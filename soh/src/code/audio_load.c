@@ -1280,7 +1280,9 @@ void AudioLoad_Init(void* heap, u32 heapSize) {
         AudioLoad_InitSoundFontMeta(i);
     }
 
+#ifndef BIGENDIAN
     AudioLoad_InitSwapFont();
+#endif
 
     if (temp_v0_3 = AudioHeap_Alloc(&gAudioContext.audioInitPool, D_8014A6C4.permanentPoolSize), temp_v0_3 == NULL) {
         // cast away const from D_8014A6C4

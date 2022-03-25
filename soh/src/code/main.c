@@ -3,6 +3,20 @@
 #include <soh/Enhancements/bootcommands.h>
 #include "soh/OTRGlobals.h"
 
+#ifdef __WIIU__
+#include <whb/log.h>
+#include <whb/log_udp.h>
+#include <sys/iosupport.h>
+
+static ssize_t wiiu_log_write(struct _reent* r, void* fd, const char* ptr, size_t len) {
+  WHBLogWritef("%*.*s", len, len, ptr);
+  return len;
+}
+static const devoptab_t dotab_stdout = {
+  .name = "stdout_whb",
+  .write_r = wiiu_log_write,
+};
+#endif
 
 s32 gScreenWidth = SCREEN_WIDTH;
 s32 gScreenHeight = SCREEN_HEIGHT;
@@ -38,6 +52,14 @@ void Main_LogSystemHeap(void) {
 
 void main(int argc, char** argv)
 {
+#ifdef __WIIU__
+    WHBLogUdpInit();
+    WHBLogPrint("Hello World!");
+
+    devoptab_list[STD_OUT] = &dotab_stdout;
+    devoptab_list[STD_ERR] = &dotab_stdout;
+#endif
+
     GameConsole_Init();
     InitOTR();
     BootCommands_Init();

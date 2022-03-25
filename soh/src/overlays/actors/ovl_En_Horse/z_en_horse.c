@@ -869,7 +869,7 @@ void EnHorse_Init(Actor* thisx, GlobalContext* globalCtx2) {
             Actor_Spawn(&globalCtx->actorCtx, globalCtx, ACTOR_EN_IN, this->actor.world.pos.x, this->actor.world.pos.y,
                         this->actor.world.pos.z, this->actor.shape.rot.x, this->actor.shape.rot.y, 1, 1);
         if (this->rider == NULL) {
-            __assert("this->race.rider != NULL", "../z_en_horse.c", 3077);
+            _assert("this->race.rider != NULL", "../z_en_horse.c", 3077);
         }
         if (!(gSaveContext.eventInf[0] & 0x40)) {
             this->ingoHorseMaxSpeed = 12.07f;

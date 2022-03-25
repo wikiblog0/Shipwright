@@ -20,6 +20,7 @@ namespace Ship {
 		BIND_HOOK(GRAYOUT_TEXTURE, Hook_GrayScaleFilter);
 		BIND_HOOK(INVALIDATE_TEXTURE, Hook_InvalidateTexture);
 
+#ifndef NO_SOH_CONSOLE
 		SohImGui::BindCmd("reload", { .handler = [&](const std::vector<std::string>&) {
 			INFO("Reloading all textures!");
 			gfx_texture_cache_clear();
@@ -27,6 +28,7 @@ namespace Ship {
 			this->TextureCache.clear();
 			return true;
 		} });
+#endif
 	}
 
 	void TextureModule::Open(std::shared_ptr<Ship::Archive> archive) {

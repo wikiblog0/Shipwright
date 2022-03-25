@@ -38,6 +38,7 @@ extern "C" {
         std::shared_ptr<Ship::ConfigFile> pConf = Ship::GlobalCtx2::GetInstance()->GetConfig();
         Ship::ConfigFile& Conf = *pConf.get();
 
+#ifndef __WIIU__
         if (SDL_Init(SDL_INIT_GAMECONTROLLER) != 0) {
             SPDLOG_ERROR("Failed to initialize SDL game controllers ({})", SDL_GetError());
             exit(EXIT_FAILURE);
@@ -73,6 +74,9 @@ extern "C" {
                 SPDLOG_ERROR("Invalid Controller Type: {}", ControllerType);
             }
         }
+#else
+        // TODO
+#endif
 
         *controllerBits = 0;
         for (size_t i = 0; i < __osMaxControllers; i++) {
@@ -308,6 +312,7 @@ namespace Ship {
         WmApi->main_loop(MainFunction);
     }
     bool Window::KeyUp(int32_t dwScancode) {
+#ifndef __WIIU__
         std::shared_ptr<ConfigFile> pConf = GlobalCtx2::GetInstance()->GetConfig();
         ConfigFile& Conf = *pConf.get();
 
@@ -333,9 +338,13 @@ namespace Ship {
         }
 
         return bIsProcessed;
+#else
+        return false;
+#endif
     }
 
     bool Window::KeyDown(int32_t dwScancode) {
+#ifndef __WIIU__
         bool bIsProcessed = false;
         for (size_t i = 0; i < __osMaxControllers; i++) {
             for (size_t j = 0; j < Controllers[i].size(); j++) {
@@ -351,10 +360,14 @@ namespace Ship {
         lastScancode = dwScancode;
 
         return bIsProcessed;
+#else
+        return false;
+#endif
     }
 
 
     void Window::AllKeysUp(void) {
+#ifndef __WIIU__
         for (size_t i = 0; i < __osMaxControllers; i++) {
             for (size_t j = 0; j < Controllers[i].size(); j++) {
                 KeyboardController* pad = dynamic_cast<KeyboardController*>(Ship::Window::Controllers[i][j].get());
@@ -363,6 +376,7 @@ namespace Ship {
                 }
             }
         }
+#endif
     }
 
     void Window::OnFullscreenChanged(bool bIsFullscreen) {

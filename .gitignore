@@ -1,0 +1,6 @@
+/build
+/external
+/.vscode
+
+*.rpx
+*.a

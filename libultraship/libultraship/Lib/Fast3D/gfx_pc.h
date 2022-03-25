@@ -3,6 +3,7 @@
 
 #include <stdbool.h>
 #include <stdint.h>
+#include <cstddef>
 #include <unordered_map>
 #include <list>
 

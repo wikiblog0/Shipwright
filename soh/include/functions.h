@@ -12,7 +12,7 @@ extern "C"
 #include "../../libultraship/libultraship/luslog.h"
 
 #if defined(INCLUDE_GAME_PRINTF) && !defined(NDEBUG)
-#define osSyncPrintf(fmt, ...) lusprintf(__FILE__, __LINE__, 0, fmt, __VA_ARGS__)
+#define osSyncPrintf(fmt, ...) lusprintf(__FILE__, __LINE__, 0, fmt, ##__VA_ARGS__)
 #else
 #define osSyncPrintf(fmt, ...) osSyncPrintfUnused(fmt, ##__VA_ARGS__)
 #endif
@@ -59,7 +59,7 @@ void Locale_ResetRegion(void);
 u32 func_80001F48(void);
 u32 func_80001F8C(void);
 u32 Locale_IsRegionNative(void);
-void __assert(const char* exp, const char* file, s32 line);
+void _assert(const char* exp, const char* file, s32 line);
 void isPrintfInit(void);
 void osSyncPrintfUnused(const char* fmt, ...);
 //void osSyncPrintf(const char* fmt, ...);

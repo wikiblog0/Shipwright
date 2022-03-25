@@ -45,8 +45,10 @@ protected:
         }
         formatted.push_back('\0');
         const char *msg_output = formatted.data();
+#ifndef NO_SOH_CONSOLE
         if (Game::Settings.debug.soh_sink && SohImGui::console->opened)
             SohImGui::console->Append("SoH Logging", priority, "%s", msg_output);
+#endif
     }
 
     void flush_() override {}

@@ -4,7 +4,11 @@
 #include "File.h"
 #include "Archive.h"
 #include <Utils/StringHelper.h>
+#ifdef __WIIU__
+#include <StormLib.h>
+#else
 #include "Lib/StormLib/StormLib.h"
+#endif
 
 namespace Ship {
 

@@ -42,7 +42,9 @@ namespace Game {
         ConfigFile& Conf = *pConf;
 
         // Debug
+#ifndef NO_SOH_CONSOLE
         SohImGui::console->opened = stob(Conf[ConfSection]["console"]);
+#endif
         Settings.debug.menu_bar = stob(Conf[ConfSection]["menu_bar"]);
         Settings.debug.soh = stob(Conf[ConfSection]["soh_debug"]);
 
@@ -96,7 +98,9 @@ namespace Game {
         ConfigFile& Conf = *pConf;
 
         // Debug
+#ifndef NO_SOH_CONSOLE
         Conf[ConfSection]["console"] = std::to_string(SohImGui::console->opened);
+#endif
         Conf[ConfSection]["menu_bar"] = std::to_string(Settings.debug.menu_bar);
         Conf[ConfSection]["soh_debug"] = std::to_string(Settings.debug.soh);
         Conf[ConfSection]["n64_mode"] = std::to_string(Settings.debug.n64mode);

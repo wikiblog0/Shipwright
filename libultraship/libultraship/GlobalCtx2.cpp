@@ -67,6 +67,7 @@ namespace Ship {
 
     void GlobalCtx2::InitLogging() {
         try {
+#ifndef __WIIU__
             // Setup Logging
             spdlog::init_thread_pool(8192, 1);
             auto SohConsoleSink = std::make_shared<spdlog::sinks::soh_sink_mt>();
@@ -81,6 +82,17 @@ namespace Ship {
             GetLogger()->set_pattern("[%Y-%m-%d %H:%M:%S.%e] [%@] [%l] %v");
             spdlog::register_logger(GetLogger());
             spdlog::set_default_logger(GetLogger());
+#else
+            // Setup Logging
+            auto ConsoleSink = std::make_shared<spdlog::sinks::stdout_color_sink_mt>();
+            ConsoleSink->set_level(spdlog::level::trace);
+            std::vector<spdlog::sink_ptr> Sinks{ ConsoleSink };
+            Logger = std::make_shared<spdlog::logger>(GetName(), Sinks.begin(), Sinks.end());
+            GetLogger()->set_level(spdlog::level::trace);
+            GetLogger()->set_pattern("[%s:%#] [%l] %v");
+            spdlog::register_logger(GetLogger());
+            spdlog::set_default_logger(GetLogger());
+#endif
         }
         catch (const spdlog::spdlog_ex& ex) {
             std::cout << "Log initialization failed: " << ex.what() << std::endl;

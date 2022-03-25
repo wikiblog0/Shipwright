@@ -6,6 +6,8 @@
 #include "Lib/Fast3D/gfx_opengl.h"
 #include "Lib/Fast3D/gfx_direct3d11.h"
 #include "Lib/Fast3D/gfx_direct3d12.h"
+#include "Lib/Fast3D/gfx_gx2.h"
+#include "Lib/Fast3D/gfx_wiiu.h"
 #include "Lib/Fast3D/gfx_window_manager_api.h"
 
 #include <string>
@@ -19,6 +21,12 @@
  */
 
 void SetWindowManager(struct GfxWindowManagerAPI** WmApi, struct GfxRenderingAPI** RenderingApi, const std::string& gfx_backend) {
+    // Wii U only has one backend
+#ifdef __WIIU__
+    *RenderingApi = &gfx_gx2_api;
+    *WmApi = &gfx_wiiu;
+#endif
+
     // First set default
 #ifdef ENABLE_OPENGL
     *RenderingApi = &gfx_opengl_api;

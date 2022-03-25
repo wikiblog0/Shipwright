@@ -12,6 +12,7 @@ namespace Ship
 	class DisplayListV0 : public ResourceFile
 	{
 	public:
+		uint64_t ReadCommand(BinaryReader* reader);
 		void ParseFileBinary(BinaryReader* reader, Resource* res) override;
 	};
 

@@ -9,8 +9,8 @@
 class BinaryWriter
 {
 public:
-	BinaryWriter(Stream* nStream);
-	BinaryWriter(std::shared_ptr<Stream> nStream);
+	BinaryWriter(Stream* nStream, Endianess endianess = Endianess::Little);
+	BinaryWriter(std::shared_ptr<Stream> nStream, Endianess endianess = Endianess::Little);
 
 	std::shared_ptr<Stream> GetStream();
 	uint64_t GetBaseAddress();
@@ -34,4 +34,5 @@ public:
 
 protected:
 	std::shared_ptr<Stream> stream;
+	Endianess endianess;
 };

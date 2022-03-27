@@ -449,7 +449,11 @@ void OTRExporter_Room::Save(ZResource* res, const fs::path& outPath, BinaryWrite
 			writer->Write(fName);
 
 			MemoryStream* csStream = new MemoryStream();
+#ifdef EXPORT_BIG_ENDIAN
+			BinaryWriter csWriter = BinaryWriter(csStream, Endianess::Big);
+#else
 			BinaryWriter csWriter = BinaryWriter(csStream);
+#endif
 			OTRExporter_Cutscene cs;
 			cs.Save(cmdSetCutscenes->cutscenes[0], "", &csWriter);
 
@@ -473,7 +477,11 @@ void OTRExporter_Room::Save(ZResource* res, const fs::path& outPath, BinaryWrite
 				writer->Write(path);
 
 				MemoryStream* pathStream = new MemoryStream();
+#ifdef EXPORT_BIG_ENDIAN
+				BinaryWriter pathWriter = BinaryWriter(pathStream, Endianess::Big);
+#else
 				BinaryWriter pathWriter = BinaryWriter(pathStream);
+#endif
 				OTRExporter_Path pathExp;
 				pathExp.Save(&cmdSetPathways->pathwayList, outPath, &pathWriter);
 

@@ -372,7 +372,11 @@ void ZFile::ExtractResources()
 		auto start = std::chrono::steady_clock::now();
 
 		auto memStreamRes = std::shared_ptr<MemoryStream>(new MemoryStream());
+#ifdef EXPORT_BIG_ENDIAN
+		BinaryWriter writerRes = BinaryWriter(memStreamRes, Endianess::Big);
+#else
 		BinaryWriter writerRes = BinaryWriter(memStreamRes);
+#endif
 
 		if (Globals::Instance->verbosity >= VerbosityLevel::VERBOSITY_INFO)
 			printf("Saving resource %s\n", res->GetName().c_str());

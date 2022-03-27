@@ -359,7 +359,11 @@ void OTRExporter_DisplayList::Save(ZResource* res, const fs::path& outPath, Bina
 					if (!File::Exists("Extract/" + fName))
 					{
 						MemoryStream* dlStream = new MemoryStream();
+#ifdef EXPORT_BIG_ENDIAN
+						BinaryWriter dlWriter = BinaryWriter(dlStream, Endianess::Big);
+#else
 						BinaryWriter dlWriter = BinaryWriter(dlStream);
+#endif
 
 						Save(dList->otherDLists[i], outPath, &dlWriter);
 
@@ -453,7 +457,11 @@ void OTRExporter_DisplayList::Save(ZResource* res, const fs::path& outPath, Bina
 						if (!File::Exists("Extract/" + fName))
 						{
 							MemoryStream* dlStream = new MemoryStream();
+#ifdef EXPORT_BIG_ENDIAN
+							BinaryWriter dlWriter = BinaryWriter(dlStream, Endianess::Big);
+#else
 							BinaryWriter dlWriter = BinaryWriter(dlStream);
+#endif
 
 							Save(dList->otherDLists[i], outPath, &dlWriter);
 
@@ -813,7 +821,11 @@ void OTRExporter_DisplayList::Save(ZResource* res, const fs::path& outPath, Bina
 						//printf("Exporting VTX Data %s\n", fName.c_str());
 						// Write vertices to file
 						MemoryStream* vtxStream = new MemoryStream();
+#ifdef EXPORT_BIG_ENDIAN
+						BinaryWriter vtxWriter = BinaryWriter(vtxStream, Endianess::Big);
+#else
 						BinaryWriter vtxWriter = BinaryWriter(vtxStream);
+#endif
 
 						int arrCnt = 0;
 

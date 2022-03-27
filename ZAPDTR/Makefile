@@ -19,6 +19,11 @@ INC := -I ZAPD -I lib/elfio -I lib/libgfxd -I lib/tinyxml2 -I ZAPDUtils
 CXXFLAGS := -fpic -std=c++17 -Wall -Wextra -fno-omit-frame-pointer
 OPTFLAGS :=
 
+# TODO wiiu
+# forces the exporter to export big endian values
+# not exactly the best implementation for now, but works until upstream implements it
+CXXFLAGS += -DEXPORT_BIG_ENDIAN
+
 ifneq ($(DEBUG),0)
   OPTIMIZATION_ON = 0
   CXXFLAGS += -g3 -DDEVELOPMENT -D_DEBUG

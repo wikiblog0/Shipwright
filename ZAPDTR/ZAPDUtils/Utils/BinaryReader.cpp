@@ -53,11 +53,6 @@ int16_t BinaryReader::ReadInt16()
 	int16_t result = 0;
 
 	stream->Read((char*)&result, sizeof(int16_t));
-
-#ifdef BIGENDIAN
-	result = __builtin_bswap16(result);
-#endif
-
 	return result;
 }
 
@@ -66,11 +61,6 @@ int32_t BinaryReader::ReadInt32()
 	int32_t result = 0;
 
 	stream->Read((char*)&result, sizeof(int32_t));
-
-#ifdef BIGENDIAN
-	result = __builtin_bswap32(result);
-#endif
-
 	return result;
 }
 
@@ -79,11 +69,6 @@ uint16_t BinaryReader::ReadUInt16()
 	uint16_t result = 0;
 
 	stream->Read((char*)&result, sizeof(uint16_t));
-
-#ifdef BIGENDIAN
-	result = __builtin_bswap16(result);
-#endif
-
 	return result;
 }
 
@@ -92,11 +77,6 @@ uint32_t BinaryReader::ReadUInt32()
 	uint32_t result = 0;
 
 	stream->Read((char*)&result, sizeof(uint32_t));
-
-#ifdef BIGENDIAN
-	result = __builtin_bswap32(result);
-#endif
-
 	return result;
 }
 
@@ -105,11 +85,6 @@ uint64_t BinaryReader::ReadUInt64()
 	uint64_t result = 0;
 
 	stream->Read((char*)&result, sizeof(uint64_t));
-
-#ifdef BIGENDIAN
-	result = __builtin_bswap64(result);
-#endif
-
 	return result;
 }
 
@@ -118,11 +93,6 @@ float BinaryReader::ReadSingle()
 	float result = NAN;
 
 	stream->Read((char*)&result, sizeof(float));
-
-#ifdef BIGENDIAN
-	uint32_t tmp = __builtin_bswap32(*(uint32_t*)&result);
-	result = *(float*)&tmp;
-#endif
 
 	if (std::isnan(result))
 		throw std::runtime_error("BinaryReader::ReadSingle(): Error reading stream");
@@ -135,12 +105,6 @@ double BinaryReader::ReadDouble()
 	double result = NAN;
 
 	stream->Read((char*)&result, sizeof(double));
-
-#ifdef BIGENDIAN
-	uint64_t tmp = __builtin_bswap64(*(uint64_t*)&result);
-	result = *(double*)&tmp;
-#endif
-
 	if (std::isnan(result))
 		throw std::runtime_error("BinaryReader::ReadDouble(): Error reading stream");
 

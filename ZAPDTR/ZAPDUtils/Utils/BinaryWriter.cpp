@@ -1,12 +1,14 @@
 #include "BinaryWriter.h"
 
-BinaryWriter::BinaryWriter(Stream* nStream)
+BinaryWriter::BinaryWriter(Stream* nStream, Endianess endianess)
 {
+	this->endianess = endianess;
 	stream.reset(nStream);
 }
 
-BinaryWriter::BinaryWriter(std::shared_ptr<Stream> nStream)
+BinaryWriter::BinaryWriter(std::shared_ptr<Stream> nStream, Endianess endianess)
 {
+	this->endianess = endianess;
 	stream = nStream;
 }
 
@@ -47,16 +49,25 @@ void BinaryWriter::Write(uint8_t value)
 
 void BinaryWriter::Write(int16_t value)
 {
+	if (endianess != Endianess::Little)
+		value = __builtin_bswap16(value);
+
 	stream->Write((char*)&value, sizeof(int16_t));
 }
 
 void BinaryWriter::Write(uint16_t value)
 {
+	if (endianess != Endianess::Little)
+		value = __builtin_bswap16(value);
+
 	stream->Write((char*)&value, sizeof(uint16_t));
 }
 
 void BinaryWriter::Write(int32_t value)
 {
+	if (endianess != Endianess::Little)
+		value = __builtin_bswap32(value);
+
 	stream->Write((char*)&value, sizeof(int32_t));
 }
 
@@ -68,33 +79,54 @@ void BinaryWriter::Write(int32_t valueA, int32_t valueB)
 
 void BinaryWriter::Write(uint32_t value)
 {
+	if (endianess != Endianess::Little)
+		value = __builtin_bswap32(value);
+
 	stream->Write((char*)&value, sizeof(uint32_t));
 }
 
 void BinaryWriter::Write(int64_t value)
 {
+	if (endianess != Endianess::Little)
+		value = __builtin_bswap64(value);
+
 	stream->Write((char*)&value, sizeof(int64_t));
 }
 
 void BinaryWriter::Write(uint64_t value)
 {
+	if (endianess != Endianess::Little)
+		value = __builtin_bswap64(value);
+
 	stream->Write((char*)&value, sizeof(uint64_t));
 }
 
 void BinaryWriter::Write(float value)
 {
+	if (endianess != Endianess::Little)
+	{
+		uint32_t tmp = __builtin_bswap32(*(uint32_t*)&value);
+		value = *(float*)&tmp;
+	}
+
 	stream->Write((char*)&value, sizeof(float));
 }
 
 void BinaryWriter::Write(double value)
 {
+	if (endianess != Endianess::Little)
+	{
+		uint64_t tmp = __builtin_bswap64(*(uint64_t*)&value);
+		value = *(double*)&tmp;
+	}
+
 	stream->Write((char*)&value, sizeof(double));
 }
 
 void BinaryWriter::Write(const std::string& str)
 {
 	int strLen = str.size();
-	stream->Write((char*)&strLen, sizeof(int));
+	Write(strLen);
 
 	for (char c : str)
 		stream->WriteByte(c);

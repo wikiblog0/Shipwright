@@ -18,6 +18,11 @@ WARN := -Wall -Wextra -Werror \
 CXXFLAGS := $(WARN) -std=c++17 
 CPPFLAGS := -MMD
 
+# TODO wiiu
+# forces the exporter to export big endian values
+# not exactly the best implementation for now, but works until upstream implements it
+CPPFLAGS += -DEXPORT_BIG_ENDIAN
+
 ifneq ($(DEBUG),0)
 	CXXFLAGS += -g
 endif

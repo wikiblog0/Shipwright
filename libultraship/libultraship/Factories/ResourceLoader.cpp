@@ -30,7 +30,15 @@ namespace Ship
             reader->ReadByte();
         
         // OTRTODO: Setup the binaryreader to use the resource's endianess
-        
+#ifdef BIGENDIAN
+        if (endianess != Endianess::Big) {
+#else
+        if (endianess != Endianess::Little) {
+#endif
+            SPDLOG_ERROR("Wrong resource endianess: {}", (endianess == Endianess::Big) ? "Big" : "Little");
+            return nullptr;
+        }
+
         ResourceType resourceType = (ResourceType)reader->ReadUInt32();
         Resource* result = nullptr;
 

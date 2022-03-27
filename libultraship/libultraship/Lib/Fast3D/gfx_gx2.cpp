@@ -32,6 +32,7 @@
 #include <gx2/registers.h>
 #include <gx2r/surface.h>
 #include "gx2_shader_gen.h"
+#include "gx2_shader_debug.h"
 
 struct ShaderProgram {
     struct ShaderGroup group;
@@ -122,6 +123,11 @@ static struct ShaderProgram* gfx_gx2_create_and_load_new_shader(uint64_t shader_
         return NULL;
     }
 
+#if 0 // debugging
+    dumpGfdFile(shader_id0, shader_id1, &prg->group);
+    dumpShaderFeatures(shader_id0, shader_id1, &cc_features);
+#endif
+
     prg->num_inputs = cc_features.num_inputs;
     prg->used_textures[0] = cc_features.used_textures[0];
     prg->used_textures[1] = cc_features.used_textures[1];
@@ -162,7 +168,7 @@ static void gfx_gx2_delete_texture(uint32_t texture_id) {
         GX2RDestroySurfaceEx(&tex->texture.surface, GX2R_RESOURCE_BIND_NONE);
     }
 
-    free((void* ) tex);
+    free((void *) tex);
 }
 
 static void gfx_gx2_select_texture(int tile, uint32_t texture_id) {
@@ -187,6 +193,7 @@ static void gfx_gx2_upload_texture(const uint8_t *rgba32_buf, uint32_t width, ui
     struct Texture *tex = current_texture;
     assert(tex);
 
+    memset(&tex->texture, 0, sizeof(GX2Texture));
     tex->texture.surface.use = GX2_SURFACE_USE_TEXTURE;
     tex->texture.surface.dim = GX2_SURFACE_DIM_TEXTURE_2D;
     tex->texture.surface.width = width;
@@ -208,12 +215,12 @@ static void gfx_gx2_upload_texture(const uint8_t *rgba32_buf, uint32_t width, ui
     uint8_t* buf = (uint8_t*) GX2RLockSurfaceEx(&tex->texture.surface, 0, GX2R_RESOURCE_BIND_NONE);
 
     for (uint32_t y = 0; y < height; y++) {
-        memcpy(buf + (y * tex->texture.surface.pitch), buf + (y * width), width * 4);
+        memcpy(buf + (y * tex->texture.surface.pitch * 4), rgba32_buf + (y * width * 4), width * 4);
     }
 
     GX2RUnlockSurfaceEx(&tex->texture.surface, 0, GX2R_RESOURCE_BIND_NONE);
 
-    if (current_shader_program != NULL) {
+    if (current_shader_program) {
         GX2SetPixelTexture(&tex->texture, current_shader_program->samplers_location[current_tile]);
     }
 
@@ -244,7 +251,7 @@ static void gfx_gx2_set_sampler_parameters(int tile, bool linear_filter, uint32_
     GX2InitSampler(&tex->sampler, GX2_TEX_CLAMP_MODE_CLAMP, linear_filter ? GX2_TEX_XY_FILTER_MODE_LINEAR : GX2_TEX_XY_FILTER_MODE_POINT);
     GX2InitSamplerClamping(&tex->sampler, gfx_cm_to_gx2(cms), gfx_cm_to_gx2(cmt), GX2_TEX_CLAMP_MODE_WRAP);
 
-    if (current_shader_program != NULL) {
+    if (current_shader_program) {
         GX2SetPixelSampler(&tex->sampler, current_shader_program->samplers_location[tile]);
     }
 

@@ -1367,10 +1367,25 @@ static void gfx_sp_tri1(uint8_t vtx1_idx, uint8_t vtx2_idx, uint8_t vtx3_idx, bo
             buf_vbo[buf_vbo_len++] = u / tex_width[t];
             buf_vbo[buf_vbo_len++] = v / tex_height[t];
 
-            if (tm & (1 << 2 * t)) {
+            bool clampS = tm & (1 << 2 * t);
+            bool clampT = tm & (1 << 2 * t + 1);
+
+            if (clampS) {
                 buf_vbo[buf_vbo_len++] = (tex_width2[t] - 0.5f) / tex_width[t];
+#ifdef __WIIU__
+                // padding
+                if (!clampT) {
+                    buf_vbo[buf_vbo_len++] = 0.0f;
+                }
+#endif
             }
-            if (tm & (1 << 2 * t + 1)) {
+            if (clampT) {
+#ifdef __WIIU__
+                // padding
+                if (!clampS) {
+                    buf_vbo[buf_vbo_len++] = 0.0f;
+                }
+#endif
                 buf_vbo[buf_vbo_len++] = (tex_height2[t] - 0.5f) / tex_height[t];
             }
         }
@@ -1442,6 +1457,12 @@ static void gfx_sp_tri1(uint8_t vtx1_idx, uint8_t vtx2_idx, uint8_t vtx3_idx, bo
                     buf_vbo[buf_vbo_len++] = color->r / 255.0f;
                     buf_vbo[buf_vbo_len++] = color->g / 255.0f;
                     buf_vbo[buf_vbo_len++] = color->b / 255.0f;
+#ifdef __WIIU__
+                    // padding
+                    if (!use_alpha) {
+                        buf_vbo[buf_vbo_len++] = 1.0f;
+                    }
+#endif
                 }
                 else {
                     if (use_fog && color == &v_arr[i]->color) {

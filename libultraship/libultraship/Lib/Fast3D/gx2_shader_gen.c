@@ -30,6 +30,96 @@ static const uint8_t reg_map[] = {
     memcpy(*alu_ptr, tmp, sizeof(tmp)); \
     *alu_ptr += sizeof(tmp) / sizeof(uint64_t)
 
+static inline void add_tex_clamp_S_T(uint64_t **alu_ptr, uint8_t tex)
+{
+    uint8_t texinfo_reg = (tex == 0) ? _R15 : _R16;
+    uint8_t texcoord_reg = (tex == 0) ? _R1 : _R3;
+    uint8_t texclamp_reg = (tex == 0) ? _R2 : _R4;
+
+    ADD_INSTR(
+        /* R127.xy = (float) texinfo.xy */
+        ALU_INT_TO_FLT(_R127, _x, texinfo_reg, _x) SCL_210
+        ALU_LAST,
+
+        ALU_INT_TO_FLT(_R127, _y, texinfo_reg, _y) SCL_210
+        ALU_LAST,
+
+        /* R127.xy = texSize / 0.5f */
+        ALU_RECIP_IEEE(__, _x, _R127, _x) SCL_210
+        ALU_LAST,
+
+        ALU_MUL_IEEE(_R127, _x, ALU_SRC_PS, _x, ALU_SRC_0_5, _x),
+        ALU_RECIP_IEEE(__, _y, _R127, _y) SCL_210
+        ALU_LAST,
+
+        ALU_MUL_IEEE(_R127, _y, ALU_SRC_PS, _y, ALU_SRC_0_5, _x)
+        ALU_LAST,
+
+        /* texCoord.xy = clamp(texCoord.xy, R127.xy, texClamp.xy) */
+        ALU_MIN(texcoord_reg, _x, texcoord_reg, _x, _R127, _x),
+        ALU_MIN(texcoord_reg, _y, texcoord_reg, _y, _R127, _y)
+        ALU_LAST,
+
+        ALU_MAX(texcoord_reg, _x, texcoord_reg, _x, texclamp_reg, _x),
+        ALU_MAX(texcoord_reg, _y, texcoord_reg, _y, texclamp_reg, _y)
+        ALU_LAST,
+    );
+}
+
+static inline void add_tex_clamp_S(uint64_t **alu_ptr, uint8_t tex)
+{
+    uint8_t texinfo_reg = (tex == 0) ? _R15 : _R16;
+    uint8_t texcoord_reg = (tex == 0) ? _R1 : _R3;
+    uint8_t texclamp_reg = (tex == 0) ? _R2 : _R4;
+
+    ADD_INSTR(
+        /* R127.x = (float) texinfo.x */
+        ALU_INT_TO_FLT(_R127, _x, texinfo_reg, _x) SCL_210
+        ALU_LAST,
+
+        /* R127.x = texSize / 0.5f */
+        ALU_RECIP_IEEE(__, _x, _R127, _x) SCL_210
+        ALU_LAST,
+
+        ALU_MUL_IEEE(_R127, _x, ALU_SRC_PS, _x, ALU_SRC_0_5, _x)
+        ALU_LAST,
+
+        /* texCoord.xy = clamp(texCoord.xy, R127.xy, texClamp.xy) */
+        ALU_MIN(texcoord_reg, _x, texcoord_reg, _x, _R127, _x)
+        ALU_LAST,
+
+        ALU_MAX(texcoord_reg, _x, texcoord_reg, _x, texclamp_reg, _x)
+        ALU_LAST,
+    );
+}
+
+static inline void add_tex_clamp_T(uint64_t **alu_ptr, uint8_t tex)
+{
+    uint8_t texinfo_reg = (tex == 0) ? _R15 : _R16;
+    uint8_t texcoord_reg = (tex == 0) ? _R1 : _R3;
+    uint8_t texclamp_reg = (tex == 0) ? _R2 : _R4;
+
+    ADD_INSTR(
+        /* R127.y = (float) texinfo.y */
+        ALU_INT_TO_FLT(_R127, _y, texinfo_reg, _y) SCL_210
+        ALU_LAST,
+
+        /* R127.y = 0.5f / texSize */
+        ALU_RECIP_IEEE(__, _x, _R127, _y) SCL_210
+        ALU_LAST,
+
+        ALU_MUL_IEEE(_R127, _y, ALU_SRC_PS, _x, ALU_SRC_0_5, _x)
+        ALU_LAST,
+
+        /* texCoord.xy = clamp(texCoord.xy, R127.xy, texClamp.xy) */
+        ALU_MIN(texcoord_reg, _y, texcoord_reg, _y, _R127, _y)
+        ALU_LAST,
+
+        ALU_MAX(texcoord_reg, _y, texcoord_reg, _y, texclamp_reg, _y)
+        ALU_LAST,
+    );
+}
+
 static inline void add_mov(uint64_t **alu_ptr, uint8_t src, bool single) {
     bool src_alpha = (src == SHADER_TEXEL0A) || (src == SHADER_TEXEL1A);
     src = reg_map[src];
@@ -106,6 +196,17 @@ static inline void add_mix(uint64_t **alu_ptr, uint8_t src0, uint8_t src1, uint8
     }
 }
 #undef ADD_INSTR
+
+static void append_tex_clamp(uint64_t **alu_ptr, uint8_t tex, bool s, bool t)
+{
+    if (s && t) {
+        add_tex_clamp_S_T(alu_ptr, tex);
+    } else if (s) {
+        add_tex_clamp_S(alu_ptr, tex);
+    } else {
+        add_tex_clamp_T(alu_ptr, tex);
+    }
+}
 
 static void append_formula(uint64_t **alu_ptr, uint8_t c[2][4], bool do_single, bool do_multiply, bool do_mix, bool only_alpha) {
     if (do_single) {
@@ -227,7 +328,7 @@ static GX2SamplerVar samplerVars[] = {
     } while (0)
 
 static int generatePixelShader(GX2PixelShader *psh, struct CCFeatures *cc_features) {
-    static const size_t max_program_buf_size = (128 + 4) * sizeof(uint64_t);
+    static const size_t max_program_buf_size = 512 * sizeof(uint64_t);
     uint64_t *program_buf = memalign(GX2_SHADER_PROGRAM_ALIGNMENT, max_program_buf_size);
     if (!program_buf) {
         return -1;
@@ -235,14 +336,78 @@ static int generatePixelShader(GX2PixelShader *psh, struct CCFeatures *cc_featur
 
     memset(program_buf, 0, max_program_buf_size);
 
-    // alu0
-    static const uint32_t alu0_offset = 32;
-    uint64_t *cur_buf = program_buf + alu0_offset;
+    // start placing alus at offset 32
+    static const uint32_t base_alu_offset = 32;
+    uint64_t *cur_buf = NULL;
 
-    // TODO opt_2cyc
-    append_formula(&cur_buf, cc_features->c[0], cc_features->do_single[0][0], cc_features->do_multiply[0][0], cc_features->do_mix[0][0], false);
-    if (cc_features->opt_alpha) {
-        append_formula(&cur_buf, cc_features->c[0], cc_features->do_single[0][1], cc_features->do_multiply[0][1], cc_features->do_mix[0][1], true);
+    // check if we need to clamp
+    bool texclamp[2] = { false, false };
+    for (int i = 0; i < 2; i++) {
+        if (cc_features->used_textures[i]) {
+            if (cc_features->clamp[i][0] || cc_features->clamp[i][1]) {
+                texclamp[i] = true;
+            }
+        }
+    }
+
+    uint32_t texclamp_alu0_offset = base_alu_offset;
+    uint32_t texclamp_alu0_size = 0;
+    uint32_t texclamp_alu0_cnt = 0;
+
+    uint32_t texclamp_alu1_offset = texclamp_alu0_offset;
+    uint32_t texclamp_alu1_size = 0;
+    uint32_t texclamp_alu1_cnt = 0;
+
+    if (texclamp[0] || texclamp[1]) {
+        // texclamp alu 0
+        texclamp_alu0_offset = base_alu_offset;
+        cur_buf = program_buf + texclamp_alu0_offset;
+
+        ADD_INSTR(
+            ALU_MOV(_R1, _z, ALU_SRC_0, _x) ALU_LAST
+        );
+
+        texclamp_alu0_size = (uintptr_t) cur_buf - ((uintptr_t) (program_buf + texclamp_alu0_offset));
+        texclamp_alu0_cnt = texclamp_alu0_size / sizeof(uint64_t);
+
+        // texclamp alu 1
+        texclamp_alu1_offset = texclamp_alu0_offset + texclamp_alu0_cnt;
+        cur_buf = program_buf + texclamp_alu1_offset;
+
+        for (int i = 0; i < 2; i++) {
+            if (cc_features->used_textures[i] && texclamp[i]) {
+                append_tex_clamp(&cur_buf, i, cc_features->clamp[i][0], cc_features->clamp[i][1]);
+            }
+        }
+
+        texclamp_alu1_size = (uintptr_t) cur_buf - ((uintptr_t) (program_buf + texclamp_alu1_offset));
+        texclamp_alu1_cnt = texclamp_alu1_size / sizeof(uint64_t);
+    }
+
+    // main alu0
+    uint32_t main_alu0_offset = texclamp_alu1_offset + texclamp_alu1_cnt;
+    cur_buf = program_buf + main_alu0_offset;
+
+    for (int c = 0; c < (cc_features->opt_2cyc ? 2 : 1); c++) {
+        append_formula(&cur_buf, cc_features->c[c], cc_features->do_single[c][0], cc_features->do_multiply[c][0], cc_features->do_mix[c][0], false);
+        if (cc_features->opt_alpha) {
+            append_formula(&cur_buf, cc_features->c[c], cc_features->do_single[c][1], cc_features->do_multiply[c][1], cc_features->do_mix[c][1], true);
+        }
+    }
+
+    if (cc_features->opt_fog) {
+        ADD_INSTR(
+            /* texel.rgb = mix(texel.rgb, vFog.rgb, vFog.a); */
+            ALU_ADD(__, _x, _R5, _x, _R1 _NEG, _x),
+            ALU_ADD(__, _y, _R5, _y, _R1 _NEG, _y),
+            ALU_ADD(__, _z, _R5, _z, _R1 _NEG, _z)
+            ALU_LAST,
+
+            ALU_MULADD(_R1, _x, ALU_SRC_PV, _x, _R5, _w, _R1, _x),
+            ALU_MULADD(_R1, _y, ALU_SRC_PV, _y, _R5, _w, _R1, _y),
+            ALU_MULADD(_R1, _z, ALU_SRC_PV, _z, _R5, _w, _R1, _z)
+            ALU_LAST,
+        );
     }
 
     if (cc_features->opt_texture_edge && cc_features->opt_alpha) {
@@ -251,74 +416,90 @@ static int generatePixelShader(GX2PixelShader *psh, struct CCFeatures *cc_featur
             ALU_KILLGT(__, _x, ALU_SRC_LITERAL, _x, _R1, _w),
             ALU_MOV(_R1, _w, ALU_SRC_1, _x)
             ALU_LAST,
-            ALU_LITERAL(0x3e99999a /*0.3f*/),
+            ALU_LITERAL(0x3e428f5c /*0.19f*/),
         );
     }
 
-    const uint32_t alu0_size = (uintptr_t) cur_buf - ((uintptr_t) (program_buf + alu0_offset));
-    const uint32_t alu0_cnt = alu0_size / sizeof(uint64_t);
+    const uint32_t main_alu0_size = (uintptr_t) cur_buf - ((uintptr_t) (program_buf + main_alu0_offset));
+    const uint32_t main_alu0_cnt = main_alu0_size / sizeof(uint64_t);
 
-    // alu1
+    // main alu1
     // place the following instructions into a new alu, in case the other alu uses KILL
-    const uint32_t alu1_offset = alu0_offset + alu0_cnt;
-    cur_buf = program_buf + alu1_offset;
-
-    if (cc_features->opt_fog) {
-        ADD_INSTR(
-            /* texel.rgb = mix(texel.rgb, vFog.rgb, vFog.a); */
-            ALU_ADD(__, _x, _R2, _x, _R1 _NEG, _x),
-            ALU_ADD(__, _y, _R2, _y, _R1 _NEG, _y),
-            ALU_ADD(__, _z, _R2, _z, _R1 _NEG, _z)
-            ALU_LAST,
-
-            ALU_MULADD(_R1, _x, ALU_SRC_PV, _x, _R2, _w, _R1, _x),
-            ALU_MULADD(_R1, _y, ALU_SRC_PV, _y, _R2, _w, _R1, _y),
-            ALU_MULADD(_R1, _z, ALU_SRC_PV, _z, _R2, _w, _R1, _z)
-            ALU_LAST,
-        );
-    }
+    const uint32_t main_alu1_offset = main_alu0_offset + main_alu0_cnt;
+    cur_buf = program_buf + main_alu1_offset;
 
     if (cc_features->opt_alpha && cc_features->opt_noise) {
         memcpy(cur_buf, noise_instructions, sizeof(noise_instructions));
         cur_buf += sizeof(noise_instructions) / sizeof(uint64_t);
     }
 
-    // TODO the rest of the added features
+    if (cc_features->opt_alpha) {
+        // TODO opt_alpha_threshold
 
-    const uint32_t alu1_size = (uintptr_t) cur_buf - ((uintptr_t) (program_buf + alu1_offset));
-    const uint32_t alu1_cnt = alu1_size / sizeof(uint64_t);
+        // TODO opt_invisible
+    }
 
-    // make sure we have enough space for textures
-    assert(32 + alu0_cnt + alu1_cnt <= 128);
+    const uint32_t main_alu1_size = (uintptr_t) cur_buf - ((uintptr_t) (program_buf + main_alu1_offset));
+    const uint32_t main_alu1_cnt = main_alu1_size / sizeof(uint64_t);
 
     // tex
-    const uint32_t tex_offset = ROUNDUP(alu1_offset + alu1_cnt, 16);
+    const uint32_t num_texinfo = texclamp[0] + texclamp[1];
     const uint32_t num_textures = cc_features->used_textures[0] + cc_features->used_textures[1];
-    uint32_t cur_tex_offset = tex_offset;
 
-    // TODO tex clamp
-    if (cc_features->used_textures[0]) {
-        uint64_t tex0_buf[] = { TEX_SAMPLE(reg_map[SHADER_TEXEL0], _x, _y, _z, _w, _R1, _x, _y, _0, _x, _t0, _s0) };
-        memcpy(program_buf + cur_tex_offset, tex0_buf, sizeof(tex0_buf));
-        cur_tex_offset += sizeof(tex0_buf) / sizeof(uint64_t);
+    uint32_t texinfo_offset = ROUNDUP(main_alu1_offset + main_alu1_cnt, 16);
+    uint32_t cur_tex_offset = texinfo_offset;
+
+    for (int i = 0; i < 2; i++) {
+        if (cc_features->used_textures[i] && texclamp[i]) {
+            uint8_t dst_reg = (i == 0) ? _R15 : _R16;
+
+            uint64_t texinfo_buf[] = {
+                TEX_GET_TEXTURE_INFO(dst_reg, _x, _y, _z, _w, _R1, _z, _z, _0, _z,  _t(i), _s(i))
+            };
+
+            memcpy(program_buf + cur_tex_offset, texinfo_buf, sizeof(texinfo_buf));
+            cur_tex_offset += sizeof(texinfo_buf) / sizeof(uint64_t);
+        }
     }
-    if (cc_features->used_textures[1]) {
-        uint64_t tex1_buf[] = { TEX_SAMPLE(reg_map[SHADER_TEXEL1],_x, _y, _z, _w, _R3, _x, _y, _0, _x, _t1, _s1) };
-        memcpy(program_buf + cur_tex_offset, tex1_buf, sizeof(tex1_buf));
-        cur_tex_offset += sizeof(tex1_buf) / sizeof(uint64_t);
+
+    uint32_t texsample_offset = cur_tex_offset;
+
+    for (int i = 0; i < 2; i++) {
+        if (cc_features->used_textures[i]) {
+            uint8_t texcoord_reg = (i == 0) ? _R1 : _R3;
+            uint8_t dst_reg = reg_map[(i == 0) ? SHADER_TEXEL0 : SHADER_TEXEL1];
+
+            uint64_t tex_buf[] = {
+                TEX_SAMPLE(dst_reg, _x, _y, _z, _w, texcoord_reg, _x, _y, _0, _x, _t(i), _s(i))
+            };
+
+            memcpy(program_buf + cur_tex_offset, tex_buf, sizeof(tex_buf));
+            cur_tex_offset += sizeof(tex_buf) / sizeof(uint64_t);
+        }
     }
+
+    // make sure we didn't overflow the buffer
+    const uint32_t total_program_size = cur_tex_offset * sizeof(uint64_t);
+    assert(total_program_size <= max_program_buf_size);
 
     // cf
     uint32_t cur_cf_offset = 0;
 
-    if (num_textures > 0) {
-        program_buf[cur_cf_offset++] = TEX(tex_offset, num_textures) VALID_PIX;
+    // if we use texclamp place those alus first
+    if (texclamp[0] || texclamp[1]) {
+        program_buf[cur_cf_offset++] = ALU(texclamp_alu0_offset, texclamp_alu0_cnt);
+        program_buf[cur_cf_offset++] = TEX(texinfo_offset, num_texinfo);
+        program_buf[cur_cf_offset++] = ALU(texclamp_alu1_offset, texclamp_alu1_cnt);
     }
 
-    program_buf[cur_cf_offset++] = ALU(alu0_offset, alu0_cnt);
+    if (num_textures > 0) {
+        program_buf[cur_cf_offset++] = TEX(texsample_offset, num_textures) VALID_PIX;
+    }
 
-    if (alu1_cnt > 0) {
-        program_buf[cur_cf_offset++] = ALU(alu1_offset, alu1_cnt);
+    program_buf[cur_cf_offset++] = ALU(main_alu0_offset, main_alu0_cnt);
+
+    if (main_alu1_cnt > 0) {
+        program_buf[cur_cf_offset++] = ALU(main_alu1_offset, main_alu1_cnt);
     }
 
     if (cc_features->opt_alpha) {
@@ -328,7 +509,7 @@ static int generatePixelShader(GX2PixelShader *psh, struct CCFeatures *cc_featur
     }
 
     // regs
-    psh->regs.sq_pgm_resources_ps = 15; // num_gprs
+    psh->regs.sq_pgm_resources_ps = 17; // num_gprs
     psh->regs.sq_pgm_exports_ps = 2; // export_mode
     psh->regs.spi_ps_in_control_0 = 13 // num_interp
         | (1 << 8) // position_ena
@@ -370,7 +551,7 @@ static int generatePixelShader(GX2PixelShader *psh, struct CCFeatures *cc_featur
         | (1 << 6); // kill_enable
     
     // program
-    psh->size = (tex_offset + (num_textures * 2)) * sizeof(uint64_t);
+    psh->size = total_program_size;
     psh->program = program_buf;
 
     psh->mode = GX2_SHADER_MODE_UNIFORM_REGISTER;
@@ -534,7 +715,7 @@ int gx2GenerateShaderGroup(struct ShaderGroup *group, struct CCFeatures *cc_feat
                 // aTexClampX
                 group->attributes[group->numAttributes++] = 
                     (GX2AttribStream) { 2 + (i * 2), 0, attribOffset, GX2_ATTRIB_FORMAT_FLOAT_32_32, GX2_ATTRIB_INDEX_PER_VERTEX, 0, GX2_COMP_SEL(_x, _y, _0, _1), GX2_ENDIAN_SWAP_DEFAULT };
-                attribOffset += (cc_features->clamp[i][0] + cc_features->clamp[i][1]) * sizeof(float);
+                attribOffset += 2 * sizeof(float);
             }
         }
     }
@@ -550,7 +731,7 @@ int gx2GenerateShaderGroup(struct ShaderGroup *group, struct CCFeatures *cc_feat
     for (int i = 0; i < cc_features->num_inputs; i++) {
         group->attributes[group->numAttributes++] = 
             (GX2AttribStream) { 6 + i, 0, attribOffset, GX2_ATTRIB_FORMAT_FLOAT_32_32_32_32, GX2_ATTRIB_INDEX_PER_VERTEX, 0, GX2_COMP_SEL(_x, _y, _z, _w), GX2_ENDIAN_SWAP_DEFAULT };
-        attribOffset += (cc_features->opt_alpha ? 4 : 3) * sizeof(float);
+        attribOffset += 4 * sizeof(float);
     }
 
     group->stride = attribOffset;

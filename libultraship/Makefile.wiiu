@@ -34,7 +34,8 @@ INCLUDES	:=	\
 SOURCEFILES_C :=    \
 		libultraship/mixer.c \
 		libultraship/Lib/stb/stb_impl.c \
-		libultraship/Lib/Fast3D/gx2_shader_gen.c
+		libultraship/Lib/Fast3D/gx2_shader_gen.c \
+		libultraship/Lib/Fast3D/gx2_shader_debug.c
 
 SOURCEFILES_CPP :=	\
 		libultraship/Blob.cpp \

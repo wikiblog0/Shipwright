@@ -3,6 +3,7 @@
 #include "spdlog/spdlog.h"
 #include "File.h"
 #include "Archive.h"
+#include "GameVersions.h"
 #include <Utils/StringHelper.h>
 #ifdef __WIIU__
 #include <StormLib.h>
@@ -14,6 +15,8 @@ namespace Ship {
 
 	ResourceMgr::ResourceMgr(std::shared_ptr<GlobalCtx2> Context, std::string MainPath, std::string PatchesPath) : Context(Context), bIsRunning(false), FileLoadThread(nullptr) {
 		OTR = std::make_shared<Archive>(MainPath, PatchesPath, false);
+
+		gameVersion = OOT_UNKNOWN;
 
 		if (OTR->IsMainMPQValid())
 			Start();
@@ -90,7 +93,10 @@ namespace Ship {
 
 			OTR->LoadFile(ToLoad->path, true, ToLoad);
 			//Lock.lock();
-			FileCache[ToLoad->path] = ToLoad->bIsLoaded && !ToLoad->bHasLoadError ? ToLoad : nullptr;
+			
+			if (!ToLoad->bHasLoadError)
+				FileCache[ToLoad->path] = ToLoad->bIsLoaded && !ToLoad->bHasLoadError ? ToLoad : nullptr;
+
 			//Lock.unlock();
 
 			SPDLOG_DEBUG("Loaded File {} on ResourceMgr thread", ToLoad->path);
@@ -128,42 +134,60 @@ namespace Ship {
 				}
 			}
 
-			auto UnmanagedRes = ResourceLoader::LoadResource(ToLoad->file);
-
-			if (UnmanagedRes != nullptr)
+			if (!ToLoad->File->bHasLoadError)
 			{
-				UnmanagedRes->resMgr = this;
-				auto Res = std::shared_ptr<Resource>(UnmanagedRes);
+				auto UnmanagedRes = ResourceLoader::LoadResource(ToLoad->File);
 
-				if (Res != nullptr) {
-					std::unique_lock<std::mutex> Lock(ToLoad->resourceLoadMutex);
+				if (UnmanagedRes != nullptr)
+				{
+					UnmanagedRes->resMgr = this;
+					auto Res = std::shared_ptr<Resource>(UnmanagedRes);
 
-					ToLoad->bHasResourceLoaded = true;
-					ToLoad->resource = Res;
-					ResourceCache[Res->file->path] = Res;
+					if (Res != nullptr) {
+						std::unique_lock<std::mutex> Lock(ToLoad->ResourceLoadMutex);
 
-					SPDLOG_DEBUG("Loaded Resource {} on ResourceMgr thread", ToLoad->file->path);
+						ToLoad->bHasResourceLoaded = true;
+						ToLoad->Resource = Res;
+						ResourceCache[Res->file->path] = Res;
 
-					// Disabled for now because it can cause random crashes
-					//FileCache[Res->File->path] = nullptr;
-					//FileCache.erase(FileCache.find(Res->File->path));
-					Res->file = nullptr;
+						SPDLOG_DEBUG("Loaded Resource {} on ResourceMgr thread", ToLoad->File->path);
+
+						// Disabled for now because it can cause random crashes
+						//FileCache[Res->File->path] = nullptr;
+						//FileCache.erase(FileCache.find(Res->File->path));
+						Res->file = nullptr;
+					}
+					else {
+						ToLoad->bHasResourceLoaded = false;
+						ToLoad->Resource = nullptr;
+
+						SPDLOG_ERROR("Resource load FAILED {} on ResourceMgr thread", ToLoad->File->path);
+					}
+
+					//ResLock.lock();
+					//ResLock.unlock();
 				}
-				else {
-					ToLoad->bHasResourceLoaded = false;
-					ToLoad->resource = nullptr;
-
-					SPDLOG_ERROR("Resource load FAILED {} on ResourceMgr thread", ToLoad->file->path);
-				}
-
-				//ResLock.lock();
-				//ResLock.unlock();
-
-				ToLoad->resourceLoadNotifier.notify_all();
 			}
+			else
+			{
+				ToLoad->bHasResourceLoaded = false;
+				ToLoad->Resource = nullptr;
+			}
+
+			ToLoad->ResourceLoadNotifier.notify_all();
 		}
 
 		SPDLOG_INFO("Resource Manager LoadResourceThread ended");
+	}
+
+	uint32_t ResourceMgr::GetGameVersion()
+	{
+		return gameVersion;
+	}
+
+	void ResourceMgr::SetGameVersion(uint32_t newGameVersion)
+	{
+		gameVersion = newGameVersion;
 	}
 
 	std::shared_ptr<File> ResourceMgr::LoadFileAsync(std::string FilePath) {
@@ -241,9 +265,16 @@ namespace Ship {
 			std::shared_ptr<File> FileData = LoadFile(FilePath);
 			Promise->file = FileData;
 
-			Promise->bHasResourceLoaded = false;
-			ResourceLoadQueue.push(Promise);
-			ResourceLoadNotifier.notify_all();
+			if (Promise->File->bHasLoadError)
+			{
+				Promise->bHasResourceLoaded = true;
+			}
+			else
+			{
+				Promise->bHasResourceLoaded = false;
+				ResourceLoadQueue.push(Promise);
+				ResourceLoadNotifier.notify_all();
+			}
 		} else {
 			Promise->bHasResourceLoaded = true;
 			Promise->resource = resCacheFind->second;

@@ -44,6 +44,14 @@ extern "C" {
             exit(EXIT_FAILURE);
         }
 
+        const char* controllerDb = "gamecontrollerdb.txt";
+        int mappingsAdded = SDL_GameControllerAddMappingsFromFile(controllerDb);
+        if (mappingsAdded >= 0) {
+            SPDLOG_INFO("Added SDL game controllers from \"{}\" ({})", controllerDb, mappingsAdded);
+        } else {
+            SPDLOG_ERROR("Failed add SDL game controller mappings from \"{}\" ({})", controllerDb, SDL_GetError());
+        }
+
         // TODO: This for loop is debug. Burn it with fire.
         for (int i = 0; i < SDL_NumJoysticks(); i++) {
             if (SDL_IsGameController(i)) {

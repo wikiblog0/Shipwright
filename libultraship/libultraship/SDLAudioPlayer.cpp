@@ -10,7 +10,11 @@ namespace Ship {
             SDL_AudioSpec want, have;
             SDL_zero(want);
             want.freq = 32000;
-            want.format = AUDIO_S16;
+#ifdef BIGENDIAN
+            want.format = AUDIO_S16MSB;
+#else
+            want.format = AUDIO_S16LSB;
+#endif
             want.channels = 2;
             want.samples = 1024;
             want.callback = NULL;

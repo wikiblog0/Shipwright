@@ -370,7 +370,11 @@ SoundFontData* AudioLoad_SyncLoadSeqFonts(s32 seqId, u32* outDefaultFontId) {
     }
 
     fontId = 0xFF;
+#ifdef BIGENDIAN
+    index = BOMSWAP16(((u16*)gAudioContext.sequenceFontTable)[seqId]);
+#else
     index = ((u16*)gAudioContext.sequenceFontTable)[seqId];
+#endif
     numFonts = gAudioContext.sequenceFontTable[index++];
 
     while (numFonts > 0) {
@@ -466,7 +470,11 @@ void AudioLoad_AsyncLoadFont(s32 fontId, s32 arg1, s32 retData, OSMesgQueue* ret
 u8* AudioLoad_GetFontsForSequence(s32 seqId, u32* outNumFonts) {
     s32 index;
 
+#ifdef BIGENDIAN
+    index = BOMSWAP16(((u16*)gAudioContext.sequenceFontTable)[seqId]);
+#else
     index = ((u16*)gAudioContext.sequenceFontTable)[seqId];
+#endif
 
     *outNumFonts = gAudioContext.sequenceFontTable[index++];
     if (*outNumFonts == 0) {
@@ -480,7 +488,11 @@ void AudioLoad_DiscardSeqFonts(s32 seqId) {
     s32 index;
     s32 numFonts;
 
+#ifdef BIGENDIAN
+    index = BOMSWAP16(((u16*)gAudioContext.sequenceFontTable)[seqId]);
+#else
     index = ((u16*)gAudioContext.sequenceFontTable)[seqId];
+#endif
     numFonts = gAudioContext.sequenceFontTable[index++];
 
     while (numFonts > 0) {
@@ -551,7 +563,11 @@ s32 AudioLoad_SyncInitSeqPlayerInternal(s32 playerIdx, s32 seqId, s32 arg2) {
     AudioSeq_SequencePlayerDisable(seqPlayer);
 
     fontId = 0xFF;
+#ifdef BIGENDIAN
+    index = BOMSWAP16(((u16*)gAudioContext.sequenceFontTable)[seqId]);
+#else
     index = ((u16*)gAudioContext.sequenceFontTable)[seqId];
+#endif
     numFonts = gAudioContext.sequenceFontTable[index++];
 
     while (numFonts > 0) {

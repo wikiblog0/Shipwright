@@ -677,6 +677,35 @@ typedef struct {
 } AudioPreloadReq; // size = 0x14
 
 typedef struct {
+#ifdef BIGENDIAN
+    union{
+        u32 opArgs;
+        struct {
+            u8 op;
+            u8 arg0;
+            u8 arg1;
+            u8 arg2;
+        };
+    };
+    union {
+        void* data;
+        f32 asFloat;
+        s32 asInt;
+        struct {
+            u16 asUShort;
+            u8 pad2[2];
+        };
+        struct {
+            s8 asSbyte;
+            u8 pad1[3];
+        };
+        struct {
+            u8 asUbyte;
+            u8 pad0[3];
+        };
+        u32 asUInt;
+    };
+#else
     union{
         u32 opArgs;
         struct {
@@ -705,6 +734,7 @@ typedef struct {
         };
         u32 asUInt;
     };
+#endif
 } AudioCmd;
 
 typedef struct {

@@ -544,16 +544,18 @@ u8 gDefaultShortNoteGateTimeTable[] = {
 };
 
 AdsrEnvelope gDefaultEnvelope[] = {
+#ifdef BIGENDIAN
+    { 1, 32000 },
+    { 1000, 32000 },
+    { -1, 0 },
+    { 0, 0 },
+#else
     // OTRTODO: Byteswapped manually for quick audio support.
     { 0x0100, 0x007D },
     { 0xE803, 0x007D },
     { 0xFFFF, 0x0000 },
     { 0x0000, 0x0000 },
-    /* { 1, 32000 },
-    { 1000, 32000 },
-    { -1, 0 },
-    { 0, 0 },
-    */
+#endif
 };
 
 NoteSubEu gZeroNoteSub = { 0 };

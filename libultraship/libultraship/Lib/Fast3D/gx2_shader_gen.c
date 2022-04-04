@@ -56,12 +56,12 @@ static inline void add_tex_clamp_S_T(uint64_t **alu_ptr, uint8_t tex)
         ALU_LAST,
 
         /* texCoord.xy = clamp(texCoord.xy, R127.xy, texClamp.xy) */
-        ALU_MIN(texcoord_reg, _x, texcoord_reg, _x, _R127, _x),
-        ALU_MIN(texcoord_reg, _y, texcoord_reg, _y, _R127, _y)
+        ALU_MAX(__, _x, texcoord_reg, _x, _R127, _x),
+        ALU_MAX(__, _y, texcoord_reg, _y, _R127, _y)
         ALU_LAST,
 
-        ALU_MAX(texcoord_reg, _x, texcoord_reg, _x, texclamp_reg, _x),
-        ALU_MAX(texcoord_reg, _y, texcoord_reg, _y, texclamp_reg, _y)
+        ALU_MIN(texcoord_reg, _x, ALU_SRC_PV, _x, texclamp_reg, _x),
+        ALU_MIN(texcoord_reg, _y, ALU_SRC_PV, _y, texclamp_reg, _y)
         ALU_LAST,
     );
 }
@@ -85,10 +85,10 @@ static inline void add_tex_clamp_S(uint64_t **alu_ptr, uint8_t tex)
         ALU_LAST,
 
         /* texCoord.xy = clamp(texCoord.xy, R127.xy, texClamp.xy) */
-        ALU_MIN(texcoord_reg, _x, texcoord_reg, _x, _R127, _x)
+        ALU_MAX(__, _x, texcoord_reg, _x, _R127, _x)
         ALU_LAST,
 
-        ALU_MAX(texcoord_reg, _x, texcoord_reg, _x, texclamp_reg, _x)
+        ALU_MIN(texcoord_reg, _x, ALU_SRC_PV, _x, texclamp_reg, _x)
         ALU_LAST,
     );
 }
@@ -112,10 +112,10 @@ static inline void add_tex_clamp_T(uint64_t **alu_ptr, uint8_t tex)
         ALU_LAST,
 
         /* texCoord.xy = clamp(texCoord.xy, R127.xy, texClamp.xy) */
-        ALU_MIN(texcoord_reg, _y, texcoord_reg, _y, _R127, _y)
+        ALU_MAX(__, _y, texcoord_reg, _y, _R127, _y)
         ALU_LAST,
 
-        ALU_MAX(texcoord_reg, _y, texcoord_reg, _y, texclamp_reg, _y)
+        ALU_MIN(texcoord_reg, _y, ALU_SRC_PV, _y, texclamp_reg, _y)
         ALU_LAST,
     );
 }
@@ -350,29 +350,13 @@ static int generatePixelShader(GX2PixelShader *psh, struct CCFeatures *cc_featur
         }
     }
 
-    uint32_t texclamp_alu0_offset = base_alu_offset;
-    uint32_t texclamp_alu0_size = 0;
-    uint32_t texclamp_alu0_cnt = 0;
-
-    uint32_t texclamp_alu1_offset = texclamp_alu0_offset;
-    uint32_t texclamp_alu1_size = 0;
-    uint32_t texclamp_alu1_cnt = 0;
+    uint32_t texclamp_alu_offset = base_alu_offset;
+    uint32_t texclamp_alu_size = 0;
+    uint32_t texclamp_alu_cnt = 0;
 
     if (texclamp[0] || texclamp[1]) {
-        // texclamp alu 0
-        texclamp_alu0_offset = base_alu_offset;
-        cur_buf = program_buf + texclamp_alu0_offset;
-
-        ADD_INSTR(
-            ALU_MOV(_R1, _z, ALU_SRC_0, _x) ALU_LAST
-        );
-
-        texclamp_alu0_size = (uintptr_t) cur_buf - ((uintptr_t) (program_buf + texclamp_alu0_offset));
-        texclamp_alu0_cnt = texclamp_alu0_size / sizeof(uint64_t);
-
-        // texclamp alu 1
-        texclamp_alu1_offset = texclamp_alu0_offset + texclamp_alu0_cnt;
-        cur_buf = program_buf + texclamp_alu1_offset;
+        // texclamp alu
+        cur_buf = program_buf + texclamp_alu_offset;
 
         for (int i = 0; i < 2; i++) {
             if (cc_features->used_textures[i] && texclamp[i]) {
@@ -380,12 +364,12 @@ static int generatePixelShader(GX2PixelShader *psh, struct CCFeatures *cc_featur
             }
         }
 
-        texclamp_alu1_size = (uintptr_t) cur_buf - ((uintptr_t) (program_buf + texclamp_alu1_offset));
-        texclamp_alu1_cnt = texclamp_alu1_size / sizeof(uint64_t);
+        texclamp_alu_size = (uintptr_t) cur_buf - ((uintptr_t) (program_buf + texclamp_alu_offset));
+        texclamp_alu_cnt = texclamp_alu_size / sizeof(uint64_t);
     }
 
     // main alu0
-    uint32_t main_alu0_offset = texclamp_alu1_offset + texclamp_alu1_cnt;
+    uint32_t main_alu0_offset = texclamp_alu_offset + texclamp_alu_cnt;
     cur_buf = program_buf + main_alu0_offset;
 
     for (int c = 0; c < (cc_features->opt_2cyc ? 2 : 1); c++) {
@@ -454,7 +438,7 @@ static int generatePixelShader(GX2PixelShader *psh, struct CCFeatures *cc_featur
             uint8_t dst_reg = (i == 0) ? _R15 : _R16;
 
             uint64_t texinfo_buf[] = {
-                TEX_GET_TEXTURE_INFO(dst_reg, _x, _y, _z, _w, _R1, _z, _z, _0, _z,  _t(i), _s(i))
+                TEX_GET_TEXTURE_INFO(dst_reg, _x, _y, _m, _m, _R1, _0, _0, _0, _0,  _t(i), _s(i))
             };
 
             memcpy(program_buf + cur_tex_offset, texinfo_buf, sizeof(texinfo_buf));
@@ -487,9 +471,8 @@ static int generatePixelShader(GX2PixelShader *psh, struct CCFeatures *cc_featur
 
     // if we use texclamp place those alus first
     if (texclamp[0] || texclamp[1]) {
-        program_buf[cur_cf_offset++] = ALU(texclamp_alu0_offset, texclamp_alu0_cnt);
         program_buf[cur_cf_offset++] = TEX(texinfo_offset, num_texinfo);
-        program_buf[cur_cf_offset++] = ALU(texclamp_alu1_offset, texclamp_alu1_cnt);
+        program_buf[cur_cf_offset++] = ALU(texclamp_alu_offset, texclamp_alu_cnt);
     }
 
     if (num_textures > 0) {

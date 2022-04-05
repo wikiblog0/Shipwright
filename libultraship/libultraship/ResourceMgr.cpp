@@ -288,7 +288,7 @@ namespace Ship {
 		auto fileList = OTR->ListFiles(SearchMask);
 
 		for (DWORD i = 0; i < fileList.size(); i++) {
-			auto file = LoadResourceAsync(fileList.operator[](i).cFileName);
+			auto file = LoadResourceAsync(fileList[i]);
 			if (file != nullptr) {
 				loadedList->push_back(file);
 			}

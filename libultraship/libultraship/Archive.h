@@ -37,7 +37,7 @@ namespace Ship
 		bool AddFile(const std::string& path, uintptr_t fileData, DWORD dwFileSize);
 		bool RemoveFile(const std::string& path);
 		bool RenameFile(const std::string& oldPath, const std::string& newPath);
-		std::vector<SFILE_FIND_DATA> ListFiles(const std::string& searchMask);
+		std::vector<std::string> ListFiles(const std::string& searchMask);
 		bool HasFile(const std::string& searchMask);
 		std::string HashToString(uint64_t hash);
 	protected:
@@ -48,7 +48,7 @@ namespace Ship
 		std::string PatchesPath;
 		std::map<std::string, HANDLE> mpqHandles;
 		std::vector<std::string> addedFiles;
-		std::map<uint64_t, std::string> hashes;
+		std::vector<std::string> filenameList;
 		HANDLE mainMPQ;
 
 		bool LoadMainMPQ(bool enableWriting, bool genCRCMap);

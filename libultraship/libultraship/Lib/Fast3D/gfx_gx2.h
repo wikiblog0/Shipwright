@@ -3,7 +3,7 @@
 
 #include "gfx_rendering_api.h"
 
-void gfx_gx2_free_vbos(void);
+void gfx_gx2_shutdown(void);
 
 extern struct GfxRenderingAPI gfx_gx2_api;
 

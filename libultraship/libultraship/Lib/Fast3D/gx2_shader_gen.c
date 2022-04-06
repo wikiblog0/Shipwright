@@ -418,9 +418,22 @@ static int generatePixelShader(GX2PixelShader *psh, struct CCFeatures *cc_featur
     }
 
     if (cc_features->opt_alpha) {
-        // TODO opt_alpha_threshold
+        if (cc_features->opt_alpha_threshold) {
+            ADD_INSTR(
+                /* if (texel.a < 8.0 / 256.0) discard; */
+                ALU_KILLGT(__, _x, ALU_SRC_LITERAL, _x, _R1, _w)
+                ALU_LAST,
+                ALU_LITERAL(0x3d000000 /*0.03125f*/),
+            );
+        }
 
-        // TODO opt_invisible
+        if (cc_features->opt_invisible) {
+            ADD_INSTR(
+                /* texel.a = 0.0; */
+                ALU_MOV(_R1, _w, ALU_SRC_0, _x)
+                ALU_LAST,
+            );
+        }
     }
 
     const uint32_t main_alu1_size = (uintptr_t) cur_buf - ((uintptr_t) (program_buf + main_alu1_offset));

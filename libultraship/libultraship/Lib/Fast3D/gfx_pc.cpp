@@ -2649,11 +2649,11 @@ void gfx_get_dimensions(uint32_t *width, uint32_t *height) {
 void gfx_init(struct GfxWindowManagerAPI *wapi, struct GfxRenderingAPI *rapi, const char *game_name, bool start_in_fullscreen) {
     gfx_wapi = wapi;
     gfx_rapi = rapi;
-    gfx_wapi->init(game_name, start_in_fullscreen);
-    gfx_rapi->init();
     gfx_current_dimensions.internal_mul = 1;
     gfx_current_dimensions.width = SCREEN_WIDTH;
     gfx_current_dimensions.height = SCREEN_HEIGHT;
+    gfx_wapi->init(game_name, start_in_fullscreen);
+    gfx_rapi->init();
 
     for (int i = 0; i < 16; i++)
         segmentPointers[i] = 0;

@@ -3,7 +3,12 @@
 
 #include "gfx_window_manager_api.h"
 
-extern uint32_t window_height;
+void gfx_wiiu_set_context_state(void);
+
+extern bool has_foreground;
+
+extern uint32_t tv_width;
+extern uint32_t tv_height;
 
 extern struct GfxWindowManagerAPI gfx_wiiu;
 

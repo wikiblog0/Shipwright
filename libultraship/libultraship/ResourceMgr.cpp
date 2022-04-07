@@ -222,8 +222,11 @@ namespace Ship {
 	std::shared_ptr<Ship::Resource> ResourceMgr::GetCachedFile(std::string FilePath) {
 		auto resCacheFind = ResourceCache.find(FilePath);
 
-		if (resCacheFind != ResourceCache.end())
+		if (resCacheFind != ResourceCache.end() &&
+			resCacheFind->second.use_count() > 0)
+		{
 			return resCacheFind->second;
+		}
 		else
 			return nullptr;
 	}

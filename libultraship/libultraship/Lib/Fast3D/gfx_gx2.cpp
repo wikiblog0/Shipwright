@@ -103,7 +103,7 @@ static inline GX2SamplerVar *GX2GetPixelSamplerVar(const GX2PixelShader *shader,
         }
     }
 
-    return NULL;
+    return nullptr;
 }
 
 static inline int32_t GX2GetPixelSamplerVarLocation(const GX2PixelShader *shader, const char *name)
@@ -180,8 +180,8 @@ static struct ShaderProgram* gfx_gx2_create_and_load_new_shader(uint64_t shader_
     printf("Generating shader: %016llx-%08x\n", shader_id0, shader_id1);
     if (gx2GenerateShaderGroup(&prg->group, &cc_features) != 0) {
         printf("Failed to generate shader\n");
-        current_shader_program = NULL;
-        return NULL;
+        current_shader_program = nullptr;
+        return nullptr;
     }
 
 #if 0 // debugging
@@ -381,7 +381,7 @@ static void gfx_gx2_set_use_alpha(bool use_alpha) {
 }
 
 static void gfx_gx2_draw_triangles(float buf_vbo[], size_t buf_vbo_len, size_t buf_vbo_num_tris) {
-    if (current_shader_program == NULL) {
+    if (!current_shader_program) {
         return;
     }
 
@@ -445,8 +445,8 @@ static void gfx_gx2_init(void) {
     assert(depthReadBuffer.surface.image);
     GX2Invalidate(GX2_INVALIDATE_MODE_CPU | GX2_INVALIDATE_MODE_DEPTH_BUFFER, depthReadBuffer.surface.image, depthReadBuffer.surface.imageSize);
 
-	GX2SetColorBuffer(&main_framebuffer.color_buffer, GX2_RENDER_TARGET_0);
-	GX2SetDepthBuffer(&main_framebuffer.depth_buffer);
+    GX2SetColorBuffer(&main_framebuffer.color_buffer, GX2_RENDER_TARGET_0);
+    GX2SetDepthBuffer(&main_framebuffer.depth_buffer);
 
     current_framebuffer = &main_framebuffer;
 
@@ -490,7 +490,7 @@ static void gfx_gx2_start_frame(void) {
 }
 
 static void gfx_gx2_end_frame(void) {
-    GX2DrawDone();
+    GX2Flush();
     draw_index = 0;
 
     GX2CopyColorBufferToScanBuffer(&main_framebuffer.color_buffer, GX2_SCAN_TARGET_TV);
@@ -506,8 +506,8 @@ static int gfx_gx2_create_framebuffer(uint32_t width, uint32_t height) {
 
     gfx_gx2_init_framebuffer(buffer, width, height);
 
-	GX2CalcSurfaceSizeAndAlignment(&buffer->color_buffer.surface);
-	GX2InitColorBufferRegs(&buffer->color_buffer);
+    GX2CalcSurfaceSizeAndAlignment(&buffer->color_buffer.surface);
+    GX2InitColorBufferRegs(&buffer->color_buffer);
 
     assert(GX2RCreateSurface(&buffer->depth_buffer.surface, GX2R_RESOURCE_BIND_DEPTH_BUFFER 
         | GX2R_RESOURCE_USAGE_GPU_READ
@@ -540,8 +540,8 @@ static int gfx_gx2_create_framebuffer(uint32_t width, uint32_t height) {
     GX2InitTextureRegs(&buffer->texture);
 
     // the texture and color buffer share a buffer
-	assert(buffer->color_buffer.surface.imageSize == buffer->texture.surface.imageSize);
-	buffer->color_buffer.surface.image = buffer->texture.surface.image;
+    assert(buffer->color_buffer.surface.imageSize == buffer->texture.surface.imageSize);
+    buffer->color_buffer.surface.image = buffer->texture.surface.image;
 
     GX2InitSampler(&buffer->sampler, GX2_TEX_CLAMP_MODE_WRAP, GX2_TEX_XY_FILTER_MODE_LINEAR);
 
@@ -564,8 +564,8 @@ static void gfx_gx2_resize_framebuffer(int fb, uint32_t width, uint32_t height) 
     buffer->color_buffer.surface.width = width;
     buffer->color_buffer.surface.height = height;
 
-	GX2CalcSurfaceSizeAndAlignment(&buffer->color_buffer.surface);
-	GX2InitColorBufferRegs(&buffer->color_buffer);
+    GX2CalcSurfaceSizeAndAlignment(&buffer->color_buffer.surface);
+    GX2InitColorBufferRegs(&buffer->color_buffer);
 
     buffer->depth_buffer.surface.width = width;
     buffer->depth_buffer.surface.height = height;
@@ -588,16 +588,16 @@ static void gfx_gx2_resize_framebuffer(int fb, uint32_t width, uint32_t height) 
     GX2InitTextureRegs(&buffer->texture);
 
     // the texture and color buffer share a buffer
-	assert(buffer->color_buffer.surface.imageSize == buffer->texture.surface.imageSize);
-	buffer->color_buffer.surface.image = buffer->texture.surface.image;
+    assert(buffer->color_buffer.surface.imageSize == buffer->texture.surface.imageSize);
+    buffer->color_buffer.surface.image = buffer->texture.surface.image;
 }
 
 void gfx_gx2_set_framebuffer(int fb) {
     struct Framebuffer *buffer = (struct Framebuffer *) fb;
     assert(buffer);
 
-	GX2SetColorBuffer(&buffer->color_buffer, GX2_RENDER_TARGET_0);
-	GX2SetDepthBuffer(&buffer->depth_buffer);
+    GX2SetColorBuffer(&buffer->color_buffer, GX2_RENDER_TARGET_0);
+    GX2SetDepthBuffer(&buffer->depth_buffer);
 
     GX2ClearColor(&buffer->color_buffer, 0.0f, 0.0f, 0.0f, 1.0f);
     GX2ClearDepthStencilEx(&buffer->depth_buffer, 
@@ -610,11 +610,12 @@ void gfx_gx2_set_framebuffer(int fb) {
 }
 
 void gfx_gx2_reset_framebuffer(void) {
+    // the other framebuffer should be fully drawn
     GX2DrawDone();
     draw_index = 0;
 
-	GX2SetColorBuffer(&main_framebuffer.color_buffer, GX2_RENDER_TARGET_0);
-	GX2SetDepthBuffer(&main_framebuffer.depth_buffer);
+    GX2SetColorBuffer(&main_framebuffer.color_buffer, GX2_RENDER_TARGET_0);
+    GX2SetDepthBuffer(&main_framebuffer.depth_buffer);
 
     current_framebuffer = &main_framebuffer;
 }

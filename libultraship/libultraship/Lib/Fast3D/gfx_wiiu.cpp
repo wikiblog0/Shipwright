@@ -80,17 +80,17 @@ static uint32_t gfx_wiiu_proc_callback_acquired(void *context) {
     assert(GfxHeapInitMEM1());
     assert(GfxHeapInitForeground());
 
-	tv_scan_buffer = GfxHeapAllocForeground(tv_scan_buffer_size, GX2_SCAN_BUFFER_ALIGNMENT);
+    tv_scan_buffer = GfxHeapAllocForeground(tv_scan_buffer_size, GX2_SCAN_BUFFER_ALIGNMENT);
     assert(tv_scan_buffer);
 
-	GX2Invalidate(GX2_INVALIDATE_MODE_CPU, tv_scan_buffer, tv_scan_buffer_size);
-	GX2SetTVBuffer(tv_scan_buffer, tv_scan_buffer_size, tv_render_mode, GX2_SURFACE_FORMAT_UNORM_R8_G8_B8_A8, GX2_BUFFERING_MODE_DOUBLE);
+    GX2Invalidate(GX2_INVALIDATE_MODE_CPU, tv_scan_buffer, tv_scan_buffer_size);
+    GX2SetTVBuffer(tv_scan_buffer, tv_scan_buffer_size, tv_render_mode, GX2_SURFACE_FORMAT_UNORM_R8_G8_B8_A8, GX2_BUFFERING_MODE_DOUBLE);
 
-	drc_scan_buffer = GfxHeapAllocForeground(drc_scan_buffer_size, GX2_SCAN_BUFFER_ALIGNMENT);
+    drc_scan_buffer = GfxHeapAllocForeground(drc_scan_buffer_size, GX2_SCAN_BUFFER_ALIGNMENT);
     assert(drc_scan_buffer);
 
-	GX2Invalidate(GX2_INVALIDATE_MODE_CPU, drc_scan_buffer, drc_scan_buffer_size);
-	GX2SetDRCBuffer(drc_scan_buffer, drc_scan_buffer_size, drc_render_mode, GX2_SURFACE_FORMAT_UNORM_R8_G8_B8_A8, GX2_BUFFERING_MODE_DOUBLE);
+    GX2Invalidate(GX2_INVALIDATE_MODE_CPU, drc_scan_buffer, drc_scan_buffer_size);
+    GX2SetDRCBuffer(drc_scan_buffer, drc_scan_buffer_size, drc_render_mode, GX2_SURFACE_FORMAT_UNORM_R8_G8_B8_A8, GX2_BUFFERING_MODE_DOUBLE);
 
     return 0;
 }
@@ -158,16 +158,16 @@ static void gfx_wiiu_init(const char *game_name, bool start_in_fullscreen) {
 
     GX2RSetAllocator(&gfx_wiiu_gx2r_alloc, &gfx_wiiu_gx2r_free);
 
-	ProcUIRegisterCallback(PROCUI_CALLBACK_ACQUIRE, gfx_wiiu_proc_callback_acquired, nullptr, 100);
-	ProcUIRegisterCallback(PROCUI_CALLBACK_RELEASE, gfx_wiiu_proc_callback_released, nullptr, 100);
+    ProcUIRegisterCallback(PROCUI_CALLBACK_ACQUIRE, gfx_wiiu_proc_callback_acquired, nullptr, 100);
+    ProcUIRegisterCallback(PROCUI_CALLBACK_RELEASE, gfx_wiiu_proc_callback_released, nullptr, 100);
 
     gfx_wiiu_proc_callback_acquired(nullptr);
 
-	context_state = (GX2ContextState *) GfxHeapAllocMEM2(sizeof(GX2ContextState), GX2_CONTEXT_STATE_ALIGNMENT);
+    context_state = (GX2ContextState *) GfxHeapAllocMEM2(sizeof(GX2ContextState), GX2_CONTEXT_STATE_ALIGNMENT);
     assert(context_state);
 
-	GX2SetupContextStateEx(context_state, TRUE);
-	GX2SetContextState(context_state);
+    GX2SetupContextStateEx(context_state, TRUE);
+    GX2SetContextState(context_state);
 
     GX2SetTVScale(tv_width, tv_height);
     GX2SetDRCScale(tv_width, tv_height);
@@ -233,8 +233,6 @@ static void gfx_wiiu_handle_events(void) {
 }
 
 static bool gfx_wiiu_start_frame(void) {
-    GX2WaitForFlip();
-
     return true;
 }
 
@@ -258,13 +256,14 @@ static inline void sync_framerate_with_timer(void) {
 }
 
 static void gfx_wiiu_swap_buffers_begin(void) {
+    // not sure how to handle vsync properly
+    GX2WaitForFlip();
     sync_framerate_with_timer();
 
-	GX2SwapScanBuffers();
-	GX2Flush();
+    GX2SwapScanBuffers();
 
-	GX2SetTVEnable(TRUE);
-	GX2SetDRCEnable(TRUE);
+    GX2SetTVEnable(TRUE);
+    GX2SetDRCEnable(TRUE);
 }
 
 static void gfx_wiiu_swap_buffers_end(void) {

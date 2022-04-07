@@ -1,0 +1,56 @@
+# build wut
+FROM devkitpro/devkitppc:latest AS wutbuild
+
+ENV PATH=$DEVKITPPC/bin:$PATH
+
+WORKDIR /
+RUN git clone https://github.com/devkitPro/wut
+WORKDIR /wut
+RUN make -j$(nproc)
+RUN make install
+WORKDIR /
+
+# set up builder image
+FROM devkitpro/devkitppc:20220128 AS builder
+
+RUN apt-get update && apt-get -y install --no-install-recommends wget tar autoconf automake libtool && rm -rf /var/lib/apt/lists/*
+COPY --from=wutbuild /opt/devkitpro/wut /opt/devkitpro/wut
+
+# build SDL2
+FROM builder AS sdlbuild
+ENV WUT_ROOT=$DEVKITPRO/wut
+
+RUN git clone -b wiiu-2.0.9 --single-branch https://github.com/yawut/SDL
+WORKDIR /SDL
+RUN mkdir build
+WORKDIR /SDL/build
+RUN /opt/devkitpro/portlibs/wiiu/bin/powerpc-eabi-cmake .. -DCMAKE_INSTALL_PREFIX=$DEVKITPRO/portlibs/wiiu
+RUN make -j$(nproc) && make install
+WORKDIR /
+
+# build StormLib
+FROM builder as stormlibbuild
+RUN git clone -b wiiu --single-branch https://github.com/GaryOderNichts/StormLib
+WORKDIR /StormLib
+RUN mkdir build
+WORKDIR /StormLib/build
+RUN /opt/devkitpro/portlibs/wiiu/bin/powerpc-eabi-cmake .. -DCMAKE_INSTALL_PREFIX=$DEVKITPRO/portlibs/wiiu -DCMAKE_BUILD_TYPE=Release
+RUN make -j$(nproc) && make install
+WORKDIR /
+
+# build final container
+FROM devkitpro/devkitppc:20220128 AS final
+
+# copy in wut
+COPY --from=wutbuild /opt/devkitpro/wut /opt/devkitpro/wut
+
+# copy in SDL2
+COPY --from=sdlbuild /opt/devkitpro/portlibs/wiiu/lib/libSDL2.a /opt/devkitpro/portlibs/wiiu/lib/
+COPY --from=sdlbuild /opt/devkitpro/portlibs/wiiu/include/SDL2 /opt/devkitpro/portlibs/wiiu/include/SDL2/
+
+# copy in StormLib
+COPY --from=stormlibbuild /opt/devkitpro/portlibs/wiiu/lib/libstorm.a /opt/devkitpro/portlibs/wiiu/lib/
+COPY --from=stormlibbuild /opt/devkitpro/portlibs/wiiu/include/StormLib.h /opt/devkitpro/portlibs/wiiu/include/
+COPY --from=stormlibbuild /opt/devkitpro/portlibs/wiiu/include/StormPort.h /opt/devkitpro/portlibs/wiiu/include/
+
+WORKDIR /project

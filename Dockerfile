@@ -1,5 +1,3 @@
-
-
 FROM ubuntu:21.04 as build
 
 ENV LANG C.UTF-8

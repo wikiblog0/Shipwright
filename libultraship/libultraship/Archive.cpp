@@ -255,7 +255,7 @@ namespace Ship {
 					if(szWildCardPtr[0] == 0)
 						return true;
 
-					if(AsciiToUpperTable[szWildCardPtr[0]] == AsciiToUpperTable[szString[0]])
+					if(AsciiToUpperTable[(int) szWildCardPtr[0]] == AsciiToUpperTable[(int) szString[0]])
 					{
 						if(SFileCheckWildCard(szString, szWildCardPtr))
 							return true;
@@ -263,7 +263,7 @@ namespace Ship {
 				}
 				else
 				{
-					if(AsciiToUpperTable[szWildCardPtr[0]] != AsciiToUpperTable[szString[0]])
+					if(AsciiToUpperTable[(int) szWildCardPtr[0]] != AsciiToUpperTable[(int) szString[0]])
 						return false;
 
 					szWildCard = szWildCardPtr + 1;

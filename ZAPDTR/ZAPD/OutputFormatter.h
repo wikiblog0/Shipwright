@@ -4,6 +4,10 @@
 #include <string>
 #include <vector>
 
+#ifdef _MSC_VER
+#define __thread __declspec(thread)
+#endif
+
 class OutputFormatter
 {
 private:
@@ -25,7 +29,7 @@ private:
 
 	void Flush();
 
-	static __declspec(thread) OutputFormatter* Instance;
+	static __thread OutputFormatter* Instance;
 	static int WriteStatic(const char* buf, int count);
 
 public:

@@ -26,6 +26,7 @@
 #include "Lib/stb/stb_image.h"
 #include "AudioPlayer.h"
 #include "Enhancements/debugconsole.h"
+#include "macros.h"
 #include "Utils/BitConverter.h"
 
 OTRGlobals* OTRGlobals::Instance;

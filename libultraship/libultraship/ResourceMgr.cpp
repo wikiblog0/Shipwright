@@ -134,9 +134,9 @@ namespace Ship {
 				}
 			}
 
-			if (!ToLoad->File->bHasLoadError)
+			if (!ToLoad->file->bHasLoadError)
 			{
-				auto UnmanagedRes = ResourceLoader::LoadResource(ToLoad->File);
+				auto UnmanagedRes = ResourceLoader::LoadResource(ToLoad->file);
 
 				if (UnmanagedRes != nullptr)
 				{
@@ -144,13 +144,13 @@ namespace Ship {
 					auto Res = std::shared_ptr<Resource>(UnmanagedRes);
 
 					if (Res != nullptr) {
-						std::unique_lock<std::mutex> Lock(ToLoad->ResourceLoadMutex);
+						std::unique_lock<std::mutex> Lock(ToLoad->resourceLoadMutex);
 
 						ToLoad->bHasResourceLoaded = true;
-						ToLoad->Resource = Res;
+						ToLoad->resource = Res;
 						ResourceCache[Res->file->path] = Res;
 
-						SPDLOG_DEBUG("Loaded Resource {} on ResourceMgr thread", ToLoad->File->path);
+						SPDLOG_DEBUG("Loaded Resource {} on ResourceMgr thread", ToLoad->file->path);
 
 						// Disabled for now because it can cause random crashes
 						//FileCache[Res->File->path] = nullptr;
@@ -159,9 +159,9 @@ namespace Ship {
 					}
 					else {
 						ToLoad->bHasResourceLoaded = false;
-						ToLoad->Resource = nullptr;
+						ToLoad->resource = nullptr;
 
-						SPDLOG_ERROR("Resource load FAILED {} on ResourceMgr thread", ToLoad->File->path);
+						SPDLOG_ERROR("Resource load FAILED {} on ResourceMgr thread", ToLoad->file->path);
 					}
 
 					//ResLock.lock();
@@ -171,10 +171,10 @@ namespace Ship {
 			else
 			{
 				ToLoad->bHasResourceLoaded = false;
-				ToLoad->Resource = nullptr;
+				ToLoad->resource = nullptr;
 			}
 
-			ToLoad->ResourceLoadNotifier.notify_all();
+			ToLoad->resourceLoadNotifier.notify_all();
 		}
 
 		SPDLOG_INFO("Resource Manager LoadResourceThread ended");
@@ -304,7 +304,7 @@ namespace Ship {
 			std::shared_ptr<File> FileData = LoadFile(FilePath);
 			Promise->file = FileData;
 
-			if (Promise->File->bHasLoadError)
+			if (Promise->file->bHasLoadError)
 			{
 				Promise->bHasResourceLoaded = true;
 			}

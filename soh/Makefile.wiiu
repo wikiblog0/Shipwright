@@ -749,9 +749,12 @@ CFLAGS	+=	$(INCLUDE) -D__WIIU__ -D__WUT__ -DBIGENDIAN \
 		-DSTBI_NO_THREAD_LOCALS
 
 CXXFLAGS	:= $(CFLAGS) -std=gnu++20
-CFLAGS	+=	-std=gnu11 \
-		-Wno-incompatible-pointer-types -Wno-int-conversion \
-		-Wno-builtin-declaration-mismatch
+CFLAGS	+=	-std=gnu11
+
+# disable some warnings
+CFLAGS	+=	-Wno-incompatible-pointer-types -Wno-int-conversion \
+		-Wno-builtin-declaration-mismatch -Wno-implicit-function-declaration \
+		-Wno-stringop-overflow -Wno-discarded-qualifiers -Wno-switch-unreachable
 
 ASFLAGS	:=	$(ARCH)
 LDFLAGS	=	$(ARCH) $(RPXSPECS) -Wl,-Map,$(notdir $*.map)

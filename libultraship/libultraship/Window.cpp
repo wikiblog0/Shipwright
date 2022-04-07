@@ -28,6 +28,10 @@
 #include "SohConsole.h"
 #include <iostream>
 
+#ifdef __WIIU__
+#include "WiiUController.h"
+#endif
+
 extern "C" {
     struct OSMesgQueue;
 
@@ -84,6 +88,7 @@ extern "C" {
         }
 #else
         // TODO
+        Ship::Window::Controllers[0].push_back(std::make_shared<Ship::WiiUController>(0));
 #endif
 
         *controllerBits = 0;

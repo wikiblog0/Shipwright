@@ -1,6 +1,8 @@
 #include "WiiUController.h"
 #include "GlobalCtx2.h"
 
+#include <vpad/input.h>
+
 namespace Ship {
 	WiiUController::WiiUController(int32_t dwControllerNumber) : Controller(dwControllerNumber) {
 		LoadBinding();
@@ -11,13 +13,49 @@ namespace Ship {
 	}
 
 	void WiiUController::ReadFromSource() {
-		wStickX = 0;
-		wStickY = 0;
+		VPADStatus status;
+		VPADRead(VPAD_CHAN_0, &status, 1, nullptr);
+
+		// TODO button mappings
+		dwPressedButtons = 0;
+		if (status.hold & VPAD_BUTTON_A)
+			dwPressedButtons |= BTN_A;
+		if (status.hold & VPAD_BUTTON_B)
+			dwPressedButtons |= BTN_B;
+		if (status.hold & VPAD_BUTTON_ZR)
+			dwPressedButtons |= BTN_Z;
+		if (status.hold & VPAD_BUTTON_R)
+			dwPressedButtons |= BTN_R;
+		if (status.hold & VPAD_BUTTON_L)
+			dwPressedButtons |= BTN_L;
+		if (status.hold & VPAD_BUTTON_PLUS)
+			dwPressedButtons |= BTN_START;
+		if (status.hold & VPAD_BUTTON_UP)
+			dwPressedButtons |= BTN_DUP;
+		if (status.hold & VPAD_BUTTON_DOWN)
+			dwPressedButtons |= BTN_DDOWN;
+		if (status.hold & VPAD_BUTTON_RIGHT)
+			dwPressedButtons |= BTN_DRIGHT;
+		if (status.hold & VPAD_BUTTON_LEFT)
+			dwPressedButtons |= BTN_DLEFT;
+
+		if (status.rightStick.x > 0.2f)
+			dwPressedButtons |= BTN_CRIGHT;
+		if (status.rightStick.x < -0.2f)
+			dwPressedButtons |= BTN_CLEFT;
+		if (status.rightStick.y > 0.2f)
+			dwPressedButtons |= BTN_CUP;
+		if (status.rightStick.y < -0.2f)
+			dwPressedButtons |= BTN_CDOWN;
+
+		wStickX = status.leftStick.x * 84;
+		wStickY = status.leftStick.y * 84;
+
+		// TODO gyro
 	}
 
-	void WiiUController::WriteToSource(ControllerCallback* controller)
-	{
-
+	void WiiUController::WriteToSource(ControllerCallback* controller) {
+		// TODO rumble
 	}
 
 	std::string WiiUController::GetControllerType() {

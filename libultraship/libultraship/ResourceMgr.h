@@ -49,8 +49,8 @@ namespace Ship
 	private:
 		std::weak_ptr<GlobalCtx2> Context;
 		volatile bool bIsRunning;
-		std::map<std::string, std::shared_ptr<File>> FileCache;
-		std::map<std::string, std::shared_ptr<Resource>> ResourceCache;
+		std::unordered_map<std::string, std::shared_ptr<File>> FileCache;
+		std::unordered_map<std::string, std::shared_ptr<Resource>> ResourceCache;
 		std::queue<std::shared_ptr<File>> FileLoadQueue;
 		std::queue<std::shared_ptr<ResourcePromise>> ResourceLoadQueue;
 		std::shared_ptr<Archive> OTR;
@@ -60,7 +60,6 @@ namespace Ship
 		std::mutex ResourceLoadMutex;
 		std::condition_variable FileLoadNotifier;
 		std::condition_variable ResourceLoadNotifier;
-		volatile bool bIsRunning;
 		uint32_t gameVersion;
 	};
 }

@@ -232,7 +232,43 @@ namespace Ship {
 	}
 
 	std::shared_ptr<Resource> ResourceMgr::LoadResource(std::string FilePath) {
-		auto Promise = LoadResourceAsync(FilePath);
+#if 1 // This implemenation will check if the file is already in the ResourceCache before allocating a ResourcePromise
+		// todo: what?
+#ifdef _MSC_VER
+		StringHelper::ReplaceOriginal(FilePath, "/", "\\");
+#else
+		StringHelper::ReplaceOriginal(FilePath, "\\", "/");
+#endif
+
+		if (StringHelper::StartsWith(FilePath, "__OTR__"))
+			FilePath.erase(0, sizeof("__OTR__") - 1);
+
+		ResourceLoadMutex.lock();
+		auto resCacheFind = ResourceCache.find(FilePath);
+		if (resCacheFind != ResourceCache.end()) {
+			ResourceLoadMutex.unlock();
+			return resCacheFind->second;
+		}
+
+		std::shared_ptr<ResourcePromise> Promise = std::make_shared<ResourcePromise>();
+
+		std::shared_ptr<File> FileData = LoadFile(FilePath);
+		Promise->file = FileData;
+
+		if (Promise->file->bHasLoadError)
+		{
+			Promise->bHasResourceLoaded = true;
+		}
+		else
+		{
+			Promise->bHasResourceLoaded = false;
+			ResourceLoadQueue.push(Promise);
+			ResourceLoadNotifier.notify_all();
+		}
+		ResourceLoadMutex.unlock();
+#else
+		auto Promise = LoadResourceAsync(FilePath, true);
+#endif
 
 		if (!Promise->bHasResourceLoaded)
 		{
@@ -254,7 +290,7 @@ namespace Ship {
 #endif
 
 		if (StringHelper::StartsWith(FilePath, "__OTR__"))
-			FilePath = StringHelper::Split(FilePath, "__OTR__")[1];
+			FilePath.erase(0, sizeof("__OTR__") - 1); // FilePath = StringHelper::Split(FilePath, "__OTR__")[1];
 
 		std::shared_ptr<ResourcePromise> Promise = std::make_shared<ResourcePromise>();
 

@@ -97,8 +97,8 @@ struct ColorCombiner {
     uint8_t shader_input_mapping[2][7];
 };
 
-static map<uint64_t, struct ColorCombiner> color_combiner_pool;
-static map<uint64_t, struct ColorCombiner>::iterator prev_combiner = color_combiner_pool.end();
+static unordered_map<uint64_t, struct ColorCombiner> color_combiner_pool;
+static unordered_map<uint64_t, struct ColorCombiner>::iterator prev_combiner = color_combiner_pool.end();
 
 static struct RSP {
     float modelview_matrix_stack[11][4][4];
@@ -2427,7 +2427,7 @@ static void gfx_run_dl(Gfx* cmd) {
                 uintptr_t addr = cmd->words.w1;
                 cmd++;
                 uint64_t hash = ((uint64_t)cmd->words.w0 << 32) + (uint64_t)cmd->words.w1;
-                ResourceMgr_GetNameByCRC(hash, fileName);
+                //ResourceMgr_GetNameByCRC(hash, fileName);
 
 
 #if _DEBUG && 0

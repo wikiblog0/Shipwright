@@ -1,4 +1,5 @@
 #include "StringHelper.h"
+#include <sstream>
 
 #pragma optimize("2", on)
 #define _CRT_SECURE_NO_WARNINGS
@@ -11,18 +12,37 @@ std::vector<std::string> StringHelper::Split(std::string s, const std::string& d
 {
 	std::vector<std::string> result;
 
-	size_t pos = 0;
-	std::string token;
-
-	while ((pos = s.find(delimiter)) != std::string::npos)
+	if (delimiter.size() == 1)
 	{
-		token = s.substr(0, pos);
-		result.push_back(token);
-		s.erase(0, pos + delimiter.length());
-	}
+		// this is faster for a single char
 
-	if (s.length() != 0)
-		result.push_back(s);
+		// if this is the filelist, reserve memory
+		if (s.length() > 20000)
+			result.reserve(1800);
+
+		std::stringstream stream(s);
+		std::string segment;
+
+		while(std::getline(stream, segment, delimiter[0]))
+		{
+			result.push_back(segment);
+		}
+	}
+	else
+	{
+		size_t pos = 0;
+		std::string token;
+
+		while ((pos = s.find(delimiter)) != std::string::npos)
+		{
+			token = s.substr(0, pos);
+			result.push_back(token);
+			s.erase(0, pos + delimiter.length());
+		}
+
+		if (s.length() != 0)
+			result.push_back(s);
+	}
 
 	return result;
 }
@@ -57,18 +77,29 @@ std::string StringHelper::Replace(std::string str, const std::string& from,
 
 void StringHelper::ReplaceOriginal(std::string& str, const std::string& from, const std::string& to)
 {
-	size_t start_pos = str.find(from);
-
-	while (start_pos != std::string::npos)
+	if (from.size() == 1 && to.size() == 1)
 	{
-		str.replace(start_pos, from.length(), to);
-		start_pos = str.find(from);
+		std::replace(str.begin(), str.end(), from[0], to[0]);
+	}
+	else
+	{
+		size_t start_pos = str.find(from);
+
+		while (start_pos != std::string::npos)
+		{
+			str.replace(start_pos, from.length(), to);
+			start_pos = str.find(from);
+		}
 	}
 }
 
 bool StringHelper::StartsWith(const std::string& s, const std::string& input)
 {
+#if __cplusplus >= 202002L
+	return s.starts_with(input.c_str());
+#else
 	return s.rfind(input, 0) == 0;
+#endif
 }
 
 bool StringHelper::Contains(const std::string& s, const std::string& input)

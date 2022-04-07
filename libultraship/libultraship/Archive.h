@@ -46,8 +46,9 @@ namespace Ship
 	private:
 		std::string MainPath;
 		std::string PatchesPath;
-		std::map<std::string, HANDLE> mpqHandles;
+		std::unordered_map<std::string, HANDLE> mpqHandles;
 		std::vector<std::string> addedFiles;
+		std::unordered_map<uint64_t, std::string> hashes;
 		std::vector<std::string> filenameList;
 		HANDLE mainMPQ;
 

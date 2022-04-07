@@ -38,6 +38,22 @@
 
 #include <proc_ui/procui.h>
 
+// wut is currently missing those (copied from retroarch)
+typedef struct GX2Rect {
+    int32_t left;
+    int32_t top;
+    int32_t right;
+    int32_t bottom;
+} GX2Rect;
+
+typedef struct GX2Point {
+    int32_t x;
+    int32_t y;
+} GX2Point;
+
+extern "C" void GX2CopySurfaceEx(GX2Surface *src, uint32_t srcLevel, uint32_t srcDepth, GX2Surface *dst, uint32_t dstLevel,
+            uint32_t dstDepth, uint32_t numRegions, GX2Rect *srcRegion, GX2Point *dstCoords);
+
 struct ShaderProgram {
     struct ShaderGroup group;
     uint8_t num_inputs;
@@ -64,6 +80,7 @@ struct Framebuffer {
 };
 
 static struct Framebuffer main_framebuffer;
+static GX2DepthBuffer depthReadBuffer;
 static struct Framebuffer *current_framebuffer;
 
 static std::map<std::pair<uint64_t, uint32_t>, struct ShaderProgram> shader_program_pool;
@@ -415,6 +432,19 @@ static void gfx_gx2_init(void) {
 
     gfx_gx2_proc_callback_acquired(nullptr);
 
+    // create a linear aligned copy of the depth buffer to read pixels to
+    memcpy(&depthReadBuffer, &main_framebuffer.depth_buffer, sizeof(GX2DepthBuffer));
+
+    depthReadBuffer.surface.tileMode = GX2_TILE_MODE_LINEAR_ALIGNED;
+    depthReadBuffer.surface.width = 1;
+    depthReadBuffer.surface.height = 1;
+
+    GX2CalcSurfaceSizeAndAlignment(&depthReadBuffer.surface);
+
+    depthReadBuffer.surface.image = memalign(depthReadBuffer.surface.alignment, depthReadBuffer.surface.imageSize);
+    assert(depthReadBuffer.surface.image);
+    GX2Invalidate(GX2_INVALIDATE_MODE_CPU | GX2_INVALIDATE_MODE_DEPTH_BUFFER, depthReadBuffer.surface.image, depthReadBuffer.surface.imageSize);
+
 	GX2SetColorBuffer(&main_framebuffer.color_buffer, GX2_RENDER_TARGET_0);
 	GX2SetDepthBuffer(&main_framebuffer.depth_buffer);
 
@@ -429,6 +459,11 @@ static void gfx_gx2_init(void) {
 }
 
 void gfx_gx2_shutdown(void) {
+    if (depthReadBuffer.surface.image) {
+        free(depthReadBuffer.surface.image);
+        depthReadBuffer.surface.image = nullptr;
+    }
+
     if (has_foreground) {
         gfx_gx2_proc_callback_released(nullptr);
     }
@@ -595,28 +630,30 @@ void gfx_gx2_select_texture_fb(int fb) {
 }
 
 static uint16_t gfx_gx2_get_pixel_depth(float x, float y) {
-    // TODO
-    return 65532;
-
-#if 0
     // bug? coordinates sometimes read from oob
-    if ((x < 0.0f) || (x > main_framebuffer.depth_buffer.surface.width)
-        || (y < 0.0f) || (y > main_framebuffer.depth_buffer.surface.height)) {
+    if ((x < 0.0f) || (x > (float) main_framebuffer.depth_buffer.surface.width)
+        || (y < 0.0f) || (y > (float) main_framebuffer.depth_buffer.surface.height)) {
         return 0;
     }
 
-    uint32_t buffer_height = main_framebuffer.depth_buffer.surface.height;
-    uint32_t buffer_pitch = main_framebuffer.depth_buffer.surface.pitch;
-    float *buffer = (float *) main_framebuffer.depth_buffer.surface.image;
+    GX2Invalidate(GX2_INVALIDATE_MODE_CPU | GX2_INVALIDATE_MODE_DEPTH_BUFFER, depthReadBuffer.surface.image, depthReadBuffer.surface.imageSize);
 
-    uint32_t offset = (buffer_height - (uint32_t) y) * buffer_pitch + (uint32_t) x;
-    GX2Invalidate(GX2_INVALIDATE_MODE_DEPTH_BUFFER, buffer + offset, sizeof(float));
+    // copy the pixel to the depthReadBuffer
+    GX2Rect srcRect = { 
+        (int32_t) x,
+        (int32_t) main_framebuffer.depth_buffer.surface.height - (int32_t) y,
+        (int32_t) x + 1,
+        (int32_t) (main_framebuffer.depth_buffer.surface.height - (int32_t) y) + 1
+    };
+    GX2Point dstPoint = { 0, 0 };
+    GX2CopySurfaceEx(&main_framebuffer.depth_buffer.surface, 0, 0, &depthReadBuffer.surface, 0, 0, 1, &srcRect, &dstPoint);
+    GX2DrawDone();
 
-    uint32_t tmp = __builtin_bswap32(*(uint32_t *)&buffer[offset]);
+    // read the pixel from the depthReadBuffer
+    uint32_t tmp = __builtin_bswap32(*(uint32_t *)depthReadBuffer.surface.image);
     float val = *(float *)&tmp;
 
     return val * 65532.0f;
-#endif
 }
 
 struct GfxRenderingAPI gfx_gx2_api = {

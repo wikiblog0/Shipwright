@@ -843,7 +843,9 @@ DEPENDS	:=	$(OFILES:.o=.d)
 all	:	$(OUTPUT).rpx
 
 $(OUTPUT).rpx	:	$(OUTPUT).elf
-$(OUTPUT).elf	:	$(OFILES)
+$(OUTPUT).elf	:	$(OFILES) \
+			$(SOH_TOP_DIR)/libultraship/lib/libultraship.a \
+			$(SOH_TOP_DIR)/ZAPDTR/ZAPDUtils/lib/libZAPDUtils.a
 
 $(OFILES_SRC)	: $(HFILES_BIN)
 

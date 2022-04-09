@@ -2077,14 +2077,26 @@ void Message_DrawMain(GlobalContext* globalCtx, Gfx** p) {
                         }
                     } else {
                         osSyncPrintf("Na_StartOcarinaSinglePlayCheck2( message->ocarina_no );\n");
+#ifdef __WIIU__
+                        /* see comment about oob shift below */
+                        func_800ECC04((1 << (msgCtx->ocarinaAction % 16)) + 0x8000);
+#else
                         func_800ECC04((1 << msgCtx->ocarinaAction) + 0x8000);
+#endif
                     }
                     msgCtx->msgMode = MSGMODE_OCARINA_PLAYING;
                 } else if (msgCtx->msgMode == MSGMODE_SONG_DEMONSTRATION_STARTING) {
                     msgCtx->stateTimer = 20;
                     msgCtx->msgMode = MSGMODE_SONG_DEMONSTRATION_SELECT_INSTRUMENT;
                 } else {
+#ifdef __WIIU__
+                    /* This shift ends up out of bounds for a u16
+                       OoT expects the shift to wrap around, which seems to happen on x86 and MIPS
+                       On PPC the result will always be 0 though, so make sure the shift wraps */
+                    func_800ECC04((1 << ((msgCtx->ocarinaAction + 0x11) % 16)) + 0x8000);
+#else
                     func_800ECC04((1 << (msgCtx->ocarinaAction + 0x11)) + 0x8000);
+#endif
                     // "Performance Check"
                     osSyncPrintf("演奏チェック=%d\n", msgCtx->ocarinaAction - OCARINA_ACTION_PLAYBACK_MINUET);
                     msgCtx->msgMode = MSGMODE_SONG_PLAYBACK;

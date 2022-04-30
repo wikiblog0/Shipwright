@@ -38,7 +38,7 @@
 
 #include <proc_ui/procui.h>
 
-// wut is currently missing those (copied from retroarch)
+// wut is currently missing those
 typedef struct GX2Rect {
     int32_t left;
     int32_t top;
@@ -51,8 +51,12 @@ typedef struct GX2Point {
     int32_t y;
 } GX2Point;
 
-extern "C" void GX2CopySurfaceEx(GX2Surface *src, uint32_t srcLevel, uint32_t srcDepth, GX2Surface *dst, uint32_t dstLevel,
+extern "C" {
+    void GX2CopySurfaceEx(GX2Surface *src, uint32_t srcLevel, uint32_t srcDepth, GX2Surface *dst, uint32_t dstLevel,
             uint32_t dstDepth, uint32_t numRegions, GX2Rect *srcRegion, GX2Point *dstCoords);
+
+    void GX2SetRasterizerClipControl(BOOL rasteriser, BOOL zclipEnable);
+}
 
 struct ShaderProgram {
     struct ShaderGroup group;
@@ -459,6 +463,8 @@ static void gfx_gx2_init(void) {
         assert(buf);
         vbo_pool.push_back(buf);
     }
+
+    GX2SetRasterizerClipControl(TRUE, FALSE);
 }
 
 void gfx_gx2_shutdown(void) {

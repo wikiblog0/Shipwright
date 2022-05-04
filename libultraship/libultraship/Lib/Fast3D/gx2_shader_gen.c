@@ -393,7 +393,7 @@ static int generatePixelShader(GX2PixelShader *psh, struct CCFeatures *cc_featur
 
     if (cc_features->opt_texture_edge && cc_features->opt_alpha) {
         ADD_INSTR(
-            /* if (texel.a > 0.3) texel.a = 1.0; else discard; */
+            /* if (texel.a > 0.19) texel.a = 1.0; else discard; */
             ALU_KILLGT(__, _x, ALU_SRC_LITERAL, _x, _R1, _w),
             ALU_MOV(_R1, _w, ALU_SRC_1, _x)
             ALU_LAST,

@@ -368,21 +368,7 @@ static void gfx_gx2_set_scissor(int x, int y, int width, int height) {
 }
 
 static void gfx_gx2_set_use_alpha(bool use_alpha) {
-    if (use_alpha) {
-        GX2SetBlendControl(GX2_RENDER_TARGET_0,
-                           GX2_BLEND_MODE_SRC_ALPHA, GX2_BLEND_MODE_INV_SRC_ALPHA,
-                           GX2_BLEND_COMBINE_MODE_ADD, FALSE,
-                           GX2_BLEND_MODE_ZERO, GX2_BLEND_MODE_ZERO,
-                           GX2_BLEND_COMBINE_MODE_ADD);
-        GX2SetColorControl(GX2_LOGIC_OP_COPY, 1, FALSE, TRUE);
-    } else {
-        GX2SetBlendControl(GX2_RENDER_TARGET_0,
-                           GX2_BLEND_MODE_ONE, GX2_BLEND_MODE_ZERO,
-                           GX2_BLEND_COMBINE_MODE_ADD, FALSE,
-                           GX2_BLEND_MODE_ZERO, GX2_BLEND_MODE_ZERO,
-                           GX2_BLEND_COMBINE_MODE_ADD);
-        GX2SetColorControl(GX2_LOGIC_OP_COPY, 0, FALSE, TRUE);
-    }
+    GX2SetColorControl(GX2_LOGIC_OP_COPY, use_alpha ? 0xff : 0, FALSE, TRUE);
 }
 
 static void gfx_gx2_draw_triangles(float buf_vbo[], size_t buf_vbo_len, size_t buf_vbo_num_tris) {
@@ -465,6 +451,15 @@ static void gfx_gx2_init(void) {
     }
 
     GX2SetRasterizerClipControl(TRUE, FALSE);
+
+    GX2SetBlendControl(GX2_RENDER_TARGET_0,
+                       GX2_BLEND_MODE_SRC_ALPHA,
+                       GX2_BLEND_MODE_INV_SRC_ALPHA,
+                       GX2_BLEND_COMBINE_MODE_ADD,
+                       FALSE,
+                       GX2_BLEND_MODE_ZERO,
+                       GX2_BLEND_MODE_ZERO,
+                       GX2_BLEND_COMBINE_MODE_ADD);
 }
 
 void gfx_gx2_shutdown(void) {

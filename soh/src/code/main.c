@@ -4,17 +4,22 @@
 #include "soh/OTRGlobals.h"
 
 #ifdef __WIIU__
+#include <stdio.h>
 #include <whb/log.h>
 #include <whb/log_udp.h>
 #include <sys/iosupport.h>
+#include <coreinit/debug.h>
 
 static ssize_t wiiu_log_write(struct _reent* r, void* fd, const char* ptr, size_t len) {
-  WHBLogWritef("%*.*s", len, len, ptr);
-  return len;
+    char buf[1024];
+    snprintf(buf, sizeof(buf), "%*.*s", len, len, ptr);
+    OSReport(buf);
+    WHBLogWritef("%*.*s", len, len, ptr);
+    return len;
 }
 static const devoptab_t dotab_stdout = {
-  .name = "stdout_whb",
-  .write_r = wiiu_log_write,
+    .name = "stdout_whb",
+    .write_r = wiiu_log_write,
 };
 #endif
 

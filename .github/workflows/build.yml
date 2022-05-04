@@ -1,0 +1,20 @@
+name: Build
+
+on: [push, pull_request]
+
+jobs:
+  build-binary:
+    runs-on: ubuntu-20.04
+    steps:
+    - uses: actions/checkout@v2
+    - name: Download assets
+      run: |
+        wget -qO soh/assets.zip ${{ secrets.ASSETS_URL }} 2>/dev/null
+        7za x soh/assets.zip -aoa -osoh/assets
+    - name: Build binary
+      run: |
+        docker run --rm -v ${PWD}:/project garyodernichts/sohwiiubuilder make -j$(nproc)
+    - uses: actions/upload-artifact@v2
+      with:
+       name: soh
+       path: soh/*.rpx

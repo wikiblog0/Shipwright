@@ -10,6 +10,11 @@ namespace Ship {
 
 			void ReadFromSource();
 			void WriteToSource(ControllerCallback* controller);
+			bool Connected() const { return true; };
+			bool CanRumble() const { return true; };
+
+			bool HasPadConf() const { return false; };
+			std::optional<std::string> GetPadConfSection() { return {}; };
 
 		protected:
 			std::string GetControllerType();

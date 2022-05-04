@@ -131,6 +131,7 @@ SOURCEFILES_C := \
 		src/code/z_actor_dlftbls.c \
 		src/code/z_bgcheck.c \
 		src/code/z_camera.c \
+		src/code/z_cheap_proc.c \
 		src/code/z_collision_btltbls.c \
 		src/code/z_collision_check.c \
 		src/code/z_common_data.c \

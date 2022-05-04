@@ -743,6 +743,7 @@ void func_8008F470(GlobalContext* globalCtx, void** skeleton, Vec3s* jointTable,
 #else
     gSPSegment(POLY_OPA_DISP++, 0x09, SEGMENTED_TO_VIRTUAL(sMouthTextures[eyeIndex]));
 #endif
+#ifndef __WIIU__
     if (tunic == PLAYER_TUNIC_KOKIRI) {
         Color_RGB8 sTemp = { CVar_GetS32("gTunic_Kokiri_Red", sTunicColors[PLAYER_TUNIC_KOKIRI].r),
                              CVar_GetS32("gTunic_Kokiri_Green", sTunicColors[PLAYER_TUNIC_KOKIRI].g),
@@ -764,6 +765,9 @@ void func_8008F470(GlobalContext* globalCtx, void** skeleton, Vec3s* jointTable,
                              CVar_GetS32("gTunic_Kokiri_Blue", sTunicColors[PLAYER_TUNIC_KOKIRI].b) };
         color = &sTemp;
     }
+#else
+    color = &sTunicColors[tunic];
+#endif
     gDPSetEnvColor(POLY_OPA_DISP++, color->r, color->g, color->b, 0);
 
     sDListsLodOffset = lod * 2;

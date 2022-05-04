@@ -283,7 +283,9 @@ void Graph_Update(GraphicsContext* gfxCtx, GameState* gameState) {
 
     GameState_ReqPadData(gameState);
     GameState_Update(gameState);
+#ifndef __WIIU__
     Debug_Draw();
+#endif
 
     OPEN_DISPS(gfxCtx, "../graph.c", 987);
 

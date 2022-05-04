@@ -1,3 +1,4 @@
+#ifdef __WIIU__
 #include "WiiUController.h"
 #include "GlobalCtx2.h"
 
@@ -70,3 +71,4 @@ namespace Ship {
 		return GetControllerType() + " CONTROLLER BINDING " + std::to_string(GetControllerNumber() + 1);
 	}
 }
+#endif

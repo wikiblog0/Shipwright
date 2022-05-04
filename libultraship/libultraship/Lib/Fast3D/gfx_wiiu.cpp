@@ -169,8 +169,8 @@ static void gfx_wiiu_init(const char *game_name, bool start_in_fullscreen) {
 
     GX2SetSwapInterval(frame_divisor);
 
-    gfx_current_dimensions.width = tv_width;
-    gfx_current_dimensions.height = tv_height;
+    gfx_current_dimensions.width = gfx_current_game_window_viewport.width = tv_width;
+    gfx_current_dimensions.height = gfx_current_game_window_viewport.height = tv_height;
 }
 
 static void gfx_wiiu_shutdown(void) {

@@ -7,14 +7,21 @@ The Ship does not include assets and as such requires a prior copy of the game t
 ## Quick Start
 
 1) Download The Ship of Harkinian from Discord.
-2) Requires an `oot debug` rom (not Master Quest).
+2) Requires a supported copy of the game (See supported games below).
+3) Use the OTRGui to generate an `oot.otr` archive file.
+4) Launch `soh.exe`
+
+### Supported Games
+Ocarina of Time Debug (not Master Quest)
 ```
 Build team: `zelda@srd022j`
 Build date: `03-02-21 00:49:18` (year-month-day)
 sha1: cee6bc3c2a634b41728f2af8da54d9bf8cc14099
 ```
-3) Use the OTRGui to generate an `oot.otr` archive file.
-4) Launch `soh.exe`
+Ocarina of Time Pal Gamecube
+```
+sha1: d0c95b2cb3c6682a171db267932af7af8cf5fa82
+```
 
 Congratulations, you are now sailing with the Ship of Harkinian! Have fun!
 
@@ -51,54 +58,7 @@ Official Discord: https://discord.com/invite/BtBmd55HVH
 
 ## Building The Ship of Harkinian
 
-### Windows
-
- 1. Install [Python](https://www.python.org/ftp/python/3.10.2/python-3.10.2-amd64.exe)
- 2. Install [Visual Studio 2022 Community Edition](https://visualstudio.microsoft.com/vs/community/)
- 2b. In the Visual Studio Installer, install `MSVC v142 - VS 2019 C++`.
- 4. Clone the Ship of Harkinian repository.
- 5. Place `oot debug` rom (not Master Quest) in the `soh` folder named `baserom_original_non_mq`.
- 6. Launch `soh/fixbaserom.py`.
- 7. Launch `soh/extract_baserom.py`.
- 8. Copy the `baserom` folder from the `soh` folder into the `OTRExporter` folder.
- 9. Run `OTRExporter/OTRExporter.sln`.
- 10. Switch the solution to `Release x64`.
- 11. Build the solution.
- 12. Launching `OTRExporter/extract_assets.py` will generate an `oot.otr` archive file in `OTRExporter/oot.otr`.
- 13. Run `soh/soh.sln`
- 14. Switch the solution to `Release x86`.
- 15. Build the solution.
- 16. Copy the `OTRExporter/oot.otr` archive file to `soh/Release`.
- 17. Launch `soh.exe`.
-
-### Linux
-
-```bash
-# Clone the repo
-git clone git@github.com:HarbourMasters/ShipWright.git
-cd ShipWright
-# Copy the baserom to the soh folder
-cp .../baserom_non_mq.z64 soh
-# Build the docker image
-sudo docker build . -t soh
-# Run the docker image with the working directory mounted to /soh
-sudo docker run --rm -it -v $(pwd):/soh soh /bin/bash
-```
-Inside the Docker container:
-```bash
-# Clone and build StormLib
-git clone https://github.com/ladislav-zezula/StormLib external/StormLib
-cmake -B external/StormLib/build -S external/StormLib
-cmake --build external/StormLib/build
-cp external/StormLib/build/libstorm.a external
-cp /usr/local/lib/libGLEW.a external
-
-cd soh
-# Extract the assets/Compile the exporter/Run the exporter
-make setup -j$(nproc)
-# Compile the code
-make -j $(nproc)
-```
+Refer to the [building instructions](BUILDING.md) to compile SoH.
 
 ## Troubleshooting The Exporter
 - Affirm that you have an `/assets` folder filled with XMLs in the same directory as OTRGui.exe

@@ -456,7 +456,6 @@ void OTRExporter_Room::Save(ZResource* res, const fs::path& outPath, BinaryWrite
 #endif
 			OTRExporter_Cutscene cs;
 			cs.Save(cmdSetCutscenes->cutscenes[0], "", &csWriter);
-			
 			if (Globals::Instance->fileMode != ZFileMode::ExtractDirectory)
 				File::WriteAllBytes("Extract/" + fName, csStream->ToVector());
 			else

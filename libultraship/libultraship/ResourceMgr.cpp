@@ -93,7 +93,7 @@ namespace Ship {
 
 			OTR->LoadFile(ToLoad->path, true, ToLoad);
 			//Lock.lock();
-			
+
 			if (!ToLoad->bHasLoadError)
 				FileCache[ToLoad->path] = ToLoad->bIsLoaded && !ToLoad->bHasLoadError ? ToLoad : nullptr;
 
@@ -290,7 +290,7 @@ namespace Ship {
 
 	std::shared_ptr<ResourcePromise> ResourceMgr::LoadResourceAsync(std::string FilePath) {
 		// todo: what?
-#ifdef _MSC_VER
+#ifdef _WIN32
 		StringHelper::ReplaceOriginal(FilePath, "/", "\\");
 #else
 		StringHelper::ReplaceOriginal(FilePath, "\\", "/");

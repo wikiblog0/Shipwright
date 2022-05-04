@@ -10,7 +10,7 @@
 #include "ZFile.h"
 #include "ZTexture.h"
 
-#if !defined(_MSC_VER) && !defined(__CYGWIN__)
+#ifdef __linux__
 #include <csignal>
 #include <cstdlib>
 #include <ctime>
@@ -28,7 +28,7 @@
 //extern const char gBuildHash[];
 const char gBuildHash[] = "";
 
-// linux todo: remove, those are because of soh <-> lus dependency problems
+// LINUX_TODO: remove, those are because of soh <-> lus dependency problems
 float divisor_num = 0.0f;
 
 extern "C" void Audio_SetGameVolume(int player_id, float volume)
@@ -38,6 +38,11 @@ extern "C" void Audio_SetGameVolume(int player_id, float volume)
 
 
 extern "C" int ResourceMgr_OTRSigCheck(char* imgData)
+{
+
+}
+
+void DebugConsole_SaveCVars()
 {
 
 }
@@ -53,7 +58,7 @@ int ExtractFunc(int workerID, int fileListSize, std::string fileListItem, ZFileM
 
 volatile int numWorkersLeft = 0;
 
-#if !defined(_MSC_VER) && !defined(__CYGWIN__)
+#ifdef __linux__
 #define ARRAY_COUNT(arr) (sizeof(arr) / sizeof(arr[0]))
 void ErrorHandler(int sig)
 {
@@ -211,7 +216,7 @@ int main(int argc, char* argv[])
 		}
 		else if (arg == "-eh")  // Enable Error Handler
 		{
-	#if !defined(_MSC_VER) && !defined(__CYGWIN__)
+#ifdef __linux__
 			signal(SIGSEGV, ErrorHandler);
 			signal(SIGABRT, ErrorHandler);
 #else
@@ -317,7 +322,7 @@ int main(int argc, char* argv[])
 				ctpl::thread_pool pool(num_threads / 2);
 
 				bool parseSuccessful;
-				
+
 				auto start = std::chrono::steady_clock::now();
 				int fileListSize = fileList.size();
 				Globals::Instance->singleThreaded = true;
@@ -402,18 +407,6 @@ int main(int argc, char* argv[])
 	{
 		BuildAssetBlob(Globals::Instance->inputPath, Globals::Instance->outputPath);
 	}
-	/*
-	else if (fileMode == ZFileMode::BuildOverlay)
-	{
-		ZOverlay* overlay =
-			ZOverlay::FromBuild(Path::GetDirectoryName(Globals::Instance->inputPath),
-		                        Path::GetDirectoryName(Globals::Instance->cfgPath));
-
-		if (overlay != nullptr)
-			File::WriteAllText(Globals::Instance->outputPath.string(),
-			                   overlay->GetSourceOutputCode(""));
-	}
-	*/
 
 	if (exporterSet != nullptr && exporterSet->endProgramFunc != nullptr)
 		exporterSet->endProgramFunc();
@@ -480,6 +473,7 @@ int ExtractFunc(int workerID, int fileListSize, std::string fileListItem, ZFileM
 
 		numWorkersLeft--;
 	}
+	return 0;
 }
 
 bool Parse(const fs::path& xmlFilePath, const fs::path& basePath, const fs::path& outPath,

@@ -144,7 +144,7 @@ namespace Ship {
 
 	bool Archive::AddFile(const std::string& path, uintptr_t fileData, DWORD dwFileSize) {
 		HANDLE hFile;
-#ifdef _MSC_VER
+#ifdef _WIN32
 		SYSTEMTIME sysTime;
 		GetSystemTime(&sysTime);
 		FILETIME t;
@@ -401,7 +401,7 @@ namespace Ship {
 
 	bool Archive::LoadMainMPQ(bool enableWriting, bool genCRCMap) {
 		HANDLE mpqHandle = NULL;
-#ifdef _MSC_VER
+#ifdef _WIN32
 		std::wstring wfullPath = std::filesystem::absolute(MainPath).wstring();
 #endif
 		std::string fullPath = std::filesystem::absolute(MainPath).string();
@@ -460,7 +460,7 @@ namespace Ship {
 
 		std::wstring wPath = std::filesystem::absolute(path).wstring();
 
-#ifdef _MSC_VER
+#ifdef _WIN32
 		if (!SFileOpenArchive(wPath.c_str(), 0, MPQ_OPEN_READ_ONLY, &patchHandle)) {
 #else
 		if (!SFileOpenArchive(fullPath.c_str(), 0, MPQ_OPEN_READ_ONLY, &patchHandle)) {
@@ -468,7 +468,7 @@ namespace Ship {
 			SPDLOG_ERROR("({}) Failed to open patch mpq file {} while applying to {}.", GetLastError(), path.c_str(), MainPath.c_str());
 			return false;
 		}
-#ifdef _MSC_VER
+#ifdef _WIN32
 		if (!SFileOpenPatchArchive(mainMPQ, wPath.c_str(), "", 0)) {
 #else
 		if (!SFileOpenPatchArchive(mainMPQ, fullPath.c_str(), "", 0)) {

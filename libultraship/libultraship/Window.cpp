@@ -11,7 +11,7 @@
 #include "Blob.h"
 #include "Matrix.h"
 #include "AudioPlayer.h"
-#ifdef _MSC_VER
+#ifdef _WIN32
 #include "WasapiAudioPlayer.h"
 #else
 #include "SDLAudioPlayer.h"
@@ -292,8 +292,11 @@ namespace Ship {
         WmApi->set_keyboard_callbacks(Window::KeyDown, Window::KeyUp, Window::AllKeysUp);
     }
 
-    void Window::RunCommands(Gfx* Commands) {
+    void Window::StartFrame() {
         gfx_start_frame();
+    }
+
+    void Window::RunCommands(Gfx* Commands) {
         gfx_run(Commands);
         gfx_end_frame();
     }
@@ -301,6 +304,10 @@ namespace Ship {
     void Window::SetFrameDivisor(int divisor) {
         gfx_set_framedivisor(divisor);
         //gfx_set_framedivisor(0);
+    }
+
+    void Window::GetPixelDepthPrepare(float x, float y) {
+        gfx_get_pixel_depth_prepare(x, y);
     }
 
     uint16_t Window::GetPixelDepth(float x, float y) {
@@ -417,7 +424,7 @@ namespace Ship {
     }
 
     void Window::SetAudioPlayer() {
-#ifdef _MSC_VER
+#ifdef _WIN32
         APlayer = std::make_shared<WasapiAudioPlayer>();
 #else
         APlayer = std::make_shared<SDLAudioPlayer>();

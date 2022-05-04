@@ -381,8 +381,8 @@ void Flags_UnsetTempClear(GlobalContext* globalCtx, s32 flag);
 s32 Flags_GetCollectible(GlobalContext* globalCtx, s32 flag);
 void Flags_SetCollectible(GlobalContext* globalCtx, s32 flag);
 void TitleCard_InitBossName(GlobalContext* globalCtx, TitleCardContext* titleCtx, void* texture, s16 x, s16 y, u8 width,
-                            u8 height);
-void TitleCard_InitPlaceName(GlobalContext* globalCtx, TitleCardContext* titleCtx, char* texture, s32 x, s32 y,
+                            u8 height, s16 hastranslation);
+void TitleCard_InitPlaceName(GlobalContext* globalCtx, TitleCardContext* titleCtx, void* texture, s32 x, s32 y,
                              s32 width, s32 height, s32 delay);
 s32 func_8002D53C(GlobalContext* globalCtx, TitleCardContext* titleCtx);
 void Actor_Kill(Actor* actor);
@@ -656,10 +656,12 @@ Vec3s* SurfaceType_GetCamPosData(CollisionContext* colCtx, CollisionPoly* poly, 
 u32 SurfaceType_GetSceneExitIndex(CollisionContext* colCtx, CollisionPoly* poly, s32 bgId);
 u32 func_80041D4C(CollisionContext* colCtx, CollisionPoly* poly, s32 bgId);
 u32 func_80041D70(CollisionContext* colCtx, CollisionPoly* poly, s32 bgId);
+u32 func_80041D94(CollisionContext* colCtx, CollisionPoly* poly, s32 bgId);
 s32 func_80041DB8(CollisionContext* colCtx, CollisionPoly* poly, s32 bgId);
 s32 func_80041DE4(CollisionContext* colCtx, CollisionPoly* poly, s32 bgId);
 s32 func_80041E18(CollisionContext* colCtx, CollisionPoly* poly, s32 bgId);
 s32 func_80041E4C(CollisionContext* colCtx, CollisionPoly* poly, s32 bgId);
+s32 func_80041E80(CollisionContext* colCtx, CollisionPoly* poly, s32 bgId);
 u32 func_80041EA4(CollisionContext* colCtx, CollisionPoly* poly, s32 bgId);
 u32 func_80041EC8(CollisionContext* colCtx, CollisionPoly* poly, s32 bgId);
 u32 SurfaceType_IsHorseBlocked(CollisionContext* colCtx, CollisionPoly* poly, s32 bgId);
@@ -977,6 +979,7 @@ void LightContext_RemoveLight(GlobalContext* globalCtx, LightContext* lightCtx, 
 Lights* Lights_NewAndDraw(GraphicsContext* gfxCtx, u8 ambientR, u8 ambientG, u8 ambientB, u8 numLights, u8 r, u8 g,
                           u8 b, s8 x, s8 y, s8 z);
 Lights* Lights_New(GraphicsContext* gfxCtx, u8 ambientR, u8 ambientG, u8 ambientB);
+void Lights_GlowCheckPrepare(GlobalContext* globalCtx);
 void Lights_GlowCheck(GlobalContext* globalCtx);
 void Lights_DrawGlow(GlobalContext* globalCtx);
 void ZeldaArena_CheckPointer(void* ptr, size_t size, const char* name, const char* action);
@@ -2396,6 +2399,9 @@ void FileChoose_Init(GameState* thisx);
 void FileChoose_Destroy(GameState* thisx);
 
 char* SetQuote();
+
+void Heaps_Alloc(void);
+void Heaps_Free(void);
 
 #ifdef __cplusplus
 };

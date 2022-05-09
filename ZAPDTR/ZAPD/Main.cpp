@@ -325,7 +325,12 @@ int main(int argc, char* argv[])
 
 				auto start = std::chrono::steady_clock::now();
 				int fileListSize = fileList.size();
+#ifdef _MSC_VER
+				Globals::Instance->singleThreaded = false;
+#else
+				// multi threaded crashes on linux for some reason?
 				Globals::Instance->singleThreaded = true;
+#endif
 
 				for (int i = 0; i < fileListSize; i++)
 					Globals::Instance->workerData[i] = new FileWorker();

@@ -17,6 +17,10 @@
 #include "MtxFactory.h"
 #include <Utils/MemoryStream.h>
 
+#ifdef __WIIU__
+#include <coreinit/debug.h>
+#endif
+
 namespace Ship
 {
     Resource* ResourceLoader::LoadResource(std::shared_ptr<File> FileToLoad)
@@ -36,6 +40,11 @@ namespace Ship
         if (endianess != Endianess::Little) {
 #endif
             SPDLOG_ERROR("Wrong resource endianess: {}", (endianess == Endianess::Big) ? "Big" : "Little");
+
+#ifdef __WIIU__
+            OSFatal("Wrong resource endianess!\nDon't use PC OTR files on the Wii U port");
+#endif
+
             return nullptr;
         }
 

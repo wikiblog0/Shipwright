@@ -59,11 +59,13 @@ void Main_LogSystemHeap(void) {
 void main(int argc, char** argv)
 {
 #ifdef __WIIU__
+#ifdef ENABLE_LOGGING
     WHBLogUdpInit();
     WHBLogPrint("Hello World!");
 
     devoptab_list[STD_OUT] = &dotab_stdout;
     devoptab_list[STD_ERR] = &dotab_stdout;
+#endif
 
     // make sure the required folders exist
     mkdir("/vol/external01/wiiu/", 0755);

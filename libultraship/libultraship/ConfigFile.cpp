@@ -4,6 +4,10 @@
 #include "Window.h"
 #include "GameSettings.h"
 
+#ifdef __WIIU__
+#include <coreinit/debug.h>
+#endif
+
 namespace Ship {
 	ConfigFile::ConfigFile(std::shared_ptr<GlobalCtx2> Context, const std::string& Path) : Context(Context), Path(Path), File(Path.c_str()) {
 		if (Path.empty()) {
@@ -14,6 +18,9 @@ namespace Ship {
 		if (!File.read(Val)) {
 			if (!CreateDefaultConfig()) {
 				SPDLOG_ERROR("Failed to create default configs");
+#ifdef __WIIU__
+				OSFatal("Failed to create default configs!\nMake sure your SD Card is not write protected");
+#endif
 				exit(EXIT_FAILURE);
 			}
 		}

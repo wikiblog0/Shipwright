@@ -9,6 +9,10 @@
 #include "spdlog/sinks/sohconsole_sink.h"
 #include "ModManager.h"
 
+#ifdef __WIIU__
+#include <coreinit/debug.h>
+#endif
+
 namespace Ship {
     std::weak_ptr<GlobalCtx2> GlobalCtx2::Context;
     ModManager* INSTANCE;
@@ -60,6 +64,9 @@ namespace Ship {
             MessageBox(NULL, L"Main OTR file not found!", L"Uh oh", MB_OK);
 #else
             SPDLOG_ERROR("Main OTR file not found!");
+#endif
+#ifdef __WIIU__
+            OSFatal("Main OTR file not found!");
 #endif
             exit(1);
         }

@@ -31,6 +31,8 @@
 #include "../StrHash64.h"
 #include "../../SohImGuiImpl.h"
 #include "../../Environment.h"
+#include "../../GameVersions.h"
+#include "../../ResourceMgr.h"
 
 // OTRTODO: fix header files for these
 extern "C" {
@@ -45,6 +47,8 @@ extern "C" {
 }
 
 using namespace std;
+
+#define SEG_ADDR(seg, addr) (addr | (seg << 24) | 1)
 
 #define SUPPORT_CHECK(x) assert(x)
 
@@ -2168,8 +2172,16 @@ static void gfx_run_dl(Gfx* cmd) {
                 uintptr_t mtxAddr = cmd->words.w1;
 
                 // OTRTODO: Temp way of dealing with gMtxClear. Need something more elegant in the future...
-                if (mtxAddr == 0x0012DB21 || mtxAddr == 0x0012DB41)
-                    mtxAddr = clearMtx;
+                uint32_t gameVersion = Ship::GlobalCtx2::GetInstance()->GetResourceManager()->GetGameVersion();
+                if (gameVersion == OOT_PAL_GC) {
+                    if (mtxAddr == SEG_ADDR(0, 0x0FBC20)) {
+                        mtxAddr = clearMtx;
+                    }
+                } else {
+                    if (mtxAddr == SEG_ADDR(0, 0x12DB20) || mtxAddr == SEG_ADDR(0, 0x12DB40)) {
+                        mtxAddr = clearMtx;
+                    }
+                }
 
 #ifdef F3DEX_GBI_2
                 gfx_sp_matrix(C0(0, 8) ^ G_MTX_PUSH, (const int32_t *) seg_addr(mtxAddr));

@@ -67,7 +67,11 @@ extern "C" void InitOTR() {
     if (!t->bHasLoadError)
     {
         //uint32_t gameVersion = BitConverter::ToUInt32BE((uint8_t*)t->buffer.get(), 0);
+#ifdef BIGENDIAN
+        uint32_t gameVersion = BOMSWAP32(*((uint32_t*)t->buffer.get()));
+#else
         uint32_t gameVersion = *((uint32_t*)t->buffer.get());
+#endif
         OTRGlobals::Instance->context->GetResourceManager()->SetGameVersion(gameVersion);
     }
 

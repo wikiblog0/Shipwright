@@ -1,5 +1,17 @@
 # Building Ship of Harkinian
 
+## Wii U
+
+```bash
+# Build the Wii U docker container:
+docker build -t sohwiiubuilder -f Dockerfile.wiiu .
+# Build SoH
+docker run -it --rm -v ${PWD}:/project sohwiiubuilder make
+
+# Build SoH (with logging)
+docker run -it --rm -v ${PWD}:/project sohwiiubuilder make DEBUG_BUILD=1
+```
+
 ## Windows
 
  1. Install [Python](https://www.python.org/ftp/python/3.10.2/python-3.10.2-amd64.exe)

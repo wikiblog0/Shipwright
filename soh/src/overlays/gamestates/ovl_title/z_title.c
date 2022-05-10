@@ -33,6 +33,8 @@ void Title_PrintBuildInfo(Gfx** gfxp) {
 
 #ifdef _MSC_VER
     GfxPrint_Printf(&printer, "MSVC SHIP");
+#elif defined(__WIIU__)
+    GfxPrint_Printf(&printer, "WIIU SHIP");
 #else
     GfxPrint_Printf(&printer, "GCC SHIP");
 #endif

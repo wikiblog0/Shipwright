@@ -1,4 +1,25 @@
-# Welcome to the Ship of Harkinian!
+# Ship of Harkinian - Wii U Port
+This is a port of Ship of Harkinian to the Wii U. For more information about SoH check out the original README below.
+
+## Quick Start
+
+1) Download the latest release from the [releases page](https://github.com/GaryOderNichts/Shipwright/releases) and extract it to the root of your SD Card.
+2) Requires a supported copy of the game (See [supported games](#supported-games) below).
+3) Download the OTRGui BE version from [here](https://github.com/GaryOderNichts/Shipwright/releases/tag/otrgui).
+4) Use OTRGui to create an `oot.otr` archive file.
+5) Copy the `oot.otr` file to the `wiiu/apps/soh/` folder on your SD Card.
+
+Nightly builds can be downloaded as artifacts from the [actions tab](https://github.com/GaryOderNichts/Shipwright/actions) (requires a GitHub account).
+
+## Configuration options
+
+Check out the [GBATemp post]() for configuring things like controller mappings, language, and other customizations.
+
+## Building the Wii U port
+
+Refer to the [building instructions](BUILDING.md) to compile SoH.
+
+# Original README: Welcome to the Ship of Harkinian!
 
 A PC port of OoT allowing you to enjoy the game with modern controls, widescreen, high-resolution, gyroscopy and other great features! Setup is simple, let's get started!
 

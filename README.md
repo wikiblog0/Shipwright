@@ -13,7 +13,7 @@ Nightly builds can be downloaded as artifacts from the [actions tab](https://git
 
 ## Configuration options
 
-Check out the [GBATemp post]() for configuring things like controller mappings, language, and other customizations.
+Check out the [GBATemp post](https://gbatemp.net/threads/ship-of-harkinian-ocarina-of-time-wii-u-port.612074/) for configuring things like controller mappings, language, and other customizations.
 
 ## Building the Wii U port
 

@@ -271,7 +271,7 @@ void Console::Dispatch(const std::string& line) {
 	this->History.push_back(line);
 	this->Log[this->selected_channel].push_back({ "> " + line } );
 	const std::vector<std::string> cmd_args = StringHelper::Split(line, " ");
-	if (this->Commands.contains(cmd_args[0])) {
+	if (cmd_args.size() > 0 && this->Commands.contains(cmd_args[0])) {
 		const CommandEntry entry = this->Commands[cmd_args[0]];
 		if(!entry.handler(cmd_args) && !entry.arguments.empty())
 			this->Log[this->selected_channel].push_back({ "[SOH] Usage: " + cmd_args[0] + " " + BuildUsage(entry), ERROR_LVL});

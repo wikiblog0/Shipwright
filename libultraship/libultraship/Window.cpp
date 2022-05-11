@@ -183,7 +183,7 @@ extern "C" {
     }
 
     char* ResourceMgr_LoadTexByCRC(uint64_t crc)  {
-        std::string hashStr = Ship::GlobalCtx2::GetInstance()->GetResourceManager()->HashToString(crc);
+        const std::string hashStr = Ship::GlobalCtx2::GetInstance()->GetResourceManager()->HashToString(crc);
 
         if (!hashStr.empty())  {
             const auto res = static_cast<Ship::Texture*>(Ship::GlobalCtx2::GetInstance()->GetResourceManager()->LoadResource(hashStr).get());

@@ -231,7 +231,7 @@ namespace Ship {
 			return nullptr;
 	}
 
-	std::shared_ptr<Resource> ResourceMgr::LoadResource(std::string& FilePath) {
+	std::shared_ptr<Resource> ResourceMgr::LoadResource(std::string FilePath) {
 #if 1 // This implemenation will check if the file is already in the ResourceCache before allocating a ResourcePromise
 		// todo: what?
 #ifdef _MSC_VER
@@ -279,13 +279,6 @@ namespace Ship {
 		}
 
 		return Promise->resource;
-	}
-
-	std::shared_ptr<Resource> ResourceMgr::LoadResource(const char* FilePath) {
-		// use a static string buffer to save a lot of small allocations for lookups
-		static std::string pathBuf(4096, ' ');
-		pathBuf = FilePath;
-		return LoadResource(pathBuf);
 	}
 
 	std::shared_ptr<ResourcePromise> ResourceMgr::LoadResourceAsync(std::string FilePath) {

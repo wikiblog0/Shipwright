@@ -34,8 +34,7 @@ namespace Ship
 		std::shared_ptr<File> LoadFileAsync(std::string FilePath);
 		std::shared_ptr<File> LoadFile(std::string FilePath);
 		std::shared_ptr<Ship::Resource> GetCachedFile(std::string FilePath);
-		std::shared_ptr<Resource> LoadResource(std::string& FilePath);
-		std::shared_ptr<Resource> LoadResource(const char* FilePath);
+		std::shared_ptr<Resource> LoadResource(std::string FilePath);
 		std::shared_ptr<ResourcePromise> LoadResourceAsync(std::string FilePath);
 		std::shared_ptr<std::vector<std::shared_ptr<Resource>>> CacheDirectory(std::string SearchMask);
 		std::shared_ptr<std::vector<std::shared_ptr<ResourcePromise>>> CacheDirectoryAsync(std::string SearchMask);

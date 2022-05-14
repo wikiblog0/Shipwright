@@ -642,6 +642,14 @@ static std::map<std::pair<float, float>, uint16_t> gfx_gx2_get_pixel_depth(int f
     return res;
 }
 
+void gfx_gx2_set_texture_filter(FilteringMode mode) {
+
+}
+
+FilteringMode gfx_gx2_get_texture_filter(void) {
+    return NONE;
+}
+
 struct GfxRenderingAPI gfx_gx2_api = {
     gfx_gx2_get_clip_parameters,
     gfx_gx2_unload_shader,
@@ -672,7 +680,9 @@ struct GfxRenderingAPI gfx_gx2_api = {
     gfx_gx2_get_pixel_depth,
     gfx_gx2_get_framebuffer_texture_id,
     gfx_gx2_select_texture_fb,
-    gfx_gx2_delete_texture
+    gfx_gx2_delete_texture,
+    gfx_gx2_set_texture_filter,
+    gfx_gx2_get_texture_filter
 };
 
 #endif

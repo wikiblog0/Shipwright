@@ -52,11 +52,7 @@ static void ExporterParseFileMode(const std::string& buildMode, ZFileMode& fileM
 		for (auto item : lst)
 		{
 			auto fileData = File::ReadAllBytes(item);
-#ifdef _MSC_VER
-			otrArchive->AddFile(StringHelper::Split(item, "Extract\\")[1], (uintptr_t)fileData.data(), fileData.size());
-#else
 			otrArchive->AddFile(StringHelper::Split(item, "Extract/")[1], (uintptr_t)fileData.data(), fileData.size());
-#endif
 		}
 	}
 }
@@ -80,11 +76,7 @@ static void ExporterProgramEnd()
 		for (auto item : lst)
 		{
 			auto fileData = File::ReadAllBytes(item);
-#ifdef _MSC_VER
-			otrArchive->AddFile(StringHelper::Split(item, "Extract\\")[1], (uintptr_t)fileData.data(), fileData.size());
-#else
 			otrArchive->AddFile(StringHelper::Split(item, "Extract/")[1], (uintptr_t)fileData.data(), fileData.size());
-#endif
 		}
 
 		otrArchive->AddFile("Audiobank", (uintptr_t)Globals::Instance->GetBaseromFile("Audiobank").data(), Globals::Instance->GetBaseromFile("Audiobank").size());

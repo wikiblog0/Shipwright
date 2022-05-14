@@ -181,7 +181,6 @@ SOURCEFILES_C := \
 		src/code/z_msgevent.c \
 		src/code/z_olib.c \
 		src/code/z_onepointdemo.c \
-		src/code/z_onepointdemo_data.c \
 		src/code/z_parameter.c \
 		src/code/z_path.c \
 		src/code/z_play.c \
@@ -732,11 +731,13 @@ SOURCEFILES_C := \
 
 SOURCEFILES_CPP := \
 		soh/Enhancements/debugconsole.cpp \
+		soh/Enhancements/savestates.cpp \
 		soh/GbiWrap.cpp \
 		soh/OTRGlobals.cpp \
 		soh/z_message_OTR.cpp \
 		soh/z_play_otr.cpp \
-		soh/z_scene_otr.cpp
+		soh/z_scene_otr.cpp \
+		soh/frame_interpolation.cpp
 
 #-------------------------------------------------------------------------------
 # options for code generation

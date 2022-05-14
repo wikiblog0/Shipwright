@@ -19,6 +19,7 @@
 #define WARNING(msg, ...)
 #define ERROR(msg, ...)
 #endif
+
 #define CMD_SUCCESS true
 #define CMD_FAILED false
 #define MAX_BUFFER_SIZE 255
@@ -85,9 +86,9 @@ public:
 	void Init();
 	void Update();
 	void Draw();
+	void Dispatch(const std::string& line);
 #ifndef NO_IMGUI
 	void Append(const std::string& channel, Priority priority, const char* fmt, ...) IM_FMTARGS(4);
 	static int CallbackStub(ImGuiInputTextCallbackData* data);
 #endif
-	void Dispatch(const std::string& line);
 };

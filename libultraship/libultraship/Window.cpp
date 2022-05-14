@@ -11,11 +11,10 @@
 #include "Blob.h"
 #include "Matrix.h"
 #include "AudioPlayer.h"
-#ifdef _WIN32
 #include "WasapiAudioPlayer.h"
-#else
 #include "SDLAudioPlayer.h"
-#endif
+#include "PulseAudioPlayer.h"
+#include "SDLAudioPlayer.h"
 #include "Lib/Fast3D/gfx_pc.h"
 #include "Lib/Fast3D/gfx_sdl.h"
 #include "Lib/Fast3D/gfx_opengl.h"
@@ -26,6 +25,7 @@
 #include <chrono>
 #include "SohHooks.h"
 #include "SohConsole.h"
+
 #include <iostream>
 
 #ifdef __WIIU__
@@ -306,8 +306,12 @@ namespace Ship {
         gfx_start_frame();
     }
 
-    void Window::RunCommands(Gfx* Commands) {
-        gfx_run(Commands);
+    void Window::RunCommands(Gfx* Commands, const std::vector<std::unordered_map<Mtx*, MtxF>>& mtx_replacements) {
+        for (const auto& m : mtx_replacements) {
+            gfx_run(Commands, m);
+            gfx_end_frame();
+        }
+        gfx_run(Commands, {});
         gfx_end_frame();
     }
 
@@ -353,6 +357,8 @@ namespace Ship {
         if (dwScancode == Ship::stoi(Conf["KEYBOARD SHORTCUTS"]["KEY_FULLSCREEN"])) {
             GlobalCtx2::GetInstance()->GetWindow()->ToggleFullscreen();
         }
+
+        
 
         // OTRTODO: Rig with Kirito's console?
         //if (dwScancode == Ship::stoi(Conf["KEYBOARD SHORTCUTS"]["KEY_CONSOLE"])) {
@@ -436,6 +442,8 @@ namespace Ship {
     void Window::SetAudioPlayer() {
 #ifdef _WIN32
         APlayer = std::make_shared<WasapiAudioPlayer>();
+#elif defined(__linux)
+        APlayer = std::make_shared<PulseAudioPlayer>();
 #else
         APlayer = std::make_shared<SDLAudioPlayer>();
 #endif

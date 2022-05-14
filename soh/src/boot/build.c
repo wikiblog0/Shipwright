@@ -1,4 +1,4 @@
-const char gBuildVersion[] = "DECKARD ALFA (1.0.0)";
+const char gBuildVersion[] = "ROY ALFA (2.0.0)";
 #ifdef __WIIU__
 const char gBuildTeam[] = "github.com/GaryOderNichts";
 #else

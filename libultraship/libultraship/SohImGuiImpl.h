@@ -1,5 +1,6 @@
 #pragma once
 
+#include "GameOverlay.h"
 #ifndef NO_IMGUI
 #include "Lib/ImGui/imgui.h"
 #endif
@@ -60,6 +61,8 @@ namespace SohImGui {
     } CustomWindow;
 
     extern Console* console;
+    extern Ship::GameOverlay* overlay;
+    extern bool needs_save;
     void Init(WindowImpl window_impl);
     void Update(EventImpl event);
 

@@ -59,7 +59,9 @@ namespace Game {
         }});
         ModInternal::registerHookListener({ GFX_INIT, [](HookEvent ev) {
             gfx_get_current_rendering_api()->set_texture_filter((FilteringMode) CVar_GetS32("gTextureFilter", THREE_POINT));
+#ifndef NO_IMGUI
             SohImGui::console->opened = CVar_GetS32("gConsoleEnabled", 0);
+#endif
             UpdateAudio();
         }});
     }

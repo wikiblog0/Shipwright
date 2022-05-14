@@ -42,7 +42,9 @@ OTRGlobals* OTRGlobals::Instance;
 OTRGlobals::OTRGlobals() {
 
     context = Ship::GlobalCtx2::CreateInstance("Ship of Harkinian");
+#ifndef __WIIU__
     gSaveStateMgr = std::make_shared<SaveStateMgr>();
+#endif
     context->GetWindow()->Init();
 }
 
@@ -119,6 +121,7 @@ extern "C" void Graph_ProcessFrame(void (*run_one_game_iter)(void)) {
 }
 
 extern "C" void Graph_StartFrame() {
+#ifndef __WIIU__
     // Why -1?
     int32_t dwScancode = OTRGlobals::Instance->context->GetWindow()->lastScancode;
     OTRGlobals::Instance->context->GetWindow()->lastScancode = -1;
@@ -176,6 +179,7 @@ extern "C" void Graph_StartFrame() {
             break;
         }
     }
+#endif
     OTRGlobals::Instance->context->GetWindow()->StartFrame();
 }
 

@@ -46,7 +46,7 @@ protected:
         }
         formatted.push_back('\0');
         const char *msg_output = formatted.data();
-#ifndef NO_IMGUI // don't bother logging to the console if it's not displayed
+#ifndef NO_IMGUI
         if (CVar_GetS32("gSinkEnabled", 0) && SohImGui::console->opened)
             SohImGui::console->Append("SoH Logging", priority, "%s", msg_output);
 #endif

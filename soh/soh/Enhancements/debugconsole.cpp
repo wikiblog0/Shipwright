@@ -30,6 +30,7 @@ extern GlobalContext* gGlobalCtx;
 
 #include "Cvar.h"
 
+#ifndef NO_IMGUI
 #define CMD_REGISTER SohImGui::BindCmd
 
 static bool ActorSpawnHandler(const std::vector<std::string>& args) {
@@ -440,8 +441,10 @@ static bool GetCVarHandler(const std::vector<std::string>& args) {
 
     return CMD_SUCCESS;
 }
+#endif
 
 void DebugConsole_Init(void) {
+#ifndef NO_IMGUI
     CMD_REGISTER("kill", { KillPlayerHandler, "Commit suicide." });
     CMD_REGISTER("map",  { LoadSceneHandler, "Load up kak?" });
     CMD_REGISTER("rupee", { RuppeHandler, "Set your rupee counter.", {
@@ -490,6 +493,7 @@ void DebugConsole_Init(void) {
     CMD_REGISTER("set_slot", { StateSlotSelectHandler, "Selects a SaveState slot", {
         { "Slot number", ArgumentType::NUMBER, }
         } });
+#endif
     DebugConsole_LoadCVars();
 }
 

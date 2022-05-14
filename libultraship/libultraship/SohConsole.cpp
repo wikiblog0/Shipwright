@@ -7,13 +7,11 @@
 #include "GlobalCtx2.h"
 #include "SohImGuiImpl.h"
 #include "Utils/StringHelper.h"
-#ifndef NO_IMGUI
 #include "Lib/ImGui/imgui.h"
 #include "Lib/ImGui/imgui_internal.h"
 
 std::map<ImGuiKey, std::string> Bindings;
 std::map<ImGuiKey, std::string> BindingToggle;
-#endif
 
 static bool HelpCommand(const std::vector<std::string>&) {
 	INFO("SoH Commands:");
@@ -35,7 +33,6 @@ std::string toLowerCase(std::string in) {
 }
 
 static bool BindCommand(const std::vector<std::string>& args) {
-#ifndef NO_IMGUI
 	if(args.size() > 2) {
 		const ImGuiIO* io = &ImGui::GetIO();;
 		for (size_t k = 0; k < std::size(io->KeysData); k++) {
@@ -52,12 +49,10 @@ static bool BindCommand(const std::vector<std::string>& args) {
 			}
 		}
 	}
-#endif
 	return CMD_SUCCESS;
 }
 
 static bool BindToggleCommand(const std::vector<std::string>& args) {
-#ifndef NO_IMGUI
 	if (args.size() > 2) {
 		const ImGuiIO* io = &ImGui::GetIO();;
 		for (size_t k = 0; k < std::size(io->KeysData); k++) {
@@ -70,7 +65,6 @@ static bool BindToggleCommand(const std::vector<std::string>& args) {
 			}
 		}
 	}
-#endif
 	return CMD_SUCCESS;
 }
 
@@ -93,7 +87,6 @@ void Console::Init() {
 }
 
 void Console::Update() {
-#ifndef NO_IMGUI
 	for(auto [key, cmd] : Bindings) {
 		if (ImGui::IsKeyPressed(key)) Dispatch(cmd);
 	}
@@ -103,13 +96,11 @@ void Console::Update() {
 			Dispatch("set " + var + " " + std::to_string(cvar == nullptr ? 0 : !static_cast<bool>(cvar->value.valueS32)));
 		}
 	}
-#endif
 }
 
 extern "C" uint8_t __enableGameInput;
 
 void Console::Draw() {
-#ifndef NO_IMGUI
 	bool input_focus = false;
 	__enableGameInput = true;
 	if (!this->opened) return;
@@ -263,7 +254,6 @@ void Console::Draw() {
 		if (input_focus) ImGui::SetKeyboardFocusHere(-1);
 		ImGui::PopItemWidth();
 	ImGui::End();
-#endif
 }
 
 void Console::Dispatch(const std::string& line) {
@@ -280,7 +270,6 @@ void Console::Dispatch(const std::string& line) {
 	this->Log[this->selected_channel].push_back({ "[SOH] Command not found", ERROR_LVL });
 }
 
-#ifndef NO_IMGUI
 int Console::CallbackStub(ImGuiInputTextCallbackData* data) {
 	const auto instance = static_cast<Console*>(data->UserData);
 	const bool empty_history = instance->History.empty();
@@ -339,4 +328,3 @@ void Console::Append(const std::string& channel, Priority priority, const char* 
 	va_end(args);
 	this->Log[channel].push_back({ std::string(buf), priority });
 }
-#endif

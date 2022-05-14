@@ -1,9 +1,7 @@
 #pragma once
 
 #include "GameOverlay.h"
-#ifndef NO_IMGUI
 #include "Lib/ImGui/imgui.h"
-#endif
 #include "SohConsole.h"
 
 struct GameAsset {
@@ -66,12 +64,10 @@ namespace SohImGui {
     void Init(WindowImpl window_impl);
     void Update(EventImpl event);
 
-#ifndef NO_IMGUI
     void EnhancementRadioButton(std::string text, std::string cvarName, int value);
     void EnhancementCheckbox(std::string text, std::string cvarName);
     void EnhancementSliderInt(std::string text, std::string id, std::string cvarName, int min, int max, std::string format);
     void EnhancementSliderFloat(std::string text, std::string id, std::string cvarName, float min, float max, std::string format, float defaultValue);
-#endif
 
     void DrawMainMenuAndCalculateGameSize(void);
     
@@ -81,10 +77,8 @@ namespace SohImGui {
     void ShowCursor(bool hide, Dialogues w);
 
     void BindCmd(const std::string& cmd, CommandEntry entry);
-#ifndef NO_IMGUI
     void AddWindow(const std::string& category, const std::string& name, WindowDrawFunc drawFunc);
     void LoadResource(const std::string& name, const std::string& path, const ImVec4& tint = ImVec4(1, 1, 1, 1));
     ImTextureID GetTextureByID(int id);
     ImTextureID GetTextureByName(const std::string& name);
-#endif
 }

@@ -59,9 +59,7 @@ SOURCEFILES_CPP :=	\
 		libultraship/Array.cpp \
 		libultraship/ConfigFile.cpp \
 		libultraship/Controller.cpp \
-		libultraship/SohConsole.cpp \
 		libultraship/SohHooks.cpp \
-		libultraship/SohImGuiImpl.cpp \
 		libultraship/Factories/CollisionHeaderFactory.cpp \
 		libultraship/Factories/DisplayListFactory.cpp \
 		libultraship/Factories/MaterialFactory.cpp \

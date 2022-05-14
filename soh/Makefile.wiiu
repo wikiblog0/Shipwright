@@ -731,7 +731,6 @@ SOURCEFILES_C := \
 
 SOURCEFILES_CPP := \
 		soh/Enhancements/debugconsole.cpp \
-		soh/Enhancements/savestates.cpp \
 		soh/GbiWrap.cpp \
 		soh/OTRGlobals.cpp \
 		soh/z_message_OTR.cpp \

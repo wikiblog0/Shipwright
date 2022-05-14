@@ -491,7 +491,9 @@ static void RunFrame()
             //uint64_t diff = (ticksB - ticksA) / (freq / 1000);
             //printf("Frame simulated in %ims\n", diff);
             runFrameContext.state = 1;
+#ifndef __WIIU__
             ProcessSaveStateRequests();
+#endif
             return;
             nextFrame:;
         }

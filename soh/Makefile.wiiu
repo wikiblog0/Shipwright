@@ -763,8 +763,8 @@ LDFLAGS	=	$(ARCH) $(RPXSPECS) -Wl,-Map,$(notdir $*.map)
 LIBS	:= -lultraship -lZAPDUtils -lSDL2 -lstorm -lz -lbz2 -lwut
 
 ifeq ($(DEBUG_BUILD), 1)
-	CFLAGS += -DENABLE_LOGGING
-	CXXFLAGS += -DENABLE_LOGGING
+	CFLAGS += -DDEBUG_BUILD
+	CXXFLAGS += -DDEBUG_BUILD
 endif
 
 #-------------------------------------------------------------------------------

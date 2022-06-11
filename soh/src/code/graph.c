@@ -266,6 +266,32 @@ void Graph_TaskSet00(GraphicsContext* gfxCtx) {
     Sched_SendEntryMsg(&gSchedContext);
 }
 
+#if defined(__WIIU__) && defined(DEBUG_BUILD)
+uint32_t get_wiiu_time_ms(void);
+
+static void DrawFramestats(Gfx** gfxp) {
+    Gfx* g;
+    GfxPrint printer;
+
+    g = *gfxp;
+    g = func_8009411C(g);
+    GfxPrint_Init(&printer);
+    GfxPrint_Open(&printer, g);
+    GfxPrint_SetColor(&printer, 255, 155, 255, 255);
+
+    static uint32_t time;
+    uint32_t ms = get_wiiu_time_ms() - time;
+    time = get_wiiu_time_ms();
+
+    GfxPrint_SetPos(&printer, 0, 0);
+    GfxPrint_Printf(&printer, "FPS %.2f Frametime: %02d ms", (1.0f / ms) * 1000, ms);
+
+    g = GfxPrint_Close(&printer);
+    GfxPrint_Destroy(&printer);
+    *gfxp = g;
+}
+#endif
+
 void Graph_Update(GraphicsContext* gfxCtx, GameState* gameState) {
     u32 problem;
 
@@ -283,6 +309,9 @@ void Graph_Update(GraphicsContext* gfxCtx, GameState* gameState) {
 
     GameState_ReqPadData(gameState);
     GameState_Update(gameState);
+#if defined(__WIIU__) && defined(DEBUG_BUILD)
+    DrawFramestats(&gfxCtx->polyOpa.p);
+#endif
 #ifndef __WIIU__
     Debug_Draw();
 #endif

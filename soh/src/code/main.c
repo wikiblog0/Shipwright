@@ -59,7 +59,7 @@ void Main_LogSystemHeap(void) {
 void main(int argc, char** argv)
 {
 #ifdef __WIIU__
-#ifdef ENABLE_LOGGING
+#ifdef DEBUG_BUILD
     WHBLogUdpInit();
     WHBLogPrint("Hello World!");
 

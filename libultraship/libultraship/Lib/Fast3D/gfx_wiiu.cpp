@@ -46,6 +46,9 @@ static uint32_t drc_scan_buffer_size = 0;
 
 static int frame_divisor = 1;
 
+// for DrawFramestats
+uint32_t frametime = 0;
+
 static void *gfx_wiiu_gx2r_alloc(GX2RResourceFlags flags, uint32_t size, uint32_t alignment) {
     // Color, depth, scan buffers all belong in MEM1
     if ((flags & (GX2R_RESOURCE_BIND_COLOR_BUFFER
@@ -267,6 +270,11 @@ static void gfx_wiiu_swap_buffers_begin(void) {
 }
 
 static void gfx_wiiu_swap_buffers_end(void) {
+#ifdef DEBUG_BUILD
+    static OSTick tick = 0;
+    frametime = OSTicksToMicroseconds(OSGetSystemTick() - tick);
+    tick = OSGetSystemTick();
+#endif
 }
 
 static double gfx_wiiu_get_time(void) {

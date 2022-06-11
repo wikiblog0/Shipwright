@@ -123,6 +123,11 @@ LDFLAGS	=	$(ARCH) $(RPXSPECS) -Wl,-Map,$(notdir $*.map)
 
 LIBS	:= 
 
+ifeq ($(DEBUG_BUILD), 1)
+	CFLAGS += -DDEBUG_BUILD
+	CXXFLAGS += -DDEBUG_BUILD
+endif
+
 #-------------------------------------------------------------------------------
 # list of directories containing libraries, this must be the top level
 # containing include and lib

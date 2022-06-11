@@ -267,9 +267,9 @@ void Graph_TaskSet00(GraphicsContext* gfxCtx) {
 }
 
 #if defined(__WIIU__) && defined(DEBUG_BUILD)
-uint32_t get_wiiu_time_ms(void);
+extern uint32_t frametime;
 
-static void DrawFramestats(Gfx** gfxp) {
+void DrawFramestats(Gfx** gfxp) {
     Gfx* g;
     GfxPrint printer;
 
@@ -279,12 +279,8 @@ static void DrawFramestats(Gfx** gfxp) {
     GfxPrint_Open(&printer, g);
     GfxPrint_SetColor(&printer, 255, 155, 255, 255);
 
-    static uint32_t time;
-    uint32_t ms = get_wiiu_time_ms() - time;
-    time = get_wiiu_time_ms();
-
     GfxPrint_SetPos(&printer, 0, 0);
-    GfxPrint_Printf(&printer, "FPS %.2f Frametime: %02d ms", (1.0f / ms) * 1000, ms);
+    GfxPrint_Printf(&printer, "FPS %.2f Frametime: %.2f ms", (1.0f / frametime) * 1000 * 1000, frametime / 1000.0f);
 
     g = GfxPrint_Close(&printer);
     GfxPrint_Destroy(&printer);
@@ -310,7 +306,7 @@ void Graph_Update(GraphicsContext* gfxCtx, GameState* gameState) {
     GameState_ReqPadData(gameState);
     GameState_Update(gameState);
 #if defined(__WIIU__) && defined(DEBUG_BUILD)
-    DrawFramestats(&gfxCtx->polyOpa.p);
+    DrawFramestats(&gfxCtx->overlay.p);
 #endif
 #ifndef __WIIU__
     Debug_Draw();

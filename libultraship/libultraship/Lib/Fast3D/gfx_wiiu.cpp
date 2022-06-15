@@ -281,12 +281,24 @@ static double gfx_wiiu_get_time(void) {
     return 0.0;
 }
 
-static void gfx_wiiu_set_framedivisor(int divisor)
-{
+static void gfx_wiiu_set_target_fps(int fps) {
+    // use the nearest divisor
+    int divisor = 60 / fps;
+    if (divisor < 1) {
+        divisor = 1;
+    }
+
     if (frame_divisor != divisor) {
         GX2SetSwapInterval(divisor);
         frame_divisor = divisor;
     }
+}
+
+static void gfx_wiiu_set_maximum_frame_latency(int latency) {
+}
+
+static float gfx_wiiu_get_detected_hz(void) {
+    return 0;
 }
 
 struct GfxWindowManagerAPI gfx_wiiu = {
@@ -302,7 +314,9 @@ struct GfxWindowManagerAPI gfx_wiiu = {
     gfx_wiiu_swap_buffers_begin,
     gfx_wiiu_swap_buffers_end,
     gfx_wiiu_get_time,
-    gfx_wiiu_set_framedivisor
+    gfx_wiiu_set_target_fps,
+    gfx_wiiu_set_maximum_frame_latency,
+    gfx_wiiu_get_detected_hz,
 };
 
 #endif

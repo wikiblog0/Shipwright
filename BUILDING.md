@@ -33,7 +33,7 @@ docker run -it --rm -v ${PWD}:/project sohwiiubuilder make DEBUG_BUILD=1
 
 ```bash
 # Clone the repo
-git clone git@github.com:HarbourMasters/ShipWright.git
+git clone https://github.com/HarbourMasters/Shipwright.git
 cd ShipWright
 # Copy the baserom to the OTRExporter folder
 cp <path to your ROM> OTRExporter

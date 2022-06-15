@@ -270,11 +270,9 @@ static void gfx_wiiu_swap_buffers_begin(void) {
 }
 
 static void gfx_wiiu_swap_buffers_end(void) {
-#ifdef DEBUG_BUILD
     static OSTick tick = 0;
     frametime = OSTicksToMicroseconds(OSGetSystemTick() - tick);
     tick = OSGetSystemTick();
-#endif
 }
 
 static double gfx_wiiu_get_time(void) {

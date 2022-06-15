@@ -266,7 +266,7 @@ void Graph_TaskSet00(GraphicsContext* gfxCtx) {
     Sched_SendEntryMsg(&gSchedContext);
 }
 
-#if defined(__WIIU__) && defined(DEBUG_BUILD)
+#if defined(__WIIU__)
 extern uint32_t frametime;
 
 void DrawFramestats(Gfx** gfxp) {
@@ -305,8 +305,10 @@ void Graph_Update(GraphicsContext* gfxCtx, GameState* gameState) {
 
     GameState_ReqPadData(gameState);
     GameState_Update(gameState);
-#if defined(__WIIU__) && defined(DEBUG_BUILD)
-    DrawFramestats(&gfxCtx->overlay.p);
+#if defined(__WIIU__)
+    if (CVar_GetS32("gFramestatsOverlay", 0)) {
+        DrawFramestats(&gfxCtx->overlay.p);
+    }
 #endif
 #ifndef __WIIU__
     Debug_Draw();

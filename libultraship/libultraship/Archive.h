@@ -13,7 +13,7 @@
 #ifdef __WIIU__
 #include <StormLib.h>
 #else
-#include "Lib/StormLib/StormLib.h"
+#include "StormLib.h"
 #endif
 
 namespace Ship

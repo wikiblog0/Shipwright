@@ -3,6 +3,9 @@
 #include "ultra64.h"
 #include "global.h"
 
+extern bool gUseLegacySD;
+extern char* sequenceMap[256];
+
 #define PORTAMENTO_IS_SPECIAL(x) ((x).mode & 0x80)
 #define PORTAMENTO_MODE(x) ((x).mode & ~0x80)
 #define PORTAMENTO_MODE_1 1
@@ -938,8 +941,16 @@ u8 AudioSeq_GetInstrument(SequenceChannel* channel, u8 instId, Instrument** inst
         *instOut = NULL;
         return 0;
     }
-    adsr->envelope = inst->envelope;
-    adsr->releaseRate = inst->releaseRate;
+
+    if (inst->envelope != NULL) 
+    {
+        adsr->envelope = inst->envelope;
+        adsr->releaseRate = (inst->releaseRate);
+    }
+    else {
+        adsr->envelope = gDefaultEnvelope;
+    }
+
     *instOut = inst;
     instId += 2;
     return instId;
@@ -1052,13 +1063,19 @@ void AudioSeq_SequenceChannelProcessScript(SequenceChannel* channel) {
                         command = (u8)parameters[0];
 
                         if (seqPlayer->defaultFont != 0xFF) {
+                            if (gUseLegacySD) {
 #ifdef BIGENDIAN
-                            offset = BOMSWAP16(((u16*)gAudioContext.sequenceFontTable)[seqPlayer->seqId]);
+                                offset = BOMSWAP16(((u16*)gAudioContext.sequenceFontTable)[seqPlayer->seqId]);
 #else
-                            offset = ((u16*)gAudioContext.sequenceFontTable)[seqPlayer->seqId];
+                                offset = ((u16*)gAudioContext.sequenceFontTable)[seqPlayer->seqId];
 #endif
-                            lowBits = gAudioContext.sequenceFontTable[offset];
-                            command = gAudioContext.sequenceFontTable[offset + lowBits - result];
+                                lowBits = gAudioContext.sequenceFontTable[offset];
+                                command = gAudioContext.sequenceFontTable[offset + lowBits - result];
+                            }
+                            else {
+                                SequenceData sDat = ResourceMgr_LoadSeqByName(sequenceMap[seqPlayer->seqId]);
+                                command = sDat.fonts[sDat.numFonts - result - 1];
+                            }
                         }
 
                         if (AudioHeap_SearchCaches(FONT_TABLE, CACHE_EITHER, command)) {
@@ -1166,14 +1183,21 @@ void AudioSeq_SequenceChannelProcessScript(SequenceChannel* channel) {
                         result = (u8)parameters[0];
                         command = (u8)parameters[0];
 
-                        if (seqPlayer->defaultFont != 0xFF) {
+                        if (seqPlayer->defaultFont != 0xFF) 
+                        {
+                            if (gUseLegacySD) {
 #ifdef BIGENDIAN
-                            offset = BOMSWAP16(((u16*)gAudioContext.sequenceFontTable)[seqPlayer->seqId]);
+                                offset = BOMSWAP16(((u16*)gAudioContext.sequenceFontTable)[seqPlayer->seqId]);
 #else
-                            offset = ((u16*)gAudioContext.sequenceFontTable)[seqPlayer->seqId];
+                                offset = ((u16*)gAudioContext.sequenceFontTable)[seqPlayer->seqId];
 #endif
-                            lowBits = gAudioContext.sequenceFontTable[offset];
-                            command = gAudioContext.sequenceFontTable[offset + lowBits - result];
+                                lowBits = gAudioContext.sequenceFontTable[offset];
+                                command = gAudioContext.sequenceFontTable[offset + lowBits - result];
+                            }
+                            else {
+                                SequenceData sDat = ResourceMgr_LoadSeqByName(sequenceMap[seqPlayer->seqId]);
+                                command = sDat.fonts[sDat.numFonts - result - 1];
+                            }
                         }
 
                         if (AudioHeap_SearchCaches(FONT_TABLE, CACHE_EITHER, command)) {
@@ -1333,7 +1357,6 @@ void AudioSeq_SequenceChannelProcessScript(SequenceChannel* channel) {
 #ifdef BIGENDIAN
                         channel->unk_22 = *(u16*)(seqPlayer->seqData + (uintptr_t)(offset + scriptState->value * 2));
 #else
-                        // OTRTODO: Byteswap added for quick audio
                         channel->unk_22 = BOMSWAP16(*(u16*)(seqPlayer->seqData + (uintptr_t)(offset + scriptState->value * 2)));
 #endif
                         break;
@@ -1344,7 +1367,6 @@ void AudioSeq_SequenceChannelProcessScript(SequenceChannel* channel) {
 #ifdef BIGENDIAN
                         channel->unk_22 = ((u16*)(channel->dynTable))[scriptState->value];
 #else
-                        // OTRTODO: Byteswap added for quick audio
                         channel->unk_22 = BOMSWAP16(((u16*)(channel->dynTable))[scriptState->value]);
 #endif
                         break;

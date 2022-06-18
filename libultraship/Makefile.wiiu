@@ -39,6 +39,7 @@ SOURCEFILES_C :=    \
 		libultraship/Lib/Fast3D/gfx_heap.c
 
 SOURCEFILES_CPP :=	\
+		libultraship/Audio.cpp \
 		libultraship/Blob.cpp \
 		libultraship/Cvar.cpp \
 		libultraship/Environment.cpp \
@@ -46,6 +47,7 @@ SOURCEFILES_CPP :=	\
 		libultraship/luslog.cpp \
 		libultraship/ModManager.cpp \
 		libultraship/SDLAudioPlayer.cpp \
+		libultraship/Factories/AudioFactory.cpp \
 		libultraship/Factories/AnimationFactory.cpp \
 		libultraship/Factories/ArrayFactory.cpp \
 		libultraship/Factories/BlobFactory.cpp \

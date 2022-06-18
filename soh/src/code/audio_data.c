@@ -550,7 +550,6 @@ AdsrEnvelope gDefaultEnvelope[] = {
     { -1, 0 },
     { 0, 0 },
 #else
-    // OTRTODO: Byteswapped manually for quick audio support.
     { 0x0100, 0x007D },
     { 0xE803, 0x007D },
     { 0xFFFF, 0x0000 },

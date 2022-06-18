@@ -366,18 +366,7 @@ void OTRExporter_DisplayList::Save(ZResource* res, const fs::path& outPath, Bina
 #endif
 
 						Save(dList->otherDLists[i], outPath, &dlWriter);
-
-#ifdef _DEBUG
-						//if (otrArchive->HasFile(fName))
-							//otrArchive->RemoveFile(fName);
-#endif
-
-						if (Globals::Instance->fileMode != ZFileMode::ExtractDirectory)
-							File::WriteAllBytes("Extract/" + fName, dlStream->ToVector());
-						else
-							files[fName] = dlStream->ToVector();
-
-						//otrArchive->AddFile(fName, (uintptr_t)dlStream->ToVector().data(), dlWriter.GetBaseAddress());
+						AddFile(fName, dlStream->ToVector());
 					}
 				}
 				else
@@ -468,10 +457,7 @@ void OTRExporter_DisplayList::Save(ZResource* res, const fs::path& outPath, Bina
 
 							Save(dList->otherDLists[i], outPath, &dlWriter);
 
-							if (Globals::Instance->fileMode != ZFileMode::ExtractDirectory)
-								File::WriteAllBytes("Extract/" + fName, dlStream->ToVector());
-							else
-								files[fName] = dlStream->ToVector();
+							AddFile(fName, dlStream->ToVector());
 						}
 					}
 					else
@@ -839,10 +825,7 @@ void OTRExporter_DisplayList::Save(ZResource* res, const fs::path& outPath, Bina
 							}
 						}
 
-						if (Globals::Instance->fileMode != ZFileMode::ExtractDirectory)
-							File::WriteAllBytes("Extract/" + fName, vtxStream->ToVector());
-						else
-							files[fName] = vtxStream->ToVector();
+						AddFile(fName, vtxStream->ToVector());
 
 						auto end = std::chrono::steady_clock::now();
 						size_t diff = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();

@@ -10,7 +10,6 @@
 .vscode/
 .vs/
 .idea/
-CMakeLists.txt
 cmake-build-debug
 venv/
 
@@ -404,3 +403,9 @@ ZAPD/BuildInfo.h
 
 DebugObj/*
 ReleaseObj/*
+
+.tags
+tags
+oot.otr
+*.sav
+shipofharkinian.ini

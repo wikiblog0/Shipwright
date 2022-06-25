@@ -66,6 +66,8 @@ namespace Ship {
 		(*this)["ARCHIVE"]["Main Archive"] = "oot.otr";
 		(*this)["ARCHIVE"]["Patches Directory"] = "";
 
+		(*this)["SAVE"]["Save Filename"] = "oot_save.sav";
+
 #ifdef __WIIU__
 
 #else

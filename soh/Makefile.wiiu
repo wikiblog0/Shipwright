@@ -736,7 +736,8 @@ SOURCEFILES_CPP := \
 		soh/z_message_OTR.cpp \
 		soh/z_play_otr.cpp \
 		soh/z_scene_otr.cpp \
-		soh/frame_interpolation.cpp
+		soh/frame_interpolation.cpp \
+		soh/SaveManager.cpp
 
 #-------------------------------------------------------------------------------
 # options for code generation

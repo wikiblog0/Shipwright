@@ -8,7 +8,10 @@
 
 #define ROUNDUP(x, align) (((x) + ((align) -1)) & ~((align) -1))
 
-#define TEXEL_REG _R1
+#define FRAG_COORD_REG _R0
+#define TEXEL_REG      _R1
+#define FOG_REG        _R3
+#define GRAYSCALE_REG  _R4
 
 enum {
     SHADER_TEXINFO0 = SHADER_COMBINED + 1,
@@ -34,9 +37,29 @@ static uint8_t get_reg(struct CCFeatures *cc_features, uint8_t c) {
     uint8_t input_last = (cc_features->num_inputs + 5) - 1;
 
     if (c == SHADER_TEXEL0 || c == SHADER_TEXEL0A) {
+        // reuse unused regs
+        if (!cc_features->opt_noise) {
+            return FRAG_COORD_REG;
+        } else if (!cc_features->opt_fog) {
+            return FOG_REG;
+        } else if (!cc_features->opt_grayscale) {
+            return GRAYSCALE_REG;
+        }
+
         return _R(input_last + 1);
     }
     if (c == SHADER_TEXEL1 || c == SHADER_TEXEL1A) {
+        // if the shader doesn't use texture 0 we can reuse it for texture 1
+        if (!cc_features->used_textures[0]) {
+            return get_reg(cc_features, SHADER_TEXEL0);
+        }
+        // reuse unused regs which tex 0 doesn't use yet
+        else if (!cc_features->opt_fog && get_reg(cc_features, SHADER_TEXEL0) != FOG_REG) {
+            return FOG_REG;
+        } else if (!cc_features->opt_grayscale && get_reg(cc_features, SHADER_TEXEL0) != GRAYSCALE_REG) {
+            return GRAYSCALE_REG;
+        }
+
         return _R(input_last + 2);
     }
 
@@ -53,12 +76,17 @@ static uint8_t get_reg(struct CCFeatures *cc_features, uint8_t c) {
 
 static uint8_t get_num_regs(struct CCFeatures *cc_features) {
     uint8_t input_count = cc_features->num_inputs + 5;
-    uint32_t num_textures = cc_features->used_textures[0] + cc_features->used_textures[1];
 
-    // we'll need an additional reg for each texture
-    input_count += num_textures;
-
-    return input_count;
+    uint8_t last_tex_reg;
+    if (cc_features->used_textures[1]) {
+        last_tex_reg = get_reg(cc_features, SHADER_TEXEL1) + 1;
+    } else if (cc_features->used_textures[0]) {
+        last_tex_reg = get_reg(cc_features, SHADER_TEXEL0) + 1;
+    } else {
+        return input_count;
+    }
+    
+    return (last_tex_reg < input_count) ? input_count : last_tex_reg;
 }
 
 #define ADD_INSTR(...) \
@@ -251,8 +279,8 @@ static void append_formula(struct CCFeatures *cc_features, uint64_t **alu_ptr, u
 
 static const uint64_t noise_instructions[] = {
     /* R127 = floor(gl_FragCoord.xy * window_params.x) */
-    ALU_MUL(__, _x, _R0, _x, _C(0), _x),
-    ALU_MUL(__, _y, _R0, _y, _C(0), _x)
+    ALU_MUL(__, _x, FRAG_COORD_REG, _x, _C(0), _x),
+    ALU_MUL(__, _y, FRAG_COORD_REG, _y, _C(0), _x)
     ALU_LAST,
 
     ALU_FLOOR(_R127, _x, ALU_SRC_PV, _x),
@@ -404,14 +432,14 @@ static int generatePixelShader(GX2PixelShader *psh, struct CCFeatures *cc_featur
     if (cc_features->opt_fog) {
         ADD_INSTR(
             /* texel.rgb = mix(texel.rgb, vFog.rgb, vFog.a); */
-            ALU_ADD(__, _x, _R3, _x, _R1 _NEG, _x),
-            ALU_ADD(__, _y, _R3, _y, _R1 _NEG, _y),
-            ALU_ADD(__, _z, _R3, _z, _R1 _NEG, _z)
+            ALU_ADD(__, _x, FOG_REG, _x, _R1 _NEG, _x),
+            ALU_ADD(__, _y, FOG_REG, _y, _R1 _NEG, _y),
+            ALU_ADD(__, _z, FOG_REG, _z, _R1 _NEG, _z)
             ALU_LAST,
 
-            ALU_MULADD(TEXEL_REG, _x, ALU_SRC_PV, _x, _R3, _w, TEXEL_REG, _x),
-            ALU_MULADD(TEXEL_REG, _y, ALU_SRC_PV, _y, _R3, _w, TEXEL_REG, _y),
-            ALU_MULADD(TEXEL_REG, _z, ALU_SRC_PV, _z, _R3, _w, TEXEL_REG, _z)
+            ALU_MULADD(TEXEL_REG, _x, ALU_SRC_PV, _x, FOG_REG, _w, TEXEL_REG, _x),
+            ALU_MULADD(TEXEL_REG, _y, ALU_SRC_PV, _y, FOG_REG, _w, TEXEL_REG, _y),
+            ALU_MULADD(TEXEL_REG, _z, ALU_SRC_PV, _z, FOG_REG, _w, TEXEL_REG, _z)
             ALU_LAST,
         );
     }
@@ -445,7 +473,7 @@ static int generatePixelShader(GX2PixelShader *psh, struct CCFeatures *cc_featur
             ALU_ADD(__, _x, TEXEL_REG, _x, TEXEL_REG, _y)
             ALU_LAST,
 
-            ALU_ADD(__, _x, ALU_SRC_PV, _x, _R1, _z)
+            ALU_ADD(__, _x, ALU_SRC_PV, _x, TEXEL_REG, _z)
             ALU_LAST,
 
             /* PV.x / 3 */
@@ -454,14 +482,14 @@ static int generatePixelShader(GX2PixelShader *psh, struct CCFeatures *cc_featur
             ALU_LITERAL(0x3eaaaaab /*0.3333333433f*/),
 
             /* texel.rgb = mix(texel.rgb, vGrayscaleColor.rgb * intensity, vGrayscaleColor.a); */
-            ALU_MULADD(_R127, _x, _R4, _x, ALU_SRC_PV, _x, _R1 _NEG, _x),
-            ALU_MULADD(_R127, _y, _R4, _y, ALU_SRC_PV, _x, _R1 _NEG, _y),
-            ALU_MULADD(_R127, _z, _R4, _z, ALU_SRC_PV, _x, _R1 _NEG, _z)
+            ALU_MULADD(_R127, _x, GRAYSCALE_REG, _x, ALU_SRC_PV, _x, _R1 _NEG, _x),
+            ALU_MULADD(_R127, _y, GRAYSCALE_REG, _y, ALU_SRC_PV, _x, _R1 _NEG, _y),
+            ALU_MULADD(_R127, _z, GRAYSCALE_REG, _z, ALU_SRC_PV, _x, _R1 _NEG, _z)
             ALU_LAST,
 
-            ALU_MULADD(TEXEL_REG, _x, ALU_SRC_PV, _x, _R4, _w, TEXEL_REG, _x),
-            ALU_MULADD(TEXEL_REG, _y, ALU_SRC_PV, _y, _R4, _w, TEXEL_REG, _y),
-            ALU_MULADD(TEXEL_REG, _z, ALU_SRC_PV, _z, _R4, _w, TEXEL_REG, _z)
+            ALU_MULADD(TEXEL_REG, _x, ALU_SRC_PV, _x, GRAYSCALE_REG, _w, TEXEL_REG, _x),
+            ALU_MULADD(TEXEL_REG, _y, ALU_SRC_PV, _y, GRAYSCALE_REG, _w, TEXEL_REG, _y),
+            ALU_MULADD(TEXEL_REG, _z, ALU_SRC_PV, _z, GRAYSCALE_REG, _w, TEXEL_REG, _z)
             ALU_LAST,
         );
     }

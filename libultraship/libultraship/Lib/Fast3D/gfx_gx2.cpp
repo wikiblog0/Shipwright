@@ -37,6 +37,7 @@
 #include "gx2_shader_debug.h"
 
 #include <proc_ui/procui.h>
+#include <coreinit/memory.h>
 
 // wut is currently missing those
 typedef struct GX2Rect {
@@ -382,7 +383,7 @@ static void gfx_gx2_draw_triangles(float buf_vbo[], size_t buf_vbo_len, size_t b
 
     float* new_vbo = vbo_pool[draw_index++];
     size_t vbo_len = sizeof(float) * buf_vbo_len;
-    memcpy(new_vbo, buf_vbo, vbo_len);
+    OSBlockMove(new_vbo, buf_vbo, vbo_len, FALSE);
 
     GX2Invalidate(GX2_INVALIDATE_MODE_CPU_ATTRIBUTE_BUFFER, new_vbo, vbo_len);
 

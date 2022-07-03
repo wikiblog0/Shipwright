@@ -766,6 +766,7 @@ LIBS	:= -lultraship -lZAPDUtils -lSDL2 -lstorm -lz -lbz2 -lwut
 ifeq ($(DEBUG_BUILD), 1)
 	CFLAGS += -DDEBUG_BUILD
 	CXXFLAGS += -DDEBUG_BUILD
+	LDFLAGS += -Wl,--wrap=abort
 endif
 
 #-------------------------------------------------------------------------------

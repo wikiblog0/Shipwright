@@ -3,7 +3,7 @@
 #include <soh/Enhancements/bootcommands.h>
 #include "soh/OTRGlobals.h"
 
-#ifdef __WIIU__
+#if defined(__WIIU__) && defined(DEBUG_BUILD)
 #include <stdio.h>
 #include <unistd.h>
 #include <whb/log.h>
@@ -22,6 +22,13 @@ static const devoptab_t dotab_stdout = {
     .name = "stdout_whb",
     .write_r = wiiu_log_write,
 };
+
+void __wrap_abort() {
+    printf("Abort called.\n");
+    // force a stack trace
+    *(uint32_t*)0xdeadc0de = 0xcafebabe;
+    while(1);
+}
 #endif
 
 s32 gScreenWidth = SCREEN_WIDTH;

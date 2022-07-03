@@ -27,8 +27,8 @@
 #include <map>
 #include <string>
 #include <chrono>
-#include "SohHooks.h"
-#include "SohConsole.h"
+#include "Hooks.h"
+#include "Console.h"
 
 #include <iostream>
 

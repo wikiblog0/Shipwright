@@ -1,11 +1,12 @@
-#include "SohConsole.h"
+#include "Console.h"
 
 #include <iostream>
 #include <sstream>
 
 #include "Cvar.h"
 #include "GlobalCtx2.h"
-#include "SohImGuiImpl.h"
+#include "ImGuiImpl.h"
+#include "Lib/ImGui/imgui.h"
 #include "Utils/StringHelper.h"
 #include "Lib/ImGui/imgui.h"
 #include "Lib/ImGui/imgui_internal.h"

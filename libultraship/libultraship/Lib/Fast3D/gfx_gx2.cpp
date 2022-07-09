@@ -612,8 +612,9 @@ static std::unordered_map<std::pair<float, float>, uint16_t, hash_pair_ff> gfx_g
 
     for (const auto& c : coordinates) {
         // bug? coordinates sometimes read from oob
-        if ((c.first < 0.0f) || (c.first> (float) main_framebuffer.depth_buffer.surface.width)
+        if ((c.first < 0.0f) || (c.first > (float) main_framebuffer.depth_buffer.surface.width)
             || (c.second < 0.0f) || (c.second > (float) main_framebuffer.depth_buffer.surface.height)) {
+            res.emplace(c, 0);
             continue;
         }
 

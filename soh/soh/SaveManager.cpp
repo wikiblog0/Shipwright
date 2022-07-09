@@ -808,10 +808,41 @@ void SaveManager::LoadStruct(const std::string& name, LoadStructFunc func) {
     }
 }
 
+#ifdef __WIIU__
+// std::filesystem::copy_file doesn't work properly with wut's devoptab at the moment
+int copy_file(const char* src, const char* dst)
+{
+    alignas(0x40) uint8_t buf[4096];
+    FILE* r = fopen(src, "r");
+    if (!r) {
+        return -1;
+    }
+    FILE* w = fopen(dst, "w");
+    if (!w) {
+        return -2;
+    }
+
+    size_t res;
+    while ((res = fread(buf, 1, sizeof(buf), r)) > 0) {
+        if (fwrite(buf, 1, res, w) != res) {
+            break;
+        }
+    }
+
+    fclose(r);
+    fclose(w);
+    return res >= 0 ? 0 : res;
+}
+#endif
+
 void SaveManager::CopyZeldaFile(int from, int to) {
     assert(std::filesystem::exists(GetFileName(from)));
     DeleteZeldaFile(to);
+#ifdef __WIIU__
+    assert(copy_file(GetFileName(from).c_str(), GetFileName(to).c_str()) == 0);
+#else
     std::filesystem::copy_file(GetFileName(from), GetFileName(to));
+#endif
     fileMetaInfo[to].valid = true;
     fileMetaInfo[to].deaths = fileMetaInfo[from].deaths;
     for (int i = 0; i < ARRAY_COUNT(fileMetaInfo[to].playerName); i++) {

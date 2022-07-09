@@ -114,7 +114,7 @@ static uint32_t gfx_wiiu_proc_callback_released(void* context) {
     return 0;
 }
 
-static void gfx_wiiu_init(const char *game_name, bool start_in_fullscreen) {
+static void gfx_wiiu_init(const char *game_name, bool start_in_fullscreen, uint32_t width, uint32_t height) {
     WHBProcInit();
 
     command_buffer_pool = GfxHeapAllocMEM2(0x400000, GX2_COMMAND_BUFFER_ALIGNMENT);

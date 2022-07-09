@@ -607,8 +607,8 @@ void gfx_gx2_select_texture_fb(int fb) {
     GX2SetPixelSampler(&buffer->sampler, location);
 }
 
-static std::map<std::pair<float, float>, uint16_t> gfx_gx2_get_pixel_depth(int fb_id, const std::set<std::pair<float, float>>& coordinates) {
-    std::map<std::pair<float, float>, uint16_t> res;
+static std::unordered_map<std::pair<float, float>, uint16_t, hash_pair_ff> gfx_gx2_get_pixel_depth(int fb_id, const std::set<std::pair<float, float>>& coordinates) {
+    std::unordered_map<std::pair<float, float>, uint16_t, hash_pair_ff> res;
 
     for (const auto& c : coordinates) {
         // bug? coordinates sometimes read from oob

@@ -27,6 +27,8 @@ void BootCommands_Init()
     CVar_RegisterS32("gMinimalUI", 0);
     CVar_RegisterS32("gRedGanonBlood", 0);
     CVar_RegisterS32("gHoverFishing", 0);
+    CVar_RegisterS32("gN64WeirdFrames", 0);
+    CVar_RegisterS32("gBombchusOOB", 0);
     CVar_RegisterS32("gRumbleEnabled", 0);
     CVar_RegisterS32("gUniformLR", 0);
     CVar_RegisterS32("gTwoHandedIdle", 0);
@@ -65,7 +67,7 @@ void BootCommands_ParseBootArgs(s32 argc, char** argv)
     for (i = 0; i < argc; i++)
         DebugArena_Free(argv[i]);
 
-    DebugArena_Free(argv);
+    //DebugArena_Free(argv);
 }
 
 /*

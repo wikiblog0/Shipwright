@@ -789,7 +789,7 @@ uintptr_t AudioLoad_SyncLoad(u32 tableType, u32 id, s32* didAllocate) {
         {
             table = AudioLoad_GetLoadTable(tableType);
             size = table->entries[realId].size;
-            size = ALIGN16(size);
+            //size = ALIGN16(size);
             medium = table->entries[id].medium;
             cachePolicy = table->entries[id].cachePolicy;
             romAddr = table->entries[realId].romAddr;
@@ -938,7 +938,6 @@ void AudioLoad_RelocateFont(s32 fontId, SoundFontData* mem, RelocInfo* relocInfo
 #define BASE_OFFSET(x) (void*)((u32)(x) + (u32)(mem))
 
     reloc2 = ptrs[0];
-    if (1) {}
     if ((reloc2 != 0 || !gUseLegacySD) && (numDrums != 0))
     {
         ptrs[0] = BASE_OFFSET(reloc2);
@@ -979,7 +978,6 @@ void AudioLoad_RelocateFont(s32 fontId, SoundFontData* mem, RelocInfo* relocInfo
     }
 
     reloc2 = ptrs[1];
-    if (1) {}
     if ((reloc2 != 0 || !gUseLegacySD) && (numSfx != 0)) {
         ptrs[1] = BASE_OFFSET(reloc2);
         for (i = 0; i < numSfx; i++) {
@@ -1047,7 +1045,7 @@ void AudioLoad_RelocateFont(s32 fontId, SoundFontData* mem, RelocInfo* relocInfo
 void AudioLoad_SyncDma(uintptr_t devAddr, u8* addr, size_t size, s32 medium) {
     OSMesgQueue* msgQueue = &gAudioContext.syncDmaQueue;
     OSIoMesg* ioMesg = &gAudioContext.syncDmaIoMesg;
-    size = ALIGN16(size);
+    //size = ALIGN16(size);
 
     Audio_InvalDCache(addr, size);
 
@@ -1823,7 +1821,6 @@ void AudioLoad_FinishAsyncLoad(AudioAsyncLoad* asyncLoad) {
     u32 sampleBankId2;
     RelocInfo relocInfo;
 
-    if (1) {}
     switch (ASYNC_TBLTYPE(retMsg)) {
         case SEQUENCE_TABLE:
             AudioLoad_SetSeqLoadStatus(ASYNC_ID(retMsg), ASYNC_STATUS(retMsg));
@@ -1847,7 +1844,6 @@ void AudioLoad_FinishAsyncLoad(AudioAsyncLoad* asyncLoad) {
     }
 
     doneMsg.data32 = asyncLoad->retMsg;
-    if (1) {}
     asyncLoad->status = LOAD_STATUS_WAITING;
     osSendMesg(asyncLoad->retQueue, doneMsg, OS_MESG_NOBLOCK);
 }
@@ -2157,7 +2153,6 @@ s32 AudioLoad_GetSamplesForFont(s32 fontId, SoundFontSample** sampleSet) {
 
     for (i = 0; i < numDrums; i++) {
         Drum* drum = Audio_GetDrum(fontId, i);
-        if (1) {}
         if (drum != NULL) {
             numSamples = AudioLoad_AddToSampleSet(drum->sound.sample, numSamples, sampleSet);
         }

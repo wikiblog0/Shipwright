@@ -88,7 +88,11 @@ void OTRExporter_Audio::Save(ZResource* res, const fs::path& outPath, BinaryWrit
 	for (auto pair : audio->samples)
 	{
 		MemoryStream* sampleStream = new MemoryStream();
+#ifdef EXPORT_BIG_ENDIAN
+		BinaryWriter sampleWriter = BinaryWriter(sampleStream, Endianess::Big);
+#else
 		BinaryWriter sampleWriter = BinaryWriter(sampleStream);
+#endif
 
 		writer->Write((uint32_t)pair.first);
 		WriteSampleEntry(pair.second, &sampleWriter);
@@ -113,7 +117,11 @@ void OTRExporter_Audio::Save(ZResource* res, const fs::path& outPath, BinaryWrit
 	for (size_t i = 0; i < audio->soundFontTable.size(); i++)
 	{
 		MemoryStream* fntStream = new MemoryStream();
+#ifdef EXPORT_BIG_ENDIAN
+		BinaryWriter fntWriter = BinaryWriter(fntStream, Endianess::Big);
+#else
 		BinaryWriter fntWriter = BinaryWriter(fntStream);
+#endif
 
 		WriteHeader(nullptr, "", &fntWriter, Ship::ResourceType::AudioSoundFont, Ship::Version::Rachael);
 
@@ -172,7 +180,11 @@ void OTRExporter_Audio::Save(ZResource* res, const fs::path& outPath, BinaryWrit
 		auto seq = audio->sequences[i];
 
 		MemoryStream* seqStream = new MemoryStream();
+#ifdef EXPORT_BIG_ENDIAN
+		BinaryWriter seqWriter = BinaryWriter(seqStream, Endianess::Big);
+#else
 		BinaryWriter seqWriter = BinaryWriter(seqStream);
+#endif
 
 		WriteHeader(nullptr, "", &seqWriter, Ship::ResourceType::AudioSequence, Ship::Version::Rachael);
 

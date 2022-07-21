@@ -5,21 +5,19 @@
 #include <vpad/input.h>
 
 namespace Ship {
-    WiiUGamepad::WiiUGamepad(int32_t dwControllerNumber) : Controller(dwControllerNumber) {
+    WiiUGamepad::WiiUGamepad() : Controller() {
         memset(rumblePattern, 0xFF, sizeof(rumblePattern));
 
-        auto config = GlobalCtx2::GetInstance()->GetConfig();
-        if (!config->has(GetBindingConfSection())) {
-            CreateDefaultBinding();
-        }
-
-        LoadBinding();
+        GUID = "WiiUGamepad";
     }
 
-    WiiUGamepad::~WiiUGamepad() {
+    bool WiiUGamepad::Open() {
+        return true;
     }
 
-    void WiiUGamepad::ReadFromSource() {
+    void WiiUGamepad::ReadFromSource(int32_t slot) {
+        DeviceProfile& profile = profiles[slot];
+
         VPADStatus vStatus;
         VPADReadError vError;
         VPADRead(VPAD_CHAN_0, &vStatus, 1, &vError);
@@ -33,75 +31,130 @@ namespace Ship {
             connected = true;
         }
 
-        dwPressedButtons = 0;
+        dwPressedButtons[slot] = 0;
         wStickX = 0;
         wStickY = 0;
 
         for (uint32_t i = VPAD_BUTTON_SYNC; i <= VPAD_STICK_L_EMULATION_LEFT; i <<= 1) {
-            if (ButtonMapping.contains(i)) {
+            if (profile.Mappings.contains(i)) {
                 // check if the stick is mapped to an analog stick
-                if ((ButtonMapping[i] == BTN_STICKRIGHT || ButtonMapping[i] == BTN_STICKLEFT) && (i >= VPAD_STICK_R_EMULATION_DOWN)) {
+                if ((profile.Mappings[i] == BTN_STICKRIGHT || profile.Mappings[i] == BTN_STICKLEFT) && (i >= VPAD_STICK_R_EMULATION_DOWN)) {
                     float axis = i >= VPAD_STICK_L_EMULATION_DOWN ? vStatus.leftStick.x : vStatus.rightStick.x;
                     wStickX = axis * 84;
-                } else if ((ButtonMapping[i] == BTN_STICKDOWN || ButtonMapping[i] == BTN_STICKUP) && (i >= VPAD_STICK_R_EMULATION_DOWN)) {
+                } else if ((profile.Mappings[i] == BTN_STICKDOWN || profile.Mappings[i] == BTN_STICKUP) && (i >= VPAD_STICK_R_EMULATION_DOWN)) {
                     float axis = i >= VPAD_STICK_L_EMULATION_DOWN ? vStatus.leftStick.y : vStatus.rightStick.y;
                     wStickY = axis * 84;
                 } else {
                     if (vStatus.hold & i) {
-                        dwPressedButtons |= ButtonMapping[i];
+                        dwPressedButtons[slot] |= profile.Mappings[i];
                     }
                 }
             }
         }
 
         // TODO gyro
+        if (profile.UseGyro) {
+
+        }
     }
 
-    void WiiUGamepad::WriteToSource(ControllerCallback* controller) {
-        VPADControlMotor(VPAD_CHAN_0, rumblePattern, controller->rumble ? 120 : 0);
+    void WiiUGamepad::WriteToSource(int32_t slot, ControllerCallback* controller) {
+        if (profiles[slot].UseRumble) {
+            VPADControlMotor(VPAD_CHAN_0, rumblePattern, controller->rumble ? 120 : 0);
+        }
     }
 
-    void WiiUGamepad::CreateDefaultBinding() {
-        std::string ConfSection = GetBindingConfSection();
-        std::shared_ptr<ConfigFile> pConf = GlobalCtx2::GetInstance()->GetConfig();
-        ConfigFile& Conf = *pConf.get();
+    int32_t WiiUGamepad::ReadRawPress() {
+        VPADStatus vStatus;
+        VPADReadError vError;
+        VPADRead(VPAD_CHAN_0, &vStatus, 1, &vError);
 
-        Conf[ConfSection][STR(BTN_CRIGHT)] = std::to_string(VPAD_STICK_R_EMULATION_RIGHT);
-        Conf[ConfSection][STR(BTN_CLEFT)] = std::to_string(VPAD_STICK_R_EMULATION_LEFT);
-        Conf[ConfSection][STR(BTN_CDOWN)] = std::to_string(VPAD_STICK_R_EMULATION_DOWN);
-        Conf[ConfSection][STR(BTN_CUP)] = std::to_string(VPAD_STICK_R_EMULATION_UP);
-        Conf[ConfSection][STR(BTN_CRIGHT_2)] = std::to_string(VPAD_BUTTON_X);
-        Conf[ConfSection][STR(BTN_CLEFT_2)] = std::to_string(VPAD_BUTTON_Y);
-        Conf[ConfSection][STR(BTN_CDOWN_2)] = std::to_string(VPAD_BUTTON_R);
-        Conf[ConfSection][STR(BTN_CUP_2)] = std::to_string(VPAD_BUTTON_L);
-        Conf[ConfSection][STR(BTN_R)] = std::to_string(VPAD_BUTTON_ZR);
-        Conf[ConfSection][STR(BTN_L)] = std::to_string(VPAD_BUTTON_MINUS);
-        Conf[ConfSection][STR(BTN_DRIGHT)] = std::to_string(VPAD_BUTTON_RIGHT);
-        Conf[ConfSection][STR(BTN_DLEFT)] = std::to_string(VPAD_BUTTON_LEFT);
-        Conf[ConfSection][STR(BTN_DDOWN)] = std::to_string(VPAD_BUTTON_DOWN);
-        Conf[ConfSection][STR(BTN_DUP)] = std::to_string(VPAD_BUTTON_UP);
-        Conf[ConfSection][STR(BTN_START)] = std::to_string(VPAD_BUTTON_PLUS);
-        Conf[ConfSection][STR(BTN_Z)] = std::to_string(VPAD_BUTTON_ZL);
-        Conf[ConfSection][STR(BTN_B)] = std::to_string(VPAD_BUTTON_B);
-        Conf[ConfSection][STR(BTN_A)] = std::to_string(VPAD_BUTTON_A);
-        Conf[ConfSection][STR(BTN_STICKRIGHT)] = std::to_string(VPAD_STICK_L_EMULATION_RIGHT);
-        Conf[ConfSection][STR(BTN_STICKLEFT)] = std::to_string(VPAD_STICK_L_EMULATION_LEFT);
-        Conf[ConfSection][STR(BTN_STICKDOWN)] = std::to_string(VPAD_STICK_L_EMULATION_DOWN);
-        Conf[ConfSection][STR(BTN_STICKUP)] = std::to_string(VPAD_STICK_L_EMULATION_UP);
+        if (vError == VPAD_READ_SUCCESS) {
+            for (uint32_t i = VPAD_BUTTON_SYNC; i <= VPAD_BUTTON_STICK_L; i <<= 1) {
+                if (vStatus.hold & i) {
+                    return i;
+                }
+            }
+        }
 
-        Conf.Save();
+        if (vStatus.leftStick.x > 0.7f) {
+            return VPAD_STICK_L_EMULATION_RIGHT;
+        }
+        if (vStatus.leftStick.x < -0.7f) {
+            return VPAD_STICK_L_EMULATION_LEFT;
+        }
+        if (vStatus.leftStick.y > 0.7f) {
+            return VPAD_STICK_L_EMULATION_UP;
+        }
+        if (vStatus.leftStick.y < -0.7f) {
+            return VPAD_STICK_L_EMULATION_DOWN;
+        }
+
+        if (vStatus.rightStick.x > 0.7f) {
+            return VPAD_STICK_R_EMULATION_RIGHT;
+        }
+        if (vStatus.rightStick.x < -0.7f) {
+            return VPAD_STICK_R_EMULATION_LEFT;
+        }
+        if (vStatus.rightStick.y > 0.7f) {
+            return VPAD_STICK_R_EMULATION_UP;
+        }
+        if (vStatus.rightStick.y < -0.7f) {
+            return VPAD_STICK_R_EMULATION_DOWN;
+        }
+
+        return -1;
     }
 
-    std::string WiiUGamepad::GetControllerType() {
-        return "WIIU";
+    const char* WiiUGamepad::GetButtonName(int slot, int n64Button) {
+        std::map<int32_t, int32_t>& Mappings = profiles[slot].Mappings;
+        const auto find = std::find_if(Mappings.begin(), Mappings.end(), [n64Button](const std::pair<int32_t, int32_t>& pair) {
+            return pair.second == n64Button;
+        });
+
+        if (find == Mappings.end()) return "Unknown";
+
+        // TODO
+        uint32_t btn = find->first;
+
+        return "Unknown";
     }
 
-    std::string WiiUGamepad::GetConfSection() {
-        return GetControllerType() + " GAMEPAD " + std::to_string(GetControllerNumber() + 1);
+    const char* WiiUGamepad::GetControllerName()
+    {
+        return "Wii U GamePad";
     }
 
-    std::string WiiUGamepad::GetBindingConfSection() {
-        return GetControllerType() + " GAMEPAD BINDING " + std::to_string(GetControllerNumber() + 1);
+    void WiiUGamepad::CreateDefaultBinding(int32_t slot) {
+        DeviceProfile& profile = profiles[slot];
+        profile.Mappings.clear();
+
+        profile.UseRumble = true;
+        profile.RumbleStrength = 1.0f;
+        profile.UseGyro = false;
+
+        profile.Mappings[VPAD_STICK_R_EMULATION_RIGHT] = BTN_CRIGHT;
+        profile.Mappings[VPAD_STICK_R_EMULATION_LEFT] = BTN_CLEFT;
+        profile.Mappings[VPAD_STICK_R_EMULATION_DOWN] = BTN_CDOWN;
+        profile.Mappings[VPAD_STICK_R_EMULATION_UP] = BTN_CUP;
+        profile.Mappings[VPAD_BUTTON_X] = BTN_CRIGHT;
+        profile.Mappings[VPAD_BUTTON_Y] = BTN_CLEFT;
+        profile.Mappings[VPAD_BUTTON_R] = BTN_CDOWN;
+        profile.Mappings[VPAD_BUTTON_L] = BTN_CUP;
+        profile.Mappings[VPAD_BUTTON_ZR] = BTN_R;
+        profile.Mappings[VPAD_BUTTON_MINUS] = BTN_L;
+        profile.Mappings[VPAD_BUTTON_RIGHT] = BTN_DRIGHT;
+        profile.Mappings[VPAD_BUTTON_LEFT] = BTN_DLEFT;
+        profile.Mappings[VPAD_BUTTON_DOWN] = BTN_DDOWN;
+        profile.Mappings[VPAD_BUTTON_UP] = BTN_DUP;
+        profile.Mappings[VPAD_BUTTON_PLUS] = BTN_START;
+        profile.Mappings[VPAD_BUTTON_ZL] = BTN_Z;
+        profile.Mappings[VPAD_BUTTON_B] = BTN_B;
+        profile.Mappings[VPAD_BUTTON_A] = BTN_A;
+        profile.Mappings[VPAD_STICK_L_EMULATION_RIGHT] = BTN_STICKRIGHT;
+        profile.Mappings[VPAD_STICK_L_EMULATION_LEFT] = BTN_STICKLEFT;
+        profile.Mappings[VPAD_STICK_L_EMULATION_DOWN] = BTN_STICKDOWN;
+        profile.Mappings[VPAD_STICK_L_EMULATION_UP] = BTN_STICKUP;
     }
 }
 #endif

@@ -76,6 +76,7 @@ SOURCEFILES_CPP :=	\
 		libultraship/Lib/Mercury/Mercury.cpp \
 		libultraship/Archive.cpp \
 		libultraship/CollisionHeader.cpp \
+		libultraship/ControlDeck.cpp \
 		libultraship/ControllerAttachment.cpp \
 		libultraship/Cutscene.cpp \
 		libultraship/DisplayList.cpp \

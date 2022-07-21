@@ -9,6 +9,7 @@
 #include "KeyboardController.h"
 #include "SDLController.h"
 #else
+#include <padscore/wpad.h>
 #include "WiiUGamepad.h"
 #include "WiiUController.h"
 #endif
@@ -36,11 +37,14 @@ void Ship::ControlDeck::ScanPhysicalDevices() {
 
 	physicalDevices.push_back(std::make_shared<KeyboardController>());
 #else
-	// TODO
-	// Ship::Window::Controllers[0].push_back(std::make_shared<Ship::WiiUGamepad>(0));
-	// for (int i = 0; i < 4; i++) {
-	//     Ship::Window::Controllers[0].push_back(std::make_shared<Ship::WiiUController>(i));
-	// }
+	physicalDevices.push_back(std::make_shared<Ship::WiiUGamepad>());
+
+	for (int i = 0; i < 4; i++) {
+		WPADExtensionType type;
+		if (WPADProbe((WPADChan) i, &type) == 0) {
+	    	physicalDevices.push_back(std::make_shared<Ship::WiiUController>(i, (int32_t) type));
+		}
+	}
 #endif
 
 	physicalDevices.push_back(std::make_shared<DisconnectedController>());

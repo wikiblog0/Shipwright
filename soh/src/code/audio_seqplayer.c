@@ -3,7 +3,6 @@
 #include "ultra64.h"
 #include "global.h"
 
-extern bool gUseLegacySD;
 extern char* sequenceMap[256];
 
 #define PORTAMENTO_IS_SPECIAL(x) ((x).mode & 0x80)
@@ -1062,22 +1061,14 @@ void AudioSeq_SequenceChannelProcessScript(SequenceChannel* channel) {
                         result = (u8)parameters[0];
                         command = (u8)parameters[0];
 
-                        if (seqPlayer->defaultFont != 0xFF) {
-                            if (gUseLegacySD) {
-#ifdef BIGENDIAN
-                                offset = BOMSWAP16(((u16*)gAudioContext.sequenceFontTable)[seqPlayer->seqId]);
-#else
-                                offset = ((u16*)gAudioContext.sequenceFontTable)[seqPlayer->seqId];
-#endif
-                                lowBits = gAudioContext.sequenceFontTable[offset];
-                                command = gAudioContext.sequenceFontTable[offset + lowBits - result];
-                            } else {
-                                SequenceData sDat = ResourceMgr_LoadSeqByName(sequenceMap[seqPlayer->seqId]);
-                                command = sDat.fonts[sDat.numFonts - result - 1];
-                            }
+                        if (seqPlayer->defaultFont != 0xFF) 
+                        {
+                            SequenceData sDat = ResourceMgr_LoadSeqByName(sequenceMap[seqPlayer->seqId]);
+                            command = sDat.fonts[sDat.numFonts - result - 1];
                         }
 
-                        if (AudioHeap_SearchCaches(FONT_TABLE, CACHE_EITHER, command)) {
+                        if (AudioHeap_SearchCaches(FONT_TABLE, CACHE_EITHER, command)) 
+                        {
                             channel->fontId = command;
                         }
 
@@ -1182,22 +1173,20 @@ void AudioSeq_SequenceChannelProcessScript(SequenceChannel* channel) {
                         result = (u8)parameters[0];
                         command = (u8)parameters[0];
 
-                        if (seqPlayer->defaultFont != 0xFF) {
-                            if (gUseLegacySD) {
-#ifdef BIGENDIAN
-                                offset = BOMSWAP16(((u16*)gAudioContext.sequenceFontTable)[seqPlayer->seqId]);
-#else
-                                offset = ((u16*)gAudioContext.sequenceFontTable)[seqPlayer->seqId];
-#endif
-                                lowBits = gAudioContext.sequenceFontTable[offset];
-                                command = gAudioContext.sequenceFontTable[offset + lowBits - result];
-                            } else {
-                                SequenceData sDat = ResourceMgr_LoadSeqByName(sequenceMap[seqPlayer->seqId]);
-                                command = sDat.fonts[sDat.numFonts - result - 1];
-                            }
+                        if (seqPlayer->defaultFont != 0xFF) 
+                        {
+                            SequenceData sDat = ResourceMgr_LoadSeqByName(sequenceMap[seqPlayer->seqId]);
+
+                            // The game apparantely would sometimes do negative array lookups, the result of which would get rejected by AudioHeap_SearchCaches, never
+                            // changing the actual fontid.
+                            if (result > sDat.numFonts)
+                                break;
+
+                            command = sDat.fonts[(sDat.numFonts - result - 1)];
                         }
 
-                        if (AudioHeap_SearchCaches(FONT_TABLE, CACHE_EITHER, command)) {
+                        if (AudioHeap_SearchCaches(FONT_TABLE, CACHE_EITHER, command)) 
+                        {
                             channel->fontId = command;
                         }
 

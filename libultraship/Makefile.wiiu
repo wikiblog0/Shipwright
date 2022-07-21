@@ -59,7 +59,6 @@ SOURCEFILES_CPP :=	\
 		libultraship/Factories/TextureFactory.cpp \
 		libultraship/Factories/VtxFactory.cpp \
 		libultraship/Array.cpp \
-		libultraship/ConfigFile.cpp \
 		libultraship/Controller.cpp \
 		libultraship/Hooks.cpp \
 		libultraship/Factories/CollisionHeaderFactory.cpp \
@@ -74,6 +73,7 @@ SOURCEFILES_CPP :=	\
 		libultraship/Lib/Fast3D/gfx_pc.cpp \
 		libultraship/Lib/StrHash64.cpp \
 		libultraship/Lib/tinyxml2/tinyxml2.cpp \
+		libultraship/Lib/Mercury/Mercury.cpp \
 		libultraship/Archive.cpp \
 		libultraship/CollisionHeader.cpp \
 		libultraship/ControllerAttachment.cpp \

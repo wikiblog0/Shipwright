@@ -628,7 +628,7 @@ void gfx_gx2_set_texture_filter(FilteringMode mode) {
 }
 
 FilteringMode gfx_gx2_get_texture_filter(void) {
-    return NONE;
+    return FILTER_NONE;
 }
 
 struct GfxRenderingAPI gfx_gx2_api = {

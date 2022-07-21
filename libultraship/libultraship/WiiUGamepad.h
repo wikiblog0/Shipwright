@@ -6,7 +6,6 @@ namespace Ship {
     class WiiUGamepad : public Controller {
         public:
             WiiUGamepad();
-            bool Open();
 
             void ReadFromSource(int32_t slot) override;
             void WriteToSource(int32_t slot, ControllerCallback* controller) override;

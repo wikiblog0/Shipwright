@@ -11,10 +11,6 @@ namespace Ship {
         GUID = "WiiUGamepad";
     }
 
-    bool WiiUGamepad::Open() {
-        return true;
-    }
-
     void WiiUGamepad::ReadFromSource(int32_t slot) {
         DeviceProfile& profile = profiles[slot];
 

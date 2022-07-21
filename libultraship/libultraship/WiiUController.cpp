@@ -7,14 +7,29 @@
 #include <padscore/wpad.h>
 
 namespace Ship {
-    WiiUController::WiiUController(int32_t index, int32_t extensionType) : Controller(), chan((WPADChan) index), extensionType(extensionType) {
-        // Create a GUID and name based on extension and channel
-        GUID = std::string("WiiU") + GetControllerExtension() + std::to_string(index);
-        controllerName = std::string("Wii U ") + GetControllerExtension() + std::string(" ") + std::to_string(index);
+    WiiUController::WiiUController(WPADChan chan) : Controller(), chan(chan) {
+        connected = false;
+        extensionType = (WPADExtensionType) -1;
     }
 
-    bool Open() {
+    bool WiiUController::Open() {
+		if (WPADProbe(chan, &extensionType) != 0) {
+            Close();
+            return false;
+        }
+
+        connected = true;
+
+        // Create a GUID and name based on extension and channel
+        GUID = std::string("WiiU") + GetControllerExtension() + std::to_string((int) chan);
+        controllerName = std::string("Wii U ") + GetControllerExtension() + std::string(" ") + std::to_string((int) chan);
+
         return true;
+    }
+
+    void WiiUController::Close() {
+        connected = false;
+        extensionType = (WPADExtensionType) -1;
     }
 
     void WiiUController::ReadFromSource(int32_t slot) {
@@ -24,7 +39,7 @@ namespace Ship {
         WPADExtensionType kType;
 
         if (WPADProbe(chan, &kType) != 0) {
-            connected = false;
+            Close();
             return;
         }
 

@@ -40,10 +40,9 @@ void Ship::ControlDeck::ScanPhysicalDevices() {
 	physicalDevices.push_back(std::make_shared<Ship::WiiUGamepad>());
 
 	for (int i = 0; i < 4; i++) {
-		WPADExtensionType type;
-		if (WPADProbe((WPADChan) i, &type) == 0) {
-	    	physicalDevices.push_back(std::make_shared<Ship::WiiUController>(i, (int32_t) type));
-		}
+		auto controller = std::make_shared<Ship::WiiUController>((WPADChan) i);
+		controller->Open();
+	    physicalDevices.push_back(controller);
 	}
 #endif
 

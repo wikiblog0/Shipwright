@@ -64,7 +64,6 @@ namespace Ship {
     void GlobalCtx2::InitWindow() {
         InitLogging();
         Config = std::make_shared<Mercury>(GetPathRelativeToAppDirectory("shipofharkinian.json"));
-        Config->reload();
 
         MainPath = Config->getString("Game.Main Archive", GetPathRelativeToAppDirectory("oot.otr"));
         PatchesPath = Config->getString("Game.Patches Archive", GetAppDirectoryPath() + "/mods");

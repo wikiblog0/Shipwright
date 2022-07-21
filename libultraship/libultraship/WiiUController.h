@@ -7,8 +7,9 @@
 namespace Ship {
     class WiiUController : public Controller {
         public:
-            WiiUController(int32_t index, int32_t extensionType);
+            WiiUController(WPADChan chan);
             bool Open();
+            void Close();
 
             void ReadFromSource(int32_t slot) override;
             void WriteToSource(int32_t slot, ControllerCallback* controller) override;
@@ -29,8 +30,8 @@ namespace Ship {
             std::string GetControllerExtension();
             std::string controllerName;
 
-            bool connected = true;
+            bool connected;
             WPADChan chan;
-            int extensionType = -1;
+            WPADExtensionType extensionType;
     };
 }

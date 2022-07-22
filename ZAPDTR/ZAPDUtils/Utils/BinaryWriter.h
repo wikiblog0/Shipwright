@@ -12,6 +12,8 @@ public:
 	BinaryWriter(Stream* nStream, Endianess endianess = Endianess::Little);
 	BinaryWriter(std::shared_ptr<Stream> nStream, Endianess endianess = Endianess::Little);
 
+	void SetEndianess(Endianess endianess);
+
 	std::shared_ptr<Stream> GetStream();
 	uint64_t GetBaseAddress();
 	uint64_t GetLength();
@@ -34,5 +36,5 @@ public:
 
 protected:
 	std::shared_ptr<Stream> stream;
-	Endianess endianess;
+	Endianess endianess = Endianess::Native;
 };

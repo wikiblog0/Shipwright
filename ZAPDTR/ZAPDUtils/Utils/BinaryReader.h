@@ -18,9 +18,13 @@ public:
 
 	void Close();
 
+	void SetEndianess(Endianess endianess);
+	Endianess GetEndianess() const;
+
 	void Seek(uint32_t offset, SeekOffsetType seekType);
 	uint32_t GetBaseAddress();
 
+	void Read(int32_t length);
 	void Read(char* buffer, int32_t length);
 	char ReadChar();
 	int8_t ReadByte();
@@ -41,4 +45,5 @@ public:
 
 protected:
 	std::shared_ptr<Stream> stream;
+	Endianess endianess = Endianess::Native;
 };

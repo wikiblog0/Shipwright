@@ -3,6 +3,16 @@
 #include <cstdint>
 #include <memory>
 
+#ifdef _MSC_VER
+#define BSWAP16 _byteswap_ushort
+#define BSWAP32 _byteswap_ulong
+#define BSWAP64 _byteswap_uint64
+#else
+#define BSWAP16 __builtin_bswap16
+#define BSWAP32 __builtin_bswap32
+#define BSWAP64 __builtin_bswap64
+#endif
+
 enum class SeekOffsetType
 {
 	Start,
@@ -10,11 +20,16 @@ enum class SeekOffsetType
 	End
 };
 
-// TODO: Eventually account for endianess in binaryreader and binarywriter
 enum class Endianess
 {
 	Little = 0,
 	Big = 1,
+
+#if (defined(__BYTE_ORDER__) && (__BYTE_ORDER__ == __ORDER_BIG_ENDIAN__)) || defined(__BIG_ENDIAN__)
+    Native = Big,
+#else
+    Native = Little,
+#endif
 };
 
 class Stream

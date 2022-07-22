@@ -34,20 +34,7 @@ namespace Ship
         for (int i = 0; i < 3; i++)
             reader->ReadByte();
 
-        // OTRTODO: Setup the binaryreader to use the resource's endianess
-#ifdef BIGENDIAN
-        if (endianess != Endianess::Big) {
-#else
-        if (endianess != Endianess::Little) {
-#endif
-            SPDLOG_ERROR("Wrong resource endianess: {}", (endianess == Endianess::Big) ? "Big" : "Little");
-
-#ifdef __WIIU__
-            OSFatal("Wrong resource endianess!\nDon't use PC OTR files on the Wii U port");
-#endif
-
-            return nullptr;
-        }
+        reader->SetEndianess(endianess);
 
         ResourceType resourceType = (ResourceType)reader->ReadUInt32();
         Resource* result = nullptr;

@@ -181,7 +181,7 @@ static void ImGui_ImplWiiU_UpdateControllerInput(ImGui_ImplWiiU_ControllerInput*
         case WPAD_EXT_CLASSIC:
         case WPAD_EXT_MPLUS_CLASSIC:
             classic_buttons |= kpad->classic.hold;
-            if (classic_buttons & WPAD_CLASSIC_BUTTON_X)
+            if (classic_buttons & WPAD_CLASSIC_BUTTON_Y)
                 bd->LastController = (nn::swkbd::ControllerType) i;
 
             stick_l_x += kpad->classic.leftStick.x;
@@ -191,7 +191,7 @@ static void ImGui_ImplWiiU_UpdateControllerInput(ImGui_ImplWiiU_ControllerInput*
             break;
         case WPAD_EXT_PRO_CONTROLLER:
             pro_buttons |= kpad->pro.hold;
-            if (pro_buttons & WPAD_PRO_BUTTON_X)
+            if (pro_buttons & WPAD_PRO_BUTTON_Y)
                 bd->LastController = (nn::swkbd::ControllerType) i;
 
             stick_l_x += kpad->pro.leftStick.x;
@@ -202,7 +202,7 @@ static void ImGui_ImplWiiU_UpdateControllerInput(ImGui_ImplWiiU_ControllerInput*
         }
     }
 
-    if (vpad_buttons & VPAD_BUTTON_X)
+    if (vpad_buttons & VPAD_BUTTON_Y)
         bd->LastController = nn::swkbd::ControllerType::DrcGamepad;
 
     io.AddKeyEvent(ImGuiKey_GamepadStart, (vpad_buttons & VPAD_BUTTON_PLUS) || (wpad_buttons & WPAD_BUTTON_PLUS) || (classic_buttons & WPAD_CLASSIC_BUTTON_PLUS) || (pro_buttons & WPAD_PRO_BUTTON_PLUS));

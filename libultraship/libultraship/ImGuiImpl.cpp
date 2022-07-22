@@ -82,7 +82,7 @@ namespace SohImGui {
 #ifdef __WIIU__
     ControllerInput controllerInput;
     bool hasKeyboardOverlay = false;
-    bool hasOverlay = false;
+    bool hasImGuiOverlay = false;
 #endif
 
     const char* filters[3] = {
@@ -222,9 +222,9 @@ namespace SohImGui {
             if (input.vpad || input.kpad[0] || input.kpad[1] || input.kpad[2] || input.kpad[3]) {
                 if (ImGui_ImplWiiU_ProcessInput(&input)) {
                     // disable inputs if virtual keyboard is opened
-                    hasOverlay = true;
+                    hasKeyboardOverlay = true;
                 } else {
-                    hasOverlay = false;
+                    hasKeyboardOverlay = false;
                 }
             }
 
@@ -854,22 +854,17 @@ namespace SohImGui {
             GlobalCtx2::GetInstance()->GetWindow()->GetControlDeck()->SaveControllerSettings();
             if (CVar_GetS32("gControlNav", 0)) {
                 if (CVar_GetS32("gOpenMenuBar", 0)) {
-#ifdef __WIIU__
-                    hasKeyboardOverlay = true;
-#endif
                     io->ConfigFlags |=ImGuiConfigFlags_NavEnableGamepad | ImGuiConfigFlags_NavEnableKeyboard;
                 } else {
-#ifdef __WIIU__
-                    hasKeyboardOverlay = false;
-#endif
                     io->ConfigFlags &= ~ImGuiConfigFlags_NavEnableGamepad;
                 }
             } else {
-#ifdef __WIIU__
-                hasKeyboardOverlay = false;
-#endif
                 io->ConfigFlags &= ~ImGuiConfigFlags_NavEnableGamepad;
             }
+
+#ifdef __WIIU__
+            hasImGuiOverlay = CVar_GetS32("gOpenMenuBar", 0) && CVar_GetS32("gControlNav", 0);
+#endif
         }
 
         #if __APPLE__

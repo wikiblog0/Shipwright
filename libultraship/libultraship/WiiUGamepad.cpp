@@ -35,7 +35,7 @@ namespace Ship {
         wStickX = 0;
         wStickY = 0;
 
-        if (SohImGui::hasOverlay || SohImGui::hasKeyboardOverlay) {
+        if (SohImGui::hasImGuiOverlay || SohImGui::hasKeyboardOverlay) {
             return;
         }
 
@@ -118,8 +118,33 @@ namespace Ship {
 
         if (find == Mappings.end()) return "Unknown";
 
-        // TODO
         uint32_t btn = find->first;
+        switch (btn) {
+            case VPAD_BUTTON_A: return "A";
+            case VPAD_BUTTON_B: return "B";
+            case VPAD_BUTTON_X: return "X";
+            case VPAD_BUTTON_Y: return "Y";
+            case VPAD_BUTTON_LEFT: return "D-pad Left";
+            case VPAD_BUTTON_RIGHT: return "D-pad Right";
+            case VPAD_BUTTON_UP: return "D-pad Up";
+            case VPAD_BUTTON_DOWN: return "D-pad Down";
+            case VPAD_BUTTON_ZL: return "ZL";
+            case VPAD_BUTTON_ZR: return "ZR";
+            case VPAD_BUTTON_L: return "L";
+            case VPAD_BUTTON_R: return "R";
+            case VPAD_BUTTON_PLUS: return "+ (START)";
+            case VPAD_BUTTON_MINUS: return "- (SELECT)";
+            case VPAD_BUTTON_STICK_R: return "Stick Button R";
+            case VPAD_BUTTON_STICK_L: return "Stick Button L";
+            case VPAD_STICK_R_EMULATION_LEFT: return "Right Stick Left";
+            case VPAD_STICK_R_EMULATION_RIGHT: return "Right Stick Right";
+            case VPAD_STICK_R_EMULATION_UP: return "Right Stick Up";
+            case VPAD_STICK_R_EMULATION_DOWN: return "Right Stick Down";
+            case VPAD_STICK_L_EMULATION_LEFT: return "Left Stick Left";
+            case VPAD_STICK_L_EMULATION_RIGHT: return "Left Stick Right";
+            case VPAD_STICK_L_EMULATION_UP: return "Left Stick Up";
+            case VPAD_STICK_L_EMULATION_DOWN: return "Left Stick Down";
+        }
 
         return "Unknown";
     }

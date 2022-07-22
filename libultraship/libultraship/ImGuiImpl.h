@@ -78,7 +78,7 @@ namespace SohImGui {
     };
     extern ControllerInput controllerInput;
     extern bool hasKeyboardOverlay;
-    extern bool hasOverlay;
+    extern bool hasImGuiOverlay;
 #endif
 
     extern Console* console;

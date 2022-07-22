@@ -7,8 +7,9 @@ void gfx_wiiu_set_context_state(void);
 
 extern bool has_foreground;
 
-extern uint32_t tv_width;
-extern uint32_t tv_height;
+// make the default fb always 1080p to not mess with scaling
+#define DEFAULT_FB_WIDTH  1920
+#define DEFAULT_FB_HEIGHT 1080
 
 extern struct GfxWindowManagerAPI gfx_wiiu;
 

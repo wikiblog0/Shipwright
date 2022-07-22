@@ -1,4 +1,4 @@
-// from https://github.com/devkitPro/wut/blob/master/libraries/libwhb/src/gfx_heap.c
+// adapted from https://github.com/devkitPro/wut/blob/master/libraries/libwhb/src/gfx_heap.c
 
 #include "gfx_heap.h"
 #include <coreinit/memheap.h>
@@ -13,19 +13,12 @@ sGfxHeapMEM1 = NULL;
 static void *
 sGfxHeapForeground = NULL;
 
-#define GFX_FRAME_HEAP_TAG (0x123DECAF)
-
 BOOL
-GfxHeapInitMEM1()
+_GfxHeapInitMEM1()
 {
    MEMHeapHandle heap = MEMGetBaseHeapHandle(MEM_BASE_HEAP_MEM1);
    uint32_t size;
    void *base;
-
-   if (!MEMRecordStateForFrmHeap(heap, GFX_FRAME_HEAP_TAG)) {
-      WHBLogPrintf("%s: MEMRecordStateForFrmHeap failed", __FUNCTION__);
-      return FALSE;
-   }
 
    size = MEMGetAllocatableSizeForFrmHeapEx(heap, 4);
    if (!size) {
@@ -49,7 +42,7 @@ GfxHeapInitMEM1()
 }
 
 BOOL
-GfxHeapDestroyMEM1()
+_GfxHeapDestroyMEM1()
 {
    MEMHeapHandle heap = MEMGetBaseHeapHandle(MEM_BASE_HEAP_MEM1);
 
@@ -58,12 +51,11 @@ GfxHeapDestroyMEM1()
       sGfxHeapMEM1 = NULL;
    }
 
-   MEMFreeByStateToFrmHeap(heap, GFX_FRAME_HEAP_TAG);
    return TRUE;
 }
 
 BOOL
-GfxHeapInitForeground()
+_GfxHeapInitForeground()
 {
    MEMHeapHandle heap = MEMGetBaseHeapHandle(MEM_BASE_HEAP_FG);
    uint32_t size;
@@ -91,7 +83,7 @@ GfxHeapInitForeground()
 }
 
 BOOL
-GfxHeapDestroyForeground()
+_GfxHeapDestroyForeground()
 {
    MEMHeapHandle foreground = MEMGetBaseHeapHandle(MEM_BASE_HEAP_FG);
 
@@ -105,7 +97,7 @@ GfxHeapDestroyForeground()
 }
 
 void *
-GfxHeapAllocMEM1(uint32_t size,
+_GfxHeapAllocMEM1(uint32_t size,
                  uint32_t alignment)
 {
    void *block;
@@ -123,7 +115,7 @@ GfxHeapAllocMEM1(uint32_t size,
 }
 
 void
-GfxHeapFreeMEM1(void *block)
+_GfxHeapFreeMEM1(void *block)
 {
    if (!sGfxHeapMEM1) {
       return;
@@ -133,7 +125,7 @@ GfxHeapFreeMEM1(void *block)
 }
 
 void *
-GfxHeapAllocForeground(uint32_t size,
+_GfxHeapAllocForeground(uint32_t size,
                        uint32_t alignment)
 {
    void *block;
@@ -151,28 +143,11 @@ GfxHeapAllocForeground(uint32_t size,
 }
 
 void
-GfxHeapFreeForeground(void *block)
+_GfxHeapFreeForeground(void *block)
 {
    if (!sGfxHeapForeground) {
       return;
    }
 
    MEMFreeToExpHeap(sGfxHeapForeground, block);
-}
-
-void *
-GfxHeapAllocMEM2(uint32_t size,
-                 uint32_t alignment)
-{
-   if (alignment < 4) {
-      alignment = 4;
-   }
-
-   return MEMAllocFromDefaultHeapEx(size, alignment);
-}
-
-void
-GfxHeapFreeMEM2(void *block)
-{
-   MEMFreeToDefaultHeap(block);
 }

@@ -31,9 +31,9 @@
 #include <gx2/mem.h>
 #include <gx2/registers.h>
 #include <gx2/display.h>
-#include <gx2r/surface.h>
 #include "gx2_shader_gen.h"
 #include "gx2_shader_debug.h"
+#include "gfx_heap.h"
 
 #include <proc_ui/procui.h>
 #include <coreinit/memory.h>
@@ -62,7 +62,9 @@ struct Texture {
 
 struct Framebuffer {
     GX2ColorBuffer color_buffer;
+    bool colorBufferMem1;
     GX2DepthBuffer depth_buffer;
+    bool depthBufferMem1;
 
     GX2Texture texture;
     GX2Sampler sampler;
@@ -93,13 +95,13 @@ static GX2CompareFunction current_depth_compare_function = GX2_COMPARE_FUNC_LESS
 
 static float current_viewport_x = 0.0f;
 static float current_viewport_y = 0.0f;
-static float current_viewport_width;
-static float current_viewport_height;
+static float current_viewport_width = DEFAULT_FB_WIDTH;
+static float current_viewport_height = DEFAULT_FB_HEIGHT;
 
 static uint32_t current_scissor_x = 0;
 static uint32_t current_scissor_y = 0;
-static uint32_t current_scissor_width;
-static uint32_t current_scissor_height;
+static uint32_t current_scissor_width = DEFAULT_FB_WIDTH;
+static uint32_t current_scissor_height = DEFAULT_FB_HEIGHT;
 
 static bool current_zmode_decal = false;
 static bool current_use_alpha = false;
@@ -240,7 +242,7 @@ static void gfx_gx2_delete_texture(uint32_t texture_id) {
     struct Texture *tex = (struct Texture *) texture_id;
 
     if (tex->texture.surface.image) {
-        GX2RDestroySurfaceEx(&tex->texture.surface, GX2R_RESOURCE_BIND_NONE);
+        free(tex->texture.surface.image);
     }
 
     free((void *) tex);
@@ -273,7 +275,7 @@ static void gfx_gx2_upload_texture(const uint8_t *rgba32_buf, uint32_t width, ui
         !tex->texture.surface.image) {
 
         if (tex->texture.surface.image) {
-            assert(GX2RDestroySurfaceEx(&tex->texture.surface, GX2R_RESOURCE_BIND_NONE));
+            free(tex->texture.surface.image);
             tex->texture.surface.image = nullptr;
         }
 
@@ -293,21 +295,20 @@ static void gfx_gx2_upload_texture(const uint8_t *rgba32_buf, uint32_t width, ui
         tex->texture.viewNumSlices = 1;
         tex->texture.compMap = GX2_COMP_MAP(GX2_SQ_SEL_R, GX2_SQ_SEL_G, GX2_SQ_SEL_B, GX2_SQ_SEL_A);
 
-        assert(GX2RCreateSurface(&tex->texture.surface, GX2R_RESOURCE_BIND_TEXTURE
-            | GX2R_RESOURCE_USAGE_CPU_WRITE
-            | GX2R_RESOURCE_USAGE_GPU_READ));
-
+        GX2CalcSurfaceSizeAndAlignment(&tex->texture.surface);
         GX2InitTextureRegs(&tex->texture);
+
+        tex->texture.surface.image = memalign(tex->texture.surface.alignment, tex->texture.surface.imageSize);
     }
 
-    uint8_t* buf = (uint8_t *) GX2RLockSurfaceEx(&tex->texture.surface, 0, GX2R_RESOURCE_BIND_NONE);
+    uint8_t* buf = (uint8_t *) tex->texture.surface.image;
     assert(buf);
 
     for (uint32_t y = 0; y < height; ++y) {
         memcpy(buf + (y * tex->texture.surface.pitch * 4), rgba32_buf + (y * width * 4), width * 4);
     }
 
-    GX2RUnlockSurfaceEx(&tex->texture.surface, 0, GX2R_RESOURCE_BIND_NONE);
+    GX2Invalidate(GX2_INVALIDATE_MODE_CPU_TEXTURE, tex->texture.surface.image, tex->texture.surface.imageSize);
 
     if (current_shader_program) {
         GX2SetPixelTexture(&tex->texture, current_shader_program->samplers_location[current_tile]);
@@ -417,42 +418,23 @@ static void gfx_gx2_draw_triangles(float buf_vbo[], size_t buf_vbo_len, size_t b
     GX2DrawEx(GX2_PRIMITIVE_MODE_TRIANGLES, 3 * buf_vbo_num_tris, 0, 1);
 }
 
-static uint32_t gfx_gx2_proc_callback_acquired(void *context) {
-    assert(GX2RCreateSurface(&main_framebuffer.color_buffer.surface, GX2R_RESOURCE_BIND_COLOR_BUFFER 
-        | GX2R_RESOURCE_USAGE_GPU_READ
-        | GX2R_RESOURCE_USAGE_GPU_WRITE));
+static void gfx_gx2_init(void) {
+    gfx_gx2_init_framebuffer(&main_framebuffer, DEFAULT_FB_WIDTH, DEFAULT_FB_HEIGHT);
 
+    GX2CalcSurfaceSizeAndAlignment(&main_framebuffer.color_buffer.surface);
     GX2InitColorBufferRegs(&main_framebuffer.color_buffer);
 
-    assert(GX2RCreateSurface(&main_framebuffer.depth_buffer.surface, GX2R_RESOURCE_BIND_DEPTH_BUFFER 
-        | GX2R_RESOURCE_USAGE_GPU_READ
-        | GX2R_RESOURCE_USAGE_GPU_WRITE));
+    main_framebuffer.color_buffer.surface.image = _GfxHeapAllocMEM1(main_framebuffer.color_buffer.surface.imageSize, main_framebuffer.color_buffer.surface.alignment);
+    assert(main_framebuffer.color_buffer.surface.image);
 
+    GX2CalcSurfaceSizeAndAlignment(&main_framebuffer.depth_buffer.surface);
     GX2InitDepthBufferRegs(&main_framebuffer.depth_buffer);
 
-    return 0;
-}
-
-static uint32_t gfx_gx2_proc_callback_released(void *context) {
-    GX2DrawDone();
-
-    GX2RDestroySurfaceEx(&main_framebuffer.color_buffer.surface, GX2R_RESOURCE_BIND_NONE);
-    GX2RDestroySurfaceEx(&main_framebuffer.depth_buffer.surface, GX2R_RESOURCE_BIND_NONE);
-
-    return 0;
-}
-
-static void gfx_gx2_init(void) {
-    gfx_gx2_init_framebuffer(&main_framebuffer, tv_width, tv_height);
+    main_framebuffer.depth_buffer.surface.image = _GfxHeapAllocMEM1(main_framebuffer.depth_buffer.surface.imageSize, main_framebuffer.depth_buffer.surface.alignment);
+    assert(main_framebuffer.depth_buffer.surface.image);
 
     main_framebuffer.imtex.Texture = &main_framebuffer.texture;
     main_framebuffer.imtex.Sampler = &main_framebuffer.sampler;
-
-    // allocate main framebuffers from mem1 while in foreground
-    ProcUIRegisterCallback(PROCUI_CALLBACK_ACQUIRE, gfx_gx2_proc_callback_acquired, nullptr, 101);
-    ProcUIRegisterCallback(PROCUI_CALLBACK_RELEASE, gfx_gx2_proc_callback_released, nullptr, 101);
-
-    gfx_gx2_proc_callback_acquired(nullptr);
 
     // create a linear aligned copy of the depth buffer to read pixels to
     memcpy(&depthReadBuffer, &main_framebuffer.depth_buffer, sizeof(GX2DepthBuffer));
@@ -463,7 +445,7 @@ static void gfx_gx2_init(void) {
 
     GX2CalcSurfaceSizeAndAlignment(&depthReadBuffer.surface);
 
-    depthReadBuffer.surface.image = memalign(depthReadBuffer.surface.alignment, depthReadBuffer.surface.imageSize);
+    depthReadBuffer.surface.image = _GfxHeapAllocMEM1(depthReadBuffer.surface.alignment, depthReadBuffer.surface.imageSize);
     assert(depthReadBuffer.surface.image);
     GX2Invalidate(GX2_INVALIDATE_MODE_CPU | GX2_INVALIDATE_MODE_DEPTH_BUFFER, depthReadBuffer.surface.image, depthReadBuffer.surface.imageSize);
 
@@ -471,12 +453,6 @@ static void gfx_gx2_init(void) {
     GX2SetDepthBuffer(&main_framebuffer.depth_buffer);
 
     current_framebuffer = &main_framebuffer;
-
-    current_viewport_width = tv_width;
-    current_viewport_height = tv_height;
-
-    current_scissor_width = tv_width;
-    current_scissor_height = tv_height;
 
     // allocate draw buffers
     for (int i = 0; i < 1024; ++i) {
@@ -498,13 +474,21 @@ static void gfx_gx2_init(void) {
 }
 
 void gfx_gx2_shutdown(void) {
+    GX2DrawDone();
+
     if (depthReadBuffer.surface.image) {
-        free(depthReadBuffer.surface.image);
+        _GfxHeapFreeMEM1(depthReadBuffer.surface.image);
         depthReadBuffer.surface.image = nullptr;
     }
 
-    if (has_foreground) {
-        gfx_gx2_proc_callback_released(nullptr);
+    if (main_framebuffer.color_buffer.surface.image) {
+        _GfxHeapFreeMEM1(main_framebuffer.color_buffer.surface.image);
+        main_framebuffer.color_buffer.surface.image = nullptr;
+    }
+
+    if (main_framebuffer.depth_buffer.surface.image) {
+        _GfxHeapFreeMEM1(main_framebuffer.depth_buffer.surface.image);
+        main_framebuffer.depth_buffer.surface.image = nullptr;
     }
 
     for (int i = 0; i < 1024; ++i) {
@@ -581,27 +565,49 @@ static void gfx_gx2_update_framebuffer_parameters(int fb, uint32_t width, uint32
         return;
     }
 
+    if (buffer->texture.surface.width == width &&
+        buffer->texture.surface.height == height) {
+        return;
+    }
+
+    // make sure the GPU no longer writes to the buffer
+    GX2DrawDone();
+
     if (buffer->texture.surface.image) {
-        assert(GX2RDestroySurfaceEx(&buffer->texture.surface, GX2R_RESOURCE_BIND_NONE));
+        if (buffer->colorBufferMem1) {
+            _GfxHeapFreeMEM1(buffer->texture.surface.image);
+        } else {
+            free(buffer->texture.surface.image);
+        }
         buffer->texture.surface.image = nullptr;
     }
 
     if (buffer->depth_buffer.surface.image) {
-        assert(GX2RDestroySurfaceEx(&buffer->depth_buffer.surface, GX2R_RESOURCE_BIND_NONE));
+        if (buffer->depthBufferMem1) {
+            _GfxHeapFreeMEM1(buffer->depth_buffer.surface.image);
+        } else {
+            free(buffer->depth_buffer.surface.image);
+        }
         buffer->depth_buffer.surface.image = nullptr;
     }
 
     gfx_gx2_init_framebuffer(buffer, width, height);
 
+    GX2CalcSurfaceSizeAndAlignment(&buffer->depth_buffer.surface);
+    GX2InitDepthBufferRegs(&buffer->depth_buffer);
+
+    buffer->depth_buffer.surface.image = _GfxHeapAllocMEM1(buffer->depth_buffer.surface.imageSize, buffer->depth_buffer.surface.alignment);
+    // fall back to mem2
+    if (!buffer->depth_buffer.surface.image) {
+        buffer->depth_buffer.surface.image = memalign(buffer->depth_buffer.surface.alignment, buffer->depth_buffer.surface.imageSize);
+        buffer->depthBufferMem1 = false;
+    } else {
+        buffer->depthBufferMem1 = true;
+    }
+    assert(buffer->depth_buffer.surface.image);
+
     GX2CalcSurfaceSizeAndAlignment(&buffer->color_buffer.surface);
     GX2InitColorBufferRegs(&buffer->color_buffer);
-
-    assert(GX2RCreateSurface(&buffer->depth_buffer.surface, GX2R_RESOURCE_BIND_DEPTH_BUFFER 
-        | GX2R_RESOURCE_USAGE_GPU_READ
-        | GX2R_RESOURCE_USAGE_GPU_WRITE
-        | GX2R_RESOURCE_USAGE_FORCE_MEM2));
-
-    GX2InitDepthBufferRegs(&buffer->depth_buffer);
 
     memset(&buffer->texture, 0, sizeof(GX2Texture));
     buffer->texture.surface.use = GX2_SURFACE_USE_TEXTURE;
@@ -619,15 +625,22 @@ static void gfx_gx2_update_framebuffer_parameters(int fb, uint32_t width, uint32
     buffer->texture.viewNumSlices = 1;
     buffer->texture.compMap = GX2_COMP_MAP(GX2_SQ_SEL_R, GX2_SQ_SEL_G, GX2_SQ_SEL_B, GX2_SQ_SEL_A);
 
-    assert(GX2RCreateSurface(&buffer->texture.surface, GX2R_RESOURCE_BIND_TEXTURE
-        | GX2R_RESOURCE_USAGE_CPU_WRITE
-        | GX2R_RESOURCE_USAGE_GPU_WRITE
-        | GX2R_RESOURCE_USAGE_GPU_READ));
-
+    GX2CalcSurfaceSizeAndAlignment(&buffer->texture.surface);
     GX2InitTextureRegs(&buffer->texture);
 
     // the texture and color buffer share a buffer
     assert(buffer->color_buffer.surface.imageSize == buffer->texture.surface.imageSize);
+
+    buffer->texture.surface.image = _GfxHeapAllocMEM1(buffer->texture.surface.imageSize, buffer->texture.surface.alignment);
+    // fall back to mem2
+    if (!buffer->texture.surface.image) {
+        buffer->texture.surface.image = memalign(buffer->texture.surface.alignment, buffer->texture.surface.imageSize);
+        buffer->colorBufferMem1 = false;
+    } else {
+        buffer->colorBufferMem1 = true;
+    }
+    assert(buffer->texture.surface.image);
+
     buffer->color_buffer.surface.image = buffer->texture.surface.image;
 }
 
@@ -731,9 +744,9 @@ static std::unordered_map<std::pair<float, float>, uint16_t, hash_pair_ff> gfx_g
         // copy the pixel to the depthReadBuffer
         GX2Rect srcRect = { 
             (int32_t) c.first,
-            (int32_t) main_framebuffer.depth_buffer.surface.height - (int32_t) c.second,
+            (int32_t) buffer->depth_buffer.surface.height - (int32_t) c.second,
             (int32_t) c.first + 1,
-            (int32_t) (main_framebuffer.depth_buffer.surface.height - (int32_t) c.second) + 1
+            (int32_t) (buffer->depth_buffer.surface.height - (int32_t) c.second) + 1
         };
         GX2Point dstPoint = { 0, 0 };
         GX2CopySurfaceEx(&buffer->depth_buffer.surface, 0, 0, &depthReadBuffer.surface, 0, 0, 1, &srcRect, &dstPoint);

@@ -2,10 +2,12 @@
 
 #include <stdio.h>
 #include <time.h>
+#include <malloc.h>
 
 #include <coreinit/time.h>
 #include <coreinit/thread.h>
 #include <coreinit/foreground.h>
+#include <coreinit/memory.h>
 
 #include <gx2/state.h>
 #include <gx2/context.h>
@@ -17,6 +19,7 @@
 
 #include <whb/proc.h>
 #include <proc_ui/procui.h>
+#include <proc_ui/memory.h>
 
 #ifndef _LANGUAGE_C
 #define _LANGUAGE_C
@@ -26,19 +29,21 @@
 #include "gfx_window_manager_api.h"
 #include "gfx_pc.h"
 #include "gfx_gx2.h"
+#include "gfx_wiiu.h"
 #include "gfx_heap.h"
 
 #include "../../ImGuiImpl.h"
 
 bool has_foreground = false;
+static void *mem1_storage = nullptr;
 static void *command_buffer_pool = nullptr;
 GX2ContextState *context_state = nullptr;
 
 static GX2TVRenderMode tv_render_mode;
 static void *tv_scan_buffer = nullptr;
 static uint32_t tv_scan_buffer_size = 0;
-uint32_t tv_width;
-uint32_t tv_height;
+static uint32_t tv_width;
+static uint32_t tv_height;
 
 static GX2DrcRenderMode drc_render_mode;
 static void *drc_scan_buffer = nullptr;
@@ -49,44 +54,18 @@ static int frame_divisor = 1;
 // for DrawFramestats
 uint32_t frametime = 0;
 
-static void *gfx_wiiu_gx2r_alloc(GX2RResourceFlags flags, uint32_t size, uint32_t alignment) {
-    // Color, depth, scan buffers all belong in MEM1
-    if ((flags & (GX2R_RESOURCE_BIND_COLOR_BUFFER
-                | GX2R_RESOURCE_BIND_DEPTH_BUFFER
-                | GX2R_RESOURCE_BIND_SCAN_BUFFER
-                | GX2R_RESOURCE_USAGE_FORCE_MEM1))
-        && !(flags & GX2R_RESOURCE_USAGE_FORCE_MEM2)) {
-        return GfxHeapAllocMEM1(size, alignment);
-    } else {
-        return GfxHeapAllocMEM2(size, alignment);
-    }
-}
-
-static void gfx_wiiu_gx2r_free(GX2RResourceFlags flags, void *block) {
-    if ((flags & (GX2R_RESOURCE_BIND_COLOR_BUFFER
-                | GX2R_RESOURCE_BIND_DEPTH_BUFFER
-                | GX2R_RESOURCE_BIND_SCAN_BUFFER
-                | GX2R_RESOURCE_USAGE_FORCE_MEM1))
-        && !(flags & GX2R_RESOURCE_USAGE_FORCE_MEM2)) {
-        return GfxHeapFreeMEM1(block);
-    } else {
-        return GfxHeapFreeMEM2(block);
-    }
-}
-
 static uint32_t gfx_wiiu_proc_callback_acquired(void *context) {
     has_foreground = true;
 
-    assert(GfxHeapInitMEM1());
-    assert(GfxHeapInitForeground());
+    assert(_GfxHeapInitForeground());
 
-    tv_scan_buffer = GfxHeapAllocForeground(tv_scan_buffer_size, GX2_SCAN_BUFFER_ALIGNMENT);
+    tv_scan_buffer = _GfxHeapAllocForeground(tv_scan_buffer_size, GX2_SCAN_BUFFER_ALIGNMENT);
     assert(tv_scan_buffer);
 
     GX2Invalidate(GX2_INVALIDATE_MODE_CPU, tv_scan_buffer, tv_scan_buffer_size);
     GX2SetTVBuffer(tv_scan_buffer, tv_scan_buffer_size, tv_render_mode, GX2_SURFACE_FORMAT_UNORM_R8_G8_B8_A8, GX2_BUFFERING_MODE_DOUBLE);
 
-    drc_scan_buffer = GfxHeapAllocForeground(drc_scan_buffer_size, GX2_SCAN_BUFFER_ALIGNMENT);
+    drc_scan_buffer = _GfxHeapAllocForeground(drc_scan_buffer_size, GX2_SCAN_BUFFER_ALIGNMENT);
     assert(drc_scan_buffer);
 
     GX2Invalidate(GX2_INVALIDATE_MODE_CPU, drc_scan_buffer, drc_scan_buffer_size);
@@ -97,17 +76,16 @@ static uint32_t gfx_wiiu_proc_callback_acquired(void *context) {
 
 static uint32_t gfx_wiiu_proc_callback_released(void* context) {
     if (tv_scan_buffer) {
-        GfxHeapFreeForeground(tv_scan_buffer);
+        _GfxHeapFreeForeground(tv_scan_buffer);
         tv_scan_buffer = nullptr;
     }
 
     if (drc_scan_buffer) {
-        GfxHeapFreeForeground(drc_scan_buffer);
+        _GfxHeapFreeForeground(drc_scan_buffer);
         drc_scan_buffer = nullptr;
     }
 
-    GfxHeapDestroyMEM1();
-    GfxHeapDestroyForeground();
+    _GfxHeapDestroyForeground();
 
     has_foreground = false;
 
@@ -117,7 +95,16 @@ static uint32_t gfx_wiiu_proc_callback_released(void* context) {
 static void gfx_wiiu_init(const char *game_name, bool start_in_fullscreen, uint32_t width, uint32_t height) {
     WHBProcInit();
 
-    command_buffer_pool = GfxHeapAllocMEM2(0x400000, GX2_COMMAND_BUFFER_ALIGNMENT);
+    uint32_t mem1_addr, mem1_size;
+    OSGetMemBound(OS_MEM1, &mem1_addr, &mem1_size);
+    mem1_storage = memalign(0x40, mem1_size);
+    assert(mem1_storage);
+
+    ProcUISetMEM1Storage(mem1_storage, mem1_size);
+
+    assert(_GfxHeapInitMEM1());
+
+    command_buffer_pool = memalign(GX2_COMMAND_BUFFER_ALIGNMENT, 0x400000);
     assert(command_buffer_pool);
 
     uint32_t initAttribs[] = {
@@ -156,14 +143,12 @@ static void gfx_wiiu_init(const char *game_name, bool start_in_fullscreen, uint3
     GX2CalcTVSize(tv_render_mode, GX2_SURFACE_FORMAT_UNORM_R8_G8_B8_A8, GX2_BUFFERING_MODE_DOUBLE, &tv_scan_buffer_size, &unk);
     GX2CalcDRCSize(drc_render_mode, GX2_SURFACE_FORMAT_UNORM_R8_G8_B8_A8, GX2_BUFFERING_MODE_DOUBLE, &drc_scan_buffer_size, &unk);
 
-    GX2RSetAllocator(&gfx_wiiu_gx2r_alloc, &gfx_wiiu_gx2r_free);
-
     ProcUIRegisterCallback(PROCUI_CALLBACK_ACQUIRE, gfx_wiiu_proc_callback_acquired, nullptr, 100);
     ProcUIRegisterCallback(PROCUI_CALLBACK_RELEASE, gfx_wiiu_proc_callback_released, nullptr, 100);
 
     gfx_wiiu_proc_callback_acquired(nullptr);
 
-    context_state = (GX2ContextState *) GfxHeapAllocMEM2(sizeof(GX2ContextState), GX2_CONTEXT_STATE_ALIGNMENT);
+    context_state = (GX2ContextState *) memalign(GX2_CONTEXT_STATE_ALIGNMENT, sizeof(GX2ContextState));
     assert(context_state);
 
     GX2SetupContextStateEx(context_state, TRUE);
@@ -174,33 +159,36 @@ static void gfx_wiiu_init(const char *game_name, bool start_in_fullscreen, uint3
 
     GX2SetSwapInterval(frame_divisor);
 
-    gfx_current_dimensions.width = gfx_current_game_window_viewport.width = tv_width;
-    gfx_current_dimensions.height = gfx_current_game_window_viewport.height = tv_height;
+    gfx_current_dimensions.width = gfx_current_game_window_viewport.width = DEFAULT_FB_WIDTH;
+    gfx_current_dimensions.height = gfx_current_game_window_viewport.height = DEFAULT_FB_HEIGHT;
 
     SohImGui::WindowImpl window_impl;
     window_impl.backend = SohImGui::Backend::GX2;
-    window_impl.gx2.width = tv_width;
-    window_impl.gx2.height = tv_height;
+    window_impl.gx2.width = DEFAULT_FB_WIDTH;
+    window_impl.gx2.height = DEFAULT_FB_HEIGHT;
     SohImGui::Init(window_impl);
 }
 
 static void gfx_wiiu_shutdown(void) {
     if (has_foreground) {
         gfx_wiiu_proc_callback_released(nullptr);
+        _GfxHeapDestroyMEM1();
     }
 
-    GX2RSetAllocator(nullptr, nullptr);
     GX2Shutdown();
 
     if (context_state) {
-        GfxHeapFreeMEM2(context_state);
+        free(context_state);
         context_state = nullptr;
     }
 
     if (command_buffer_pool) {
-        GfxHeapFreeMEM2(command_buffer_pool);
+        free(command_buffer_pool);
         command_buffer_pool = nullptr;
     }
+
+    ProcUISetMEM1Storage(nullptr, 0);
+    free(mem1_storage);
 }
 
 void gfx_wiiu_set_context_state(void) {

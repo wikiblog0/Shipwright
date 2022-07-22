@@ -1,4 +1,4 @@
-// from https://github.com/devkitPro/wut/blob/master/libraries/libwhb/src/gfx_heap.h
+// adapted from https://github.com/devkitPro/wut/blob/master/libraries/libwhb/src/gfx_heap.h
 
 #pragma once
 #include <wut.h>
@@ -8,37 +8,30 @@ extern "C" {
 #endif
 
 BOOL
-GfxHeapInitMEM1();
+_GfxHeapInitMEM1();
 
 BOOL
-GfxHeapDestroyMEM1();
+_GfxHeapDestroyMEM1();
 
 BOOL
-GfxHeapInitForeground();
+_GfxHeapInitForeground();
 
 BOOL
-GfxHeapDestroyForeground();
+_GfxHeapDestroyForeground();
 
 void *
-GfxHeapAllocMEM1(uint32_t size,
+_GfxHeapAllocMEM1(uint32_t size,
                  uint32_t alignment);
 
 void
-GfxHeapFreeMEM1(void *block);
+_GfxHeapFreeMEM1(void *block);
 
 void *
-GfxHeapAllocForeground(uint32_t size,
+_GfxHeapAllocForeground(uint32_t size,
                        uint32_t alignment);
 
 void
-GfxHeapFreeForeground(void *block);
-
-void *
-GfxHeapAllocMEM2(uint32_t size,
-                 uint32_t alignment);
-
-void
-GfxHeapFreeMEM2(void *block);
+_GfxHeapFreeForeground(void *block);
 
 #ifdef __cplusplus
 }

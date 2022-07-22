@@ -28,7 +28,7 @@
 #include "gfx_gx2.h"
 #include "gfx_heap.h"
 
-#include "../../GameSettings.h"
+#include "../../ImGuiImpl.h"
 
 bool has_foreground = false;
 static void *command_buffer_pool = nullptr;
@@ -177,9 +177,11 @@ static void gfx_wiiu_init(const char *game_name, bool start_in_fullscreen, uint3
     gfx_current_dimensions.width = gfx_current_game_window_viewport.width = tv_width;
     gfx_current_dimensions.height = gfx_current_game_window_viewport.height = tv_height;
 
-    // This is usually done in SohImGui::Init
-    Game::LoadSettings();
-    Game::InitSettings();
+    SohImGui::WindowImpl window_impl;
+    window_impl.backend = SohImGui::Backend::GX2;
+    window_impl.gx2.width = tv_width;
+    window_impl.gx2.height = tv_height;
+    SohImGui::Init(window_impl);
 }
 
 static void gfx_wiiu_shutdown(void) {

@@ -6,18 +6,10 @@
 #include <functional>
 #include "Lib/ImGui/imgui.h"
 
-#ifndef NO_IMGUI
 #define LOG(msg, ...) SohImGui::console->Append("Main", Priority::LOG_LVL, msg, ##__VA_ARGS__)
 #define INFO(msg, ...) SohImGui::console->Append("Main", Priority::INFO_LVL, msg, ##__VA_ARGS__)
 #define WARNING(msg, ...) SohImGui::console->Append("Main", Priority::WARNING_LVL, msg, ##__VA_ARGS__)
 #define ERROR(msg, ...) SohImGui::console->Append("Main", Priority::ERROR_LVL, msg, ##__VA_ARGS__)
-#else
-// don't bother logging to the console if it's not displayed
-#define LOG(msg, ...)
-#define INFO(msg, ...)
-#define WARNING(msg, ...)
-#define ERROR(msg, ...)
-#endif
 
 #define CMD_SUCCESS true
 #define CMD_FAILED false

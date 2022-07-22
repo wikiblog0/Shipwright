@@ -58,10 +58,8 @@ SaveManager* SaveManager::Instance;
 
 OTRGlobals::OTRGlobals() {
     context = Ship::GlobalCtx2::CreateInstance("Ship of Harkinian");
-#ifndef __WIIU__
     gSaveStateMgr = std::make_shared<SaveStateMgr>();
     gRandomizer = std::make_shared<Randomizer>();
-#endif
     context->GetWindow()->Init();
 }
 
@@ -125,12 +123,10 @@ extern "C" void InitOTR() {
     OTRMessage_Init();
     OTRAudio_Init();
     DebugConsole_Init();
-#ifndef __WIIU__
     InitCosmeticsEditor();
     Debug_Init();
     Rando_Init();
     InitItemTracker();
-#endif
     OTRExtScanner();
 }
 
@@ -466,15 +462,9 @@ extern "C" char* ResourceMgr_LoadTexOrDListByName(const char* filePath) {
         return ResourceMgr_LoadTexByName(filePath);
 }
 
-#ifdef NO_IMGUI
-extern "C" Sprite* GetSeedTexture(uint8_t index) {
-    return NULL;
-}
-#else
 extern "C" Sprite* GetSeedTexture(uint8_t index) {
     return Randomizer::GetSeedTexture(index);
 }
-#endif
 
 extern "C" char* ResourceMgr_LoadPlayerAnimByName(const char* animPath) {
     auto anim = std::static_pointer_cast<Ship::PlayerAnimation>(
@@ -1393,39 +1383,6 @@ extern "C" void* getN64WeirdFrame(s32 i) {
     return &weirdFrameBytes[i + sizeof(n64WeirdFrames)];
 }
 
-#ifdef NO_IMGUI
-extern "C" s16 Randomizer_GetItemModelFromId(s16 itemId) {
-    return GI_NONE;
-}
-
-extern "C" s32 Randomizer_GetItemIDFromGetItemID(s32 getItemId) {
-    return -1;
-}
-
-extern "C" void Randomizer_LoadSettings(const char* spoilerFileName) {
-
-}
-
-extern "C" void Randomizer_LoadHintLocations(const char* spoilerFileName) {
-
-}
-
-extern "C" void Randomizer_LoadItemLocations(const char* spoilerFileName, bool silent) {
-
-}
-
-extern "C" bool SpoilerFileExists(const char* spoilerFileName) {
-    return false;
-}
-
-extern "C" u8 Randomizer_GetSettingValue(RandomizerSettingKey randoSettingKey) {
-    return 0;
-}
-
-extern "C" RandomizerCheck Randomizer_GetCheckFromActor(s16 sceneNum, s16 actorId, s16 actorParams) {
-    return RC_UNKNOWN_CHECK;
-}
-#else
 extern "C" s16 Randomizer_GetItemModelFromId(s16 itemId) {
     return OTRGlobals::Instance->gRandomizer->GetItemModelFromId(itemId);
 }
@@ -1457,7 +1414,6 @@ extern "C" u8 Randomizer_GetSettingValue(RandomizerSettingKey randoSettingKey) {
 extern "C" RandomizerCheck Randomizer_GetCheckFromActor(s16 sceneNum, s16 actorId, s16 actorParams) {
     return OTRGlobals::Instance->gRandomizer->GetCheckFromActor(sceneNum, actorId, actorParams);
 }
-#endif
 
 extern "C" int CopyScrubMessage(u16 scrubTextId, char* buffer, const int maxBufferSize) {
     std::string scrubText("");
@@ -1531,31 +1487,6 @@ extern "C" int CopyScrubMessage(u16 scrubTextId, char* buffer, const int maxBuff
     return CopyStringToCharBuffer(scrubText, buffer, maxBufferSize);
 }
 
-#ifdef NO_IMGUI
-extern "C" int Randomizer_CopyAltarMessage(char* buffer, const int maxBufferSize) {
-    return -1;
-}
-
-extern "C" int Randomizer_CopyGanonText(char* buffer, const int maxBufferSize) {
-    return -1;
-}
-
-extern "C" int Randomizer_CopyGanonHintText(char* buffer, const int maxBufferSize) {
-    return -1;
-}
-
-extern "C" int Randomizer_CopyHintFromCheck(RandomizerCheck check, char* buffer, const int maxBufferSize) {
-    return -1;
-}
-
-extern "C" s32 Randomizer_GetRandomizedItemId(GetItemID ogId, s16 actorId, s16 actorParams, s16 sceneNum) {
-    return -1;
-}
-
-extern "C" s32 Randomizer_GetItemIdFromKnownCheck(RandomizerCheck randomizerCheck, GetItemID ogId) {
-    return -1;
-}
-#else
 extern "C" int Randomizer_CopyAltarMessage(char* buffer, const int maxBufferSize) {
     const std::string& altarText = (LINK_IS_ADULT) ? OTRGlobals::Instance->gRandomizer->GetAdultAltarText()
                                                    : OTRGlobals::Instance->gRandomizer->GetChildAltarText();
@@ -1586,4 +1517,3 @@ extern "C" s32 Randomizer_GetRandomizedItemId(GetItemID ogId, s16 actorId, s16 a
 extern "C" s32 Randomizer_GetItemIdFromKnownCheck(RandomizerCheck randomizerCheck, GetItemID ogId) {
     return OTRGlobals::Instance->gRandomizer->GetRandomizedItemIdFromKnownCheck(randomizerCheck, ogId);
 }
-#endif

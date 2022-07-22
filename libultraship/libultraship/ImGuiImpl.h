@@ -5,6 +5,11 @@
 #include "Console.h"
 #include "InputEditor.h"
 
+#ifdef __WIIU__
+#include <vpad/input.h>
+#include <padscore/kpad.h>
+#endif
+
 struct GameAsset {
     uint32_t textureId;
     int width;
@@ -14,7 +19,8 @@ struct GameAsset {
 namespace SohImGui {
     enum class Backend {
         DX11,
-        SDL
+        SDL,
+        GX2,
     };
 
     enum class Dialogues {
@@ -35,6 +41,10 @@ namespace SohImGui {
                 void* window;
                 void* context;
             } sdl;
+            struct {
+                uint32_t width;
+                uint32_t height;
+            } gx2;
         };
     } WindowImpl;
 
@@ -58,6 +68,18 @@ namespace SohImGui {
         bool enabled;
         WindowDrawFunc drawFunc;
     } CustomWindow;
+
+#ifdef __WIIU__
+    struct ControllerInput {
+        VPADStatus vpad;
+        bool has_vpad;
+        KPADStatus kpad[4];
+        bool has_kpad[4];
+    };
+    extern ControllerInput controllerInput;
+    extern bool hasKeyboardOverlay;
+    extern bool hasOverlay;
+#endif
 
     extern Console* console;
     extern Ship::InputEditor* controller;

@@ -2670,8 +2670,8 @@ void gfx_init(struct GfxWindowManagerAPI *wapi, struct GfxRenderingAPI *rapi, co
     gfx_wapi->init(game_name, start_in_fullscreen, width, height);
     gfx_rapi->init();
     gfx_rapi->update_framebuffer_parameters(0, width, height, 1, false, true, true, true);
-#ifndef __WIIU__ // WIIU overrides them in gfx_init for now
     gfx_current_dimensions.internal_mul = 1;
+#ifndef __WIIU__ // Wii U overrides them in gfx_wapi->init to match framebuffer size
     gfx_current_dimensions.width = width;
     gfx_current_dimensions.height = height;
 #endif
@@ -2725,9 +2725,7 @@ void gfx_start_frame(void) {
     gfx_wapi->handle_events();
     gfx_wapi->get_dimensions(&gfx_current_window_dimensions.width, &gfx_current_window_dimensions.height);
 
-#ifndef NO_IMGUI
     SohImGui::DrawMainMenuAndCalculateGameSize();
-#endif
     has_drawn_imgui_menu = true;
     if (gfx_current_dimensions.height == 0) {
         // Avoid division by zero
@@ -2776,22 +2774,18 @@ void gfx_run(Gfx *commands, const std::unordered_map<Mtx *, MtxF>& mtx_replaceme
 
     if (!gfx_wapi->start_frame()) {
         dropped_frame = true;
-#ifndef NO_IMGUI
         if (has_drawn_imgui_menu) {
             SohImGui::DrawFramebufferAndGameInput();
             SohImGui::CancelFrame();
             has_drawn_imgui_menu = false;
         }
-#endif
         return;
     }
     dropped_frame = false;
 
-#ifndef NO_IMGUI
     if (!has_drawn_imgui_menu) {
         SohImGui::DrawMainMenuAndCalculateGameSize();
     }
-#endif
 
     current_mtx_replacements = &mtx_replacements;
 
@@ -2824,10 +2818,8 @@ void gfx_run(Gfx *commands, const std::unordered_map<Mtx *, MtxF>& mtx_replaceme
         }
     }
 
-#ifndef NO_IMGUI
     SohImGui::DrawFramebufferAndGameInput();
     SohImGui::Render();
-#endif
 
     double t1 = gfx_wapi->get_time();
     //printf("Process %f %f\n", t1, t1 - t0);

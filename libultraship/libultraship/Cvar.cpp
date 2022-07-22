@@ -5,13 +5,7 @@
 #include <memory>
 #include <utility>
 #include <PR/ultra64/gbi.h>
-
-#ifdef NO_IMGUI
-#include <string.h>
-#define ImStrdup strdup
-#else
 #include "imgui_internal.h"
-#endif
 
 std::map<std::string, std::unique_ptr<CVar>, std::less<>> cvars;
 

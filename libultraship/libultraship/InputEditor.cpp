@@ -108,6 +108,142 @@ namespace Ship {
 			Window::ControllerApi->ScanPhysicalDevices();
 		}
 
+#ifdef __WIIU__ // TODO this whole menu is broken with the Wii U's 2x scaling, manually scaled for now
+		SohImGui::BeginGroupPanel("Buttons", ImVec2(150 * 2, 20 * 2));
+			DrawButton("A", BTN_A);
+			DrawButton("B", BTN_B);
+			DrawButton("L", BTN_L);
+			DrawButton("R", BTN_R);
+			DrawButton("Z", BTN_Z);
+			DrawButton("START", BTN_START);
+			SEPARATION();
+		SohImGui::EndGroupPanel((IsKeyboard ? 7.0f : 48.0f) * 2);
+		ImGui::SameLine();
+		SohImGui::BeginGroupPanel("Digital Pad", ImVec2(150 * 2, 20 * 2));
+			DrawButton("Up", BTN_DUP);
+			DrawButton("Down", BTN_DDOWN);
+			DrawButton("Left", BTN_DLEFT);
+			DrawButton("Right", BTN_DRIGHT);
+			SEPARATION();
+		SohImGui::EndGroupPanel((IsKeyboard ? 53.0f : 94.0f) * 2);
+		ImGui::SameLine();
+		SohImGui::BeginGroupPanel("Analog Stick", ImVec2(150 * 2, 20 * 2));
+			DrawButton("Up", BTN_STICKUP);
+			DrawButton("Down", BTN_STICKDOWN);
+			DrawButton("Left", BTN_STICKLEFT);
+			DrawButton("Right", BTN_STICKRIGHT);
+
+			if (!IsKeyboard) {
+				ImGui::SetCursorPosX(ImGui::GetCursorPosX() + 8);
+				DrawVirtualStick("##MainVirtualStick", ImVec2(Backend->wStickX, Backend->wStickY));
+				ImGui::SameLine();
+
+				ImGui::SetCursorPosX(ImGui::GetCursorPosX() + 5);
+
+				ImGui::BeginChild("##MSInput", ImVec2(90 * 2, 50 * 2), false);
+				ImGui::Text("Deadzone");
+				ImGui::PushItemWidth(80);
+				ImGui::InputFloat("##MDZone", &profile.Thresholds[LEFT_STICK], 1.0f, 0.0f, "%.0f");
+				ImGui::PopItemWidth();
+				ImGui::EndChild();
+			} else {
+				ImGui::Dummy(ImVec2(0, 6 * 2));
+			}
+		SohImGui::EndGroupPanel((IsKeyboard ? 52.0f : 24.0f) * 2);
+		ImGui::SameLine();
+
+		if (!IsKeyboard) {
+			ImGui::SameLine();
+			SohImGui::BeginGroupPanel("Camera Stick", ImVec2(150 * 2, 20 * 2));
+				DrawButton("Up", BTN_VSTICKUP);
+				DrawButton("Down", BTN_VSTICKDOWN);
+				DrawButton("Left", BTN_VSTICKLEFT);
+				DrawButton("Right", BTN_VSTICKRIGHT);
+
+				ImGui::SetCursorPosX(ImGui::GetCursorPosX() + 8);
+				DrawVirtualStick("##CameraVirtualStick", ImVec2(Backend->wCamX / sensitivity, Backend->wCamY / sensitivity));
+
+				ImGui::SameLine();
+				ImGui::SetCursorPosX(ImGui::GetCursorPosX() + 5);
+				ImGui::BeginChild("##CSInput", ImVec2(90 * 2, 85 * 2), false);
+					ImGui::Text("Deadzone");
+					ImGui::PushItemWidth(80);
+					ImGui::InputFloat("##MDZone", &profile.Thresholds[RIGHT_STICK], 1.0f, 0.0f, "%.0f");
+					ImGui::PopItemWidth();
+					ImGui::Text("Sensitivity");
+					ImGui::PushItemWidth(80);
+					ImGui::InputFloat("##MSensitivity", &profile.Thresholds[SENSITIVITY], 1.0f, 0.0f, "%.0f");
+					ImGui::PopItemWidth();
+				ImGui::EndChild();
+			SohImGui::EndGroupPanel(14.0f * 2);
+		}
+
+		if(Backend->CanGyro()) {
+			ImGui::SameLine();
+
+			SohImGui::BeginGroupPanel("Gyro Options", ImVec2(175 * 2, 20 * 2));
+			float cursorX = ImGui::GetCursorPosX() + 5;
+			ImGui::SetCursorPosX(cursorX);
+			ImGui::Checkbox("Enable Gyro", &profile.UseGyro);
+			ImGui::SetCursorPosX(cursorX);
+			ImGui::Text("Gyro Sensitivity: %d%%", static_cast<int>(100.0f * profile.Thresholds[GYRO_SENSITIVITY]));
+			ImGui::PushItemWidth(135.0f);
+			ImGui::SetCursorPosX(cursorX);
+			ImGui::SliderFloat("##GSensitivity", &profile.Thresholds[GYRO_SENSITIVITY], 0.0f, 1.0f, "");
+			ImGui::PopItemWidth();
+			ImGui::Dummy(ImVec2(0, 1));
+			ImGui::SetCursorPosX(cursorX);
+			if (ImGui::Button("Recalibrate Gyro##RGyro")) {
+				profile.Thresholds[DRIFT_X] = 0.0f;
+				profile.Thresholds[DRIFT_Y] = 0.0f;
+			}
+			ImGui::SetCursorPosX(cursorX);
+			DrawVirtualStick("##GyroPreview", ImVec2(-10.0f * Backend->wGyroY, 10.0f * Backend->wGyroX));
+
+			ImGui::SameLine();
+			ImGui::SetCursorPosX(ImGui::GetCursorPosX() + 5);
+			ImGui::BeginChild("##GyInput", ImVec2(90 * 2, 85 * 2), false);
+			ImGui::Text("Drift X");
+			ImGui::PushItemWidth(80);
+			ImGui::InputFloat("##GDriftX", &profile.Thresholds[DRIFT_X], 1.0f, 0.0f, "%.1f");
+			ImGui::PopItemWidth();
+			ImGui::Text("Drift Y");
+			ImGui::PushItemWidth(80);
+			ImGui::InputFloat("##GDriftY", &profile.Thresholds[DRIFT_Y], 1.0f, 0.0f, "%.1f");
+			ImGui::PopItemWidth();
+			ImGui::EndChild();
+			SohImGui::EndGroupPanel(14.0f * 2);
+		}
+
+		ImGui::SameLine();
+
+		const ImVec2 cursor = ImGui::GetCursorPos();
+
+		SohImGui::BeginGroupPanel("C-Buttons", ImVec2(158 * 2, 20 * 2));
+			DrawButton("Up", BTN_CUP);
+			DrawButton("Down", BTN_CDOWN);
+			DrawButton("Left", BTN_CLEFT);
+			DrawButton("Right", BTN_CRIGHT);
+			ImGui::Dummy(ImVec2(0, 5));
+		SohImGui::EndGroupPanel();
+
+		ImGui::SetCursorPosX(cursor.x);
+		ImGui::SetCursorPosY(cursor.y + (120 * 2));
+		SohImGui::BeginGroupPanel("Options", ImVec2(158 * 2, 20 * 2));
+			float cursorX = ImGui::GetCursorPosX() + 5;
+			ImGui::SetCursorPosX(cursorX);
+			ImGui::Checkbox("Rumble Enabled", &profile.UseRumble);
+			if (Backend->CanRumble()) {
+				ImGui::SetCursorPosX(cursorX);
+				ImGui::Text("Rumble Force: %d%%", static_cast<int>(100.0f * profile.RumbleStrength));
+				ImGui::SetCursorPosX(cursorX);
+				ImGui::PushItemWidth(135.0f * 2);
+				ImGui::SliderFloat("##RStrength", &profile.RumbleStrength, 0.0f, 1.0f, "");
+				ImGui::PopItemWidth();
+			}
+			ImGui::Dummy(ImVec2(0, 5));
+		SohImGui::EndGroupPanel((IsKeyboard ? 0.0f : 2.0f) * 2);
+#else
 		SohImGui::BeginGroupPanel("Buttons", ImVec2(150, 20));
 			DrawButton("A", BTN_A);
 			DrawButton("B", BTN_B);
@@ -242,6 +378,7 @@ namespace Ship {
 			}
 			ImGui::Dummy(ImVec2(0, 5));
 		SohImGui::EndGroupPanel(IsKeyboard ? 0.0f : 2.0f);
+#endif
 	}
 
 	void InputEditor::DrawHud() {
@@ -254,7 +391,12 @@ namespace Ship {
 			return;
 		}
 
+#ifdef __WIIU__
+		// Adjust for scaling
+		ImGui::SetNextWindowSizeConstraints(ImVec2(641 * 2, 250 * 2), ImVec2(1200 * 2, 290 * 2));
+#else
 		ImGui::SetNextWindowSizeConstraints(ImVec2(641, 250), ImVec2(1200, 290));
+#endif
 		//OTRTODO: Disable this stupid workaround ( ReadRawPress() only works when the window is on the main viewport )
 		ImGui::SetNextWindowViewport(ImGui::GetMainViewport()->ID);
 		ImGui::Begin("Controller Configuration", &this->Opened, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_AlwaysAutoResize);

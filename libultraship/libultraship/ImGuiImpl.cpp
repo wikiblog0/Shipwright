@@ -27,6 +27,15 @@
 #include "Lib/spdlog/include/spdlog/common.h"
 #include "Utils/StringHelper.h"
 
+#ifdef __WIIU__
+#include "Lib/ImGui/backends/wiiu/imgui_impl_gx2.h"
+#include "Lib/ImGui/backends/wiiu/imgui_impl_wiiu.h"
+
+#include <gx2/registers.h>
+
+void* gfx_gx2_texture_for_imgui(uint32_t texture_id);   
+#endif
+
 #ifdef ENABLE_OPENGL
 #include "Lib/ImGui/backends/imgui_impl_opengl3.h"
 #include "Lib/ImGui/backends/imgui_impl_sdl.h"
@@ -70,6 +79,12 @@ namespace SohImGui {
     bool needs_save = false;
     int lastBackendID = 0;
 
+#ifdef __WIIU__
+    ControllerInput controllerInput;
+    bool hasKeyboardOverlay = false;
+    bool hasOverlay = false;
+#endif
+
     const char* filters[3] = {
         "Three-Point",
         "Linear",
@@ -80,7 +95,11 @@ namespace SohImGui {
 #ifdef _WIN32
         { "dx11", "DirectX" },
 #endif
+#ifndef __WIIU__
         { "sdl", "OpenGL" }
+#else
+        { "wiiu", "GX2" }
+#endif
     };
 
 
@@ -126,9 +145,15 @@ namespace SohImGui {
 
     void ImGuiWMInit() {
         switch (impl.backend) {
+#ifdef __WIIU__
+        case Backend::GX2:
+            ImGui_ImplWiiU_Init();
+            break;
+#else
         case Backend::SDL:
             ImGui_ImplSDL2_InitForOpenGL(static_cast<SDL_Window*>(impl.sdl.window), impl.sdl.context);
             break;
+#endif
 #if defined(ENABLE_DX11) || defined(ENABLE_DX12)
         case Backend::DX11:
             ImGui_ImplWin32_Init(impl.dx11.window);
@@ -142,6 +167,11 @@ namespace SohImGui {
 
     void ImGuiBackendInit() {
         switch (impl.backend) {
+#ifdef __WIIU__
+        case Backend::GX2:
+            ImGui_ImplGX2_Init();
+            break;
+#else
         case Backend::SDL:
         #if defined(__APPLE__)
             ImGui_ImplOpenGL3_Init("#version 410 core");
@@ -149,6 +179,7 @@ namespace SohImGui {
             ImGui_ImplOpenGL3_Init("#version 120");
         #endif
             break;
+#endif
 
 #if defined(ENABLE_DX11) || defined(ENABLE_DX12)
         case Backend::DX11:
@@ -162,9 +193,11 @@ namespace SohImGui {
 
     void ImGuiProcessEvent(EventImpl event) {
         switch (impl.backend) {
+#ifndef __WIIU__
         case Backend::SDL:
             ImGui_ImplSDL2_ProcessEvent(static_cast<const SDL_Event*>(event.sdl.event));
             break;
+#endif
 #if defined(ENABLE_DX11) || defined(ENABLE_DX12)
         case Backend::DX11:
             ImGui_ImplWin32_WndProcHandler(static_cast<HWND>(event.win32.handle), event.win32.msg, event.win32.wparam, event.win32.lparam);
@@ -177,9 +210,32 @@ namespace SohImGui {
 
     void ImGuiWMNewFrame() {
         switch (impl.backend) {
+#ifdef __WIIU__
+        case Backend::GX2: {
+            ImGui_ImplWiiU_ControllerInput input;
+            input.vpad = controllerInput.has_vpad ? &controllerInput.vpad : nullptr;
+            input.kpad[0] = controllerInput.has_kpad[0] ? &controllerInput.kpad[0] : nullptr;
+            input.kpad[1] = controllerInput.has_kpad[1] ? &controllerInput.kpad[1] : nullptr;
+            input.kpad[2] = controllerInput.has_kpad[2] ? &controllerInput.kpad[2] : nullptr;
+            input.kpad[3] = controllerInput.has_kpad[3] ? &controllerInput.kpad[3] : nullptr;
+
+            if (input.vpad || input.kpad[0] || input.kpad[1] || input.kpad[2] || input.kpad[3]) {
+                if (ImGui_ImplWiiU_ProcessInput(&input)) {
+                    // disable inputs if virtual keyboard is opened
+                    hasOverlay = true;
+                } else {
+                    hasOverlay = false;
+                }
+            }
+
+            memset(&controllerInput, 0, sizeof(controllerInput));
+            break;
+        }
+#else
         case Backend::SDL:
             ImGui_ImplSDL2_NewFrame(static_cast<SDL_Window*>(impl.sdl.window));
             break;
+#endif
 #if defined(ENABLE_DX11) || defined(ENABLE_DX12)
         case Backend::DX11:
             ImGui_ImplWin32_NewFrame();
@@ -192,9 +248,15 @@ namespace SohImGui {
 
     void ImGuiBackendNewFrame() {
         switch (impl.backend) {
+#ifdef __WIIU__
+        case Backend::GX2:
+            ImGui_ImplGX2_NewFrame();
+            break;
+#else
         case Backend::SDL:
             ImGui_ImplOpenGL3_NewFrame();
             break;
+#endif
 #if defined(ENABLE_DX11) || defined(ENABLE_DX12)
         case Backend::DX11:
             ImGui_ImplDX11_NewFrame();
@@ -207,9 +269,20 @@ namespace SohImGui {
 
     void ImGuiRenderDrawData(ImDrawData* data) {
         switch (impl.backend) {
+#ifdef __WIIU__
+        case Backend::GX2:
+            ImGui_ImplGX2_RenderDrawData(data);
+
+            // Reset viewport and scissor for drawing the keyboard
+            GX2SetViewport(0.0f, 0.0f, io->DisplaySize.x, io->DisplaySize.y, 0.0f, 1.0f);
+            GX2SetScissor(0, 0, io->DisplaySize.x, io->DisplaySize.y);
+            ImGui_ImplWiiU_DrawKeyboardOverlay();
+            break;
+#else
         case Backend::SDL:
             ImGui_ImplOpenGL3_RenderDrawData(data);
             break;
+#endif
 #if defined(ENABLE_DX11) || defined(ENABLE_DX12)
         case Backend::DX11:
             ImGui_ImplDX11_RenderDrawData(data);
@@ -339,6 +412,16 @@ namespace SohImGui {
         io = &ImGui::GetIO();
         io->ConfigFlags |= ImGuiConfigFlags_DockingEnable;
         io->Fonts->AddFontDefault();
+
+#ifdef __WIIU__
+        // Scale everything by 2 for the Wii U
+        ImGui::GetStyle().ScaleAllSizes(2.0f);
+        io->FontGlobalScale = 2.0f;
+
+        // Setup display sizes
+        io->DisplaySize.x = window_impl.gx2.width;
+        io->DisplaySize.y =  window_impl.gx2.height;
+#endif
 
         lastBackendID = GetBackendID(GlobalCtx2::GetInstance()->GetConfig());
         if (CVar_GetS32("gOpenMenuBar", 0) != 1) {
@@ -758,7 +841,11 @@ namespace SohImGui {
 
         ImGui::DockSpace(dockId, ImVec2(0.0f, 0.0f), ImGuiDockNodeFlags_None | ImGuiDockNodeFlags_NoDockingInCentralNode);
 
+#ifdef __WIIU__
+        if (ImGui::IsKeyPressed(TOGGLE_PAD_BTN)) {
+#else
         if (ImGui::IsKeyPressed(TOGGLE_BTN)) {
+#endif
             bool menu_bar = CVar_GetS32("gOpenMenuBar", 0);
             CVar_SetS32("gOpenMenuBar", !menu_bar);
             needs_save = true;
@@ -767,11 +854,20 @@ namespace SohImGui {
             GlobalCtx2::GetInstance()->GetWindow()->GetControlDeck()->SaveControllerSettings();
             if (CVar_GetS32("gControlNav", 0)) {
                 if (CVar_GetS32("gOpenMenuBar", 0)) {
+#ifdef __WIIU__
+                    hasKeyboardOverlay = true;
+#endif
                     io->ConfigFlags |=ImGuiConfigFlags_NavEnableGamepad | ImGuiConfigFlags_NavEnableKeyboard;
                 } else {
+#ifdef __WIIU__
+                    hasKeyboardOverlay = false;
+#endif
                     io->ConfigFlags &= ~ImGuiConfigFlags_NavEnableGamepad;
                 }
             } else {
+#ifdef __WIIU__
+                hasKeyboardOverlay = false;
+#endif
                 io->ConfigFlags &= ~ImGuiConfigFlags_NavEnableGamepad;
             }
         }
@@ -792,10 +888,18 @@ namespace SohImGui {
 
         if (ImGui::BeginMenuBar()) {
             if (DefaultAssets.contains("Game_Icon")) {
+#ifdef __WIIU__
+                // adjust icon for scaling TODO make this a vector which can be multiplied with
+                ImGui::SetCursorPos(ImVec2(5 * 2, 2.5f * 2));
+                ImGui::Image(GetTextureByID(DefaultAssets["Game_Icon"]->textureId), ImVec2(16.0f * 2, 16.0f * 2));
+                ImGui::SameLine();
+                ImGui::SetCursorPos(ImVec2(25 * 2, 0));
+#else
                 ImGui::SetCursorPos(ImVec2(5, 2.5f));
                 ImGui::Image(GetTextureByID(DefaultAssets["Game_Icon"]->textureId), ImVec2(16.0f, 16.0f));
                 ImGui::SameLine();
                 ImGui::SetCursorPos(ImVec2(25, 0));
+#endif
             }
 
             if (ImGui::BeginMenu("Shipwright")) {
@@ -860,12 +964,14 @@ namespace SohImGui {
 
             if (ImGui::BeginMenu("Graphics"))
             {
+#ifndef __WIIU__ // TODO crashes / not implemented properly
                 EnhancementSliderFloat("Internal Resolution: %d %%", "##IMul", "gInternalResolution", 0.5f, 2.0f, "", 1.0f, true);
                 Tooltip("Multiplies your output resolution by the value inputted,\nas a more intensive but effective form of anti-aliasing");
                 gfx_current_dimensions.internal_mul = CVar_GetFloat("gInternalResolution", 1);
                 EnhancementSliderInt("MSAA: %d", "##IMSAA", "gMSAAValue", 1, 8, "");
                 Tooltip("Activates multi-sample anti-aliasing when above 1x\nup to 8x for 8 samples for every pixel");
                 gfx_msaa_level = CVar_GetS32("gMSAAValue", 1);
+#endif
 
                 if (impl.backend == Backend::DX11)
                 {
@@ -1389,6 +1495,8 @@ namespace SohImGui {
             ImGui::Text("Platform: Windows");
 #elif __APPLE__
             ImGui::Text("Platform: macOS");
+#elif __WIIU__
+            ImGui::Text("Platform: Wii U");
 #else
             ImGui::Text("Platform: Linux");
 #endif
@@ -1562,6 +1670,13 @@ namespace SohImGui {
             return gfx_d3d11_get_texture_by_id(id);
         }
 #endif
+#ifdef __WIIU__
+        if (impl.backend == Backend::GX2)
+        {
+            return gfx_gx2_texture_for_imgui(id);
+        }
+#endif
+
         return reinterpret_cast<ImTextureID>(id);
     }
 

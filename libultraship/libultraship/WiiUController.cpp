@@ -2,6 +2,7 @@
 #include "WiiUController.h"
 #include "GlobalCtx2.h"
 #include "Window.h"
+#include "ImGuiImpl.h"
 
 #include <padscore/kpad.h>
 #include <padscore/wpad.h>
@@ -10,6 +11,8 @@ namespace Ship {
     WiiUController::WiiUController(WPADChan chan) : Controller(), chan(chan) {
         connected = false;
         extensionType = (WPADExtensionType) -1;
+
+        controllerName = "Wii U Controller (Disconnected)";
     }
 
     bool WiiUController::Open() {
@@ -54,9 +57,16 @@ namespace Ship {
             return;
         }
 
+        SohImGui::controllerInput.has_kpad[chan] = true;
+        SohImGui::controllerInput.kpad[chan] = kStatus;
+
         dwPressedButtons[slot] = 0;
         wStickX = 0;
         wStickY = 0;
+
+        if (SohImGui::hasOverlay || SohImGui::hasKeyboardOverlay) {
+            return;
+        }
 
         switch (kType) {
             case WPAD_EXT_PRO_CONTROLLER:
@@ -221,8 +231,7 @@ namespace Ship {
         return "Unknown";
     }
 
-    const char* WiiUController::GetControllerName()
-    {
+    const char* WiiUController::GetControllerName() {
         return controllerName.c_str();
     }
 

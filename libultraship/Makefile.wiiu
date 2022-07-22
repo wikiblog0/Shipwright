@@ -19,13 +19,16 @@ include $(DEVKITPRO)/wut/share/wut_rules
 #-------------------------------------------------------------------------------
 TARGET		:=	ultraship
 BUILD		:=	build
-SOURCES		:=	
+SOURCES		:=	\
+		libultraship/Lib/ImGui \
+		libultraship/Lib/ImGui/backends/wiiu
 DATA		:=	
 INCLUDES	:=	\
 		../ZAPDTR/ZAPDUtils \
 		libultraship/Lib/Fast3D/U64 \
 		libultraship/Lib/spdlog \
 		libultraship/Lib/spdlog/include \
+		libultraship/Lib/ImGui \
 		libultraship
 
 #-------------------------------------------------------------------------------
@@ -61,6 +64,8 @@ SOURCEFILES_CPP :=	\
 		libultraship/Array.cpp \
 		libultraship/Controller.cpp \
 		libultraship/Hooks.cpp \
+		libultraship/ImGuiImpl.cpp \
+		libultraship/InputEditor.cpp \
 		libultraship/Factories/CollisionHeaderFactory.cpp \
 		libultraship/Factories/DisplayListFactory.cpp \
 		libultraship/Factories/MaterialFactory.cpp \
@@ -76,12 +81,14 @@ SOURCEFILES_CPP :=	\
 		libultraship/Lib/Mercury/Mercury.cpp \
 		libultraship/Archive.cpp \
 		libultraship/CollisionHeader.cpp \
+		libultraship/Console.cpp \
 		libultraship/ControlDeck.cpp \
 		libultraship/ControllerAttachment.cpp \
 		libultraship/Cutscene.cpp \
 		libultraship/DisplayList.cpp \
 		libultraship/GlobalCtx2.cpp \
 		libultraship/File.cpp \
+		libultraship/GameOverlay.cpp \
 		libultraship/Material.cpp \
 		libultraship/Matrix.cpp \
 		libultraship/MemoryPack.cpp \
@@ -114,7 +121,6 @@ CFLAGS	:=	-O2 -ffunction-sections \
 		$(MACHDEP)
 
 CFLAGS	+=	$(INCLUDE) -D__WIIU__ -D__WUT__ -DBIGENDIAN \
-		-DNO_IMGUI \
 		-DSPDLOG_NO_THREAD_ID -DSPDLOG_NO_TLS \
 		-DSTBI_NO_THREAD_LOCALS
 

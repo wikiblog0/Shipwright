@@ -229,7 +229,8 @@ typedef struct {
         }                                         \
     }
 
-std::unordered_map<uint32_t, ItemTrackerMapEntry> equipTrackerMap = {
+// TODO wiiu: Using an unordered_map here crashes in _Z41__static_initialization_and_destruction_0ii.constprop.0+0x3070???
+std::map<uint32_t, ItemTrackerMapEntry> equipTrackerMap = {
     ITEM_TRACKER_MAP_ENTRY(ITEM_SWORD_KOKIRI, 0),
     ITEM_TRACKER_MAP_ENTRY(ITEM_SWORD_MASTER, 1),
     ITEM_TRACKER_MAP_ENTRY(ITEM_SWORD_BGS, 2),

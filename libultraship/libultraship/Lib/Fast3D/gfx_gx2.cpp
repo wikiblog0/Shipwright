@@ -38,6 +38,8 @@
 #include <proc_ui/procui.h>
 #include <coreinit/memory.h>
 
+#include "../ImGui/backends/wiiu/imgui_impl_gx2.h"
+
 struct ShaderProgram {
     struct ShaderGroup group;
     uint8_t num_inputs;
@@ -53,6 +55,9 @@ struct Texture {
 
     GX2Sampler sampler;
     bool sampler_set;
+
+    // For ImGui rendering
+    ImGui_ImplGX2_Texture imtex;
 };
 
 struct Framebuffer {
@@ -61,6 +66,9 @@ struct Framebuffer {
 
     GX2Texture texture;
     GX2Sampler sampler;
+
+    // For ImGui rendering
+    ImGui_ImplGX2_Texture imtex;
 };
 
 static struct Framebuffer main_framebuffer;
@@ -78,6 +86,23 @@ static std::vector<float *> vbo_pool;
 
 static uint32_t frame_count;
 static float current_noise_scale;
+
+static BOOL current_depth_test = TRUE;
+static BOOL current_depth_write = TRUE;
+static GX2CompareFunction current_depth_compare_function = GX2_COMPARE_FUNC_LESS;
+
+static float current_viewport_x = 0.0f;
+static float current_viewport_y = 0.0f;
+static float current_viewport_width;
+static float current_viewport_height;
+
+static uint32_t current_scissor_x = 0;
+static uint32_t current_scissor_y = 0;
+static uint32_t current_scissor_width;
+static uint32_t current_scissor_height;
+
+static bool current_zmode_decal = false;
+static bool current_use_alpha = false;
 
 static inline GX2SamplerVar *GX2GetPixelSamplerVar(const GX2PixelShader *shader, const char *name)
 {
@@ -203,7 +228,12 @@ static void gfx_gx2_shader_get_info(struct ShaderProgram *prg, uint8_t *num_inpu
 
 static uint32_t gfx_gx2_new_texture(void) {
     // some 32-bit trickery :P
-    return (uint32_t) calloc(1, sizeof(struct Texture));
+    struct Texture *tex = (struct Texture *) calloc(1, sizeof(struct Texture));
+
+    tex->imtex.Texture = &tex->texture;
+    tex->imtex.Sampler = &tex->sampler;
+
+    return (uint32_t) tex;
 }
 
 static void gfx_gx2_delete_texture(uint32_t texture_id) {
@@ -243,7 +273,7 @@ static void gfx_gx2_upload_texture(const uint8_t *rgba32_buf, uint32_t width, ui
         !tex->texture.surface.image) {
 
         if (tex->texture.surface.image) {
-            GX2RDestroySurfaceEx(&tex->texture.surface, GX2R_RESOURCE_BIND_NONE);
+            assert(GX2RDestroySurfaceEx(&tex->texture.surface, GX2R_RESOURCE_BIND_NONE));
             tex->texture.surface.image = nullptr;
         }
 
@@ -318,11 +348,15 @@ static void gfx_gx2_set_sampler_parameters(int tile, bool linear_filter, uint32_
 }
 
 static void gfx_gx2_set_depth_test_and_mask(bool depth_test, bool z_upd) {
-    GX2SetDepthOnlyControl(depth_test || z_upd, z_upd,
-        depth_test ? GX2_COMPARE_FUNC_LEQUAL : GX2_COMPARE_FUNC_ALWAYS);
+    current_depth_test = depth_test || z_upd;
+    current_depth_write = z_upd;
+    current_depth_compare_function = depth_test ? GX2_COMPARE_FUNC_LEQUAL : GX2_COMPARE_FUNC_ALWAYS;
+
+    GX2SetDepthOnlyControl(current_depth_test, current_depth_write, current_depth_compare_function);
 }
 
 static void gfx_gx2_set_zmode_decal(bool zmode_decal) {
+    current_zmode_decal = zmode_decal;
     if (zmode_decal) {
         GX2SetPolygonControl(GX2_FRONT_FACE_CCW, FALSE, FALSE, TRUE,
                              GX2_POLYGON_MODE_TRIANGLE, GX2_POLYGON_MODE_TRIANGLE,
@@ -338,15 +372,28 @@ static void gfx_gx2_set_zmode_decal(bool zmode_decal) {
 
 static void gfx_gx2_set_viewport(int x, int y, int width, int height) {
     uint32_t buffer_height = current_framebuffer->color_buffer.surface.height;
-    GX2SetViewport(x, buffer_height - y - height, width, height, 0.0f, 1.0f);
+
+    current_viewport_x = x;
+    current_viewport_y = buffer_height - y - height;
+    current_viewport_width = width;
+    current_viewport_height = height;
+
+    GX2SetViewport(current_viewport_x, current_viewport_y, current_viewport_width, current_viewport_height, 0.0f, 1.0f);
 }
 
 static void gfx_gx2_set_scissor(int x, int y, int width, int height) {
     uint32_t buffer_height = current_framebuffer->color_buffer.surface.height;
-    GX2SetScissor(x, buffer_height - y - height, width, height);
+
+    current_scissor_x = x;
+    current_scissor_y = buffer_height - y - height;
+    current_scissor_width = width;
+    current_scissor_height = height;
+
+    GX2SetScissor(current_scissor_x, current_scissor_y, current_scissor_width, current_scissor_height);
 }
 
 static void gfx_gx2_set_use_alpha(bool use_alpha) {
+    current_use_alpha = use_alpha;
     GX2SetColorControl(GX2_LOGIC_OP_COPY, use_alpha ? 0xff : 0, FALSE, TRUE);
 }
 
@@ -398,6 +445,9 @@ static uint32_t gfx_gx2_proc_callback_released(void *context) {
 static void gfx_gx2_init(void) {
     gfx_gx2_init_framebuffer(&main_framebuffer, tv_width, tv_height);
 
+    main_framebuffer.imtex.Texture = &main_framebuffer.texture;
+    main_framebuffer.imtex.Sampler = &main_framebuffer.sampler;
+
     // allocate main framebuffers from mem1 while in foreground
     ProcUIRegisterCallback(PROCUI_CALLBACK_ACQUIRE, gfx_gx2_proc_callback_acquired, nullptr, 101);
     ProcUIRegisterCallback(PROCUI_CALLBACK_RELEASE, gfx_gx2_proc_callback_released, nullptr, 101);
@@ -421,6 +471,12 @@ static void gfx_gx2_init(void) {
     GX2SetDepthBuffer(&main_framebuffer.depth_buffer);
 
     current_framebuffer = &main_framebuffer;
+
+    current_viewport_width = tv_width;
+    current_viewport_height = tv_height;
+
+    current_scissor_width = tv_width;
+    current_scissor_height = tv_height;
 
     // allocate draw buffers
     for (int i = 0; i < 1024; ++i) {
@@ -462,6 +518,35 @@ static void gfx_gx2_on_resize(void) {
 }
 
 static void gfx_gx2_start_frame(void) {
+    // Restore state since ImGui modified it when rendering
+    GX2SetViewport(current_viewport_x, current_viewport_y, current_viewport_width, current_viewport_height, 0.0f, 1.0f);
+    GX2SetScissor(current_scissor_x, current_scissor_y, current_scissor_width, current_scissor_height);
+
+    GX2SetColorControl(GX2_LOGIC_OP_COPY, current_use_alpha ? 0xff : 0, FALSE, TRUE);
+
+    GX2SetBlendControl(GX2_RENDER_TARGET_0,
+                       GX2_BLEND_MODE_SRC_ALPHA,
+                       GX2_BLEND_MODE_INV_SRC_ALPHA,
+                       GX2_BLEND_COMBINE_MODE_ADD,
+                       FALSE,
+                       GX2_BLEND_MODE_ZERO,
+                       GX2_BLEND_MODE_ZERO,
+                       GX2_BLEND_COMBINE_MODE_ADD);
+
+    GX2SetDepthOnlyControl(current_depth_test, current_depth_write, current_depth_compare_function);
+
+    if (current_zmode_decal) {
+        GX2SetPolygonControl(GX2_FRONT_FACE_CCW, FALSE, FALSE, TRUE,
+                             GX2_POLYGON_MODE_TRIANGLE, GX2_POLYGON_MODE_TRIANGLE,
+                             TRUE, TRUE, FALSE);
+        GX2SetPolygonOffset(-2.0f, -2.0f, -2.0f, -2.0f, 0.0f);
+    } else {
+        GX2SetPolygonControl(GX2_FRONT_FACE_CCW, FALSE, FALSE, FALSE,
+                             GX2_POLYGON_MODE_TRIANGLE, GX2_POLYGON_MODE_TRIANGLE,
+                             FALSE, FALSE, FALSE);
+        GX2SetPolygonOffset(0.0f, 0.0f, 0.0f, 0.0f, 0.0f);
+    }
+
     frame_count++;
 }
 
@@ -481,6 +566,9 @@ static int gfx_gx2_create_framebuffer(void) {
 
     GX2InitSampler(&buffer->sampler, GX2_TEX_CLAMP_MODE_WRAP, GX2_TEX_XY_FILTER_MODE_LINEAR);
 
+    buffer->imtex.Texture = &buffer->texture;
+    buffer->imtex.Sampler = &buffer->sampler;
+
     // some more 32-bit shenanigans :D
     return (int) buffer;
 }
@@ -494,11 +582,13 @@ static void gfx_gx2_update_framebuffer_parameters(int fb, uint32_t width, uint32
     }
 
     if (buffer->texture.surface.image) {
-        GX2RDestroySurfaceEx(&buffer->texture.surface, GX2R_RESOURCE_BIND_NONE);
+        assert(GX2RDestroySurfaceEx(&buffer->texture.surface, GX2R_RESOURCE_BIND_NONE));
+        buffer->texture.surface.image = nullptr;
     }
 
     if (buffer->depth_buffer.surface.image) {
-        GX2RDestroySurfaceEx(&buffer->depth_buffer.surface, GX2R_RESOURCE_BIND_NONE);
+        assert(GX2RDestroySurfaceEx(&buffer->depth_buffer.surface, GX2R_RESOURCE_BIND_NONE));
+        buffer->depth_buffer.surface.image = nullptr;
     }
 
     gfx_gx2_init_framebuffer(buffer, width, height);
@@ -571,10 +661,41 @@ void gfx_gx2_clear_framebuffer(void) {
 }
 
 void gfx_gx2_resolve_msaa_color_buffer(int fb_id_target, int fb_id_source) {
+    struct Framebuffer *src_buffer = (struct Framebuffer *) fb_id_source;
+    struct Framebuffer *target_buffer = (struct Framebuffer *) fb_id_target;
+
+    // fb 0 = main buffer
+    if (!src_buffer) {
+        src_buffer = &main_framebuffer;
+    }
+    if (!target_buffer) {
+        target_buffer = &main_framebuffer;
+    }
+
+    if (src_buffer->color_buffer.surface.aa == GX2_AA_MODE1X) {
+        GX2CopySurface(&src_buffer->color_buffer.surface,
+            src_buffer->color_buffer.viewMip,
+            src_buffer->color_buffer.viewFirstSlice,
+            &target_buffer->color_buffer.surface,
+            target_buffer->color_buffer.viewMip,
+            target_buffer->color_buffer.viewFirstSlice);
+    } else {
+        GX2ResolveAAColorBuffer(&src_buffer->color_buffer,
+            &target_buffer->color_buffer.surface,
+            target_buffer->color_buffer.viewMip,
+            target_buffer->color_buffer.viewFirstSlice);
+    }
 }
 
 void *gfx_gx2_get_framebuffer_texture_id(int fb_id) {
-    return nullptr;
+    struct Framebuffer *buffer = (struct Framebuffer *) fb_id;
+
+    // fb 0 = main buffer
+    if (!buffer) {
+        buffer = &main_framebuffer;
+    }
+
+    return &buffer->imtex;
 }
 
 void gfx_gx2_select_texture_fb(int fb) {
@@ -588,12 +709,19 @@ void gfx_gx2_select_texture_fb(int fb) {
 }
 
 static std::unordered_map<std::pair<float, float>, uint16_t, hash_pair_ff> gfx_gx2_get_pixel_depth(int fb_id, const std::set<std::pair<float, float>>& coordinates) {
+    struct Framebuffer *buffer = (struct Framebuffer *) fb_id;
+
+    // fb 0 = main buffer
+    if (!buffer) {
+        buffer = &main_framebuffer;
+    }
+
     std::unordered_map<std::pair<float, float>, uint16_t, hash_pair_ff> res;
 
     for (const auto& c : coordinates) {
         // bug? coordinates sometimes read from oob
-        if ((c.first < 0.0f) || (c.first > (float) main_framebuffer.depth_buffer.surface.width)
-            || (c.second < 0.0f) || (c.second > (float) main_framebuffer.depth_buffer.surface.height)) {
+        if ((c.first < 0.0f) || (c.first > (float) buffer->depth_buffer.surface.width)
+            || (c.second < 0.0f) || (c.second > (float) buffer->depth_buffer.surface.height)) {
             res.emplace(c, 0);
             continue;
         }
@@ -608,7 +736,7 @@ static std::unordered_map<std::pair<float, float>, uint16_t, hash_pair_ff> gfx_g
             (int32_t) (main_framebuffer.depth_buffer.surface.height - (int32_t) c.second) + 1
         };
         GX2Point dstPoint = { 0, 0 };
-        GX2CopySurfaceEx(&main_framebuffer.depth_buffer.surface, 0, 0, &depthReadBuffer.surface, 0, 0, 1, &srcRect, &dstPoint);
+        GX2CopySurfaceEx(&buffer->depth_buffer.surface, 0, 0, &depthReadBuffer.surface, 0, 0, 1, &srcRect, &dstPoint);
         GX2DrawDone();
 
         gfx_wiiu_set_context_state();
@@ -629,6 +757,11 @@ void gfx_gx2_set_texture_filter(FilteringMode mode) {
 
 FilteringMode gfx_gx2_get_texture_filter(void) {
     return FILTER_NONE;
+}
+
+void* gfx_gx2_texture_for_imgui(uint32_t texture_id) {
+    struct Texture *tex = (struct Texture *) texture_id;
+    return &tex->imtex;
 }
 
 struct GfxRenderingAPI gfx_gx2_api = {

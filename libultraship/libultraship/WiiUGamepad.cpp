@@ -1,6 +1,7 @@
 #ifdef __WIIU__
 #include "WiiUGamepad.h"
 #include "GlobalCtx2.h"
+#include "ImGuiImpl.h"
 
 #include <vpad/input.h>
 
@@ -27,9 +28,16 @@ namespace Ship {
             connected = true;
         }
 
+        SohImGui::controllerInput.has_vpad = true;
+        SohImGui::controllerInput.vpad = vStatus;
+
         dwPressedButtons[slot] = 0;
         wStickX = 0;
         wStickY = 0;
+
+        if (SohImGui::hasOverlay || SohImGui::hasKeyboardOverlay) {
+            return;
+        }
 
         for (uint32_t i = VPAD_BUTTON_SYNC; i <= VPAD_STICK_L_EMULATION_LEFT; i <<= 1) {
             if (profile.Mappings.contains(i)) {
@@ -116,8 +124,7 @@ namespace Ship {
         return "Unknown";
     }
 
-    const char* WiiUGamepad::GetControllerName()
-    {
+    const char* WiiUGamepad::GetControllerName() {
         return "Wii U GamePad";
     }
 

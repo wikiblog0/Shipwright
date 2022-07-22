@@ -40,6 +40,8 @@
 
 #include "../ImGui/backends/wiiu/imgui_impl_gx2.h"
 
+#define ALIGN(x, align) (((x) + ((align) -1)) & ~((align) -1))
+
 struct ShaderProgram {
     struct ShaderGroup group;
     uint8_t num_inputs;
@@ -83,8 +85,10 @@ static struct ShaderProgram *current_shader_program;
 static struct Texture *current_texture;
 static int current_tile;
 
-static size_t draw_index = 0;
-static std::vector<float *> vbo_pool;
+// 96 Mb (should be more than enough to draw everything without waiting for the GPU)
+#define DRAW_BUFFER_SIZE 0x6000000
+static uint8_t *draw_buffer = nullptr;
+static uint8_t *draw_ptr = nullptr;
 
 static uint32_t frame_count;
 static float current_noise_scale;
@@ -403,15 +407,18 @@ static void gfx_gx2_draw_triangles(float buf_vbo[], size_t buf_vbo_len, size_t b
         return;
     }
 
-    if (draw_index >= vbo_pool.size()) {
+    size_t vbo_len = sizeof(float) * buf_vbo_len;
+
+    if (draw_ptr + vbo_len >= draw_buffer + DRAW_BUFFER_SIZE) {
+        printf("Waiting on GPU!!!\n");
         GX2DrawDone();
-        draw_index = 0;
+        draw_ptr = draw_buffer;
     }
 
-    float* new_vbo = vbo_pool[draw_index++];
-    size_t vbo_len = sizeof(float) * buf_vbo_len;
-    OSBlockMove(new_vbo, buf_vbo, vbo_len, FALSE);
+    float* new_vbo = (float *) draw_ptr;
+    draw_ptr += ALIGN(vbo_len, GX2_VERTEX_BUFFER_ALIGNMENT);
 
+    OSBlockMove(new_vbo, buf_vbo, vbo_len, FALSE);
     GX2Invalidate(GX2_INVALIDATE_MODE_CPU_ATTRIBUTE_BUFFER, new_vbo, vbo_len);
 
     GX2SetAttribBuffer(0, vbo_len, current_shader_program->group.stride, new_vbo);
@@ -454,12 +461,10 @@ static void gfx_gx2_init(void) {
 
     current_framebuffer = &main_framebuffer;
 
-    // allocate draw buffers
-    for (int i = 0; i < 1024; ++i) {
-        float* buf = static_cast<float *>(memalign(GX2_VERTEX_BUFFER_ALIGNMENT, 0x6000 * sizeof(float)));
-        assert(buf);
-        vbo_pool.push_back(buf);
-    }
+    // allocate draw buffer
+    draw_buffer = (uint8_t *) memalign(GX2_VERTEX_BUFFER_ALIGNMENT, DRAW_BUFFER_SIZE);
+    assert(draw_buffer);
+    draw_ptr = draw_buffer;
 
     GX2SetRasterizerClipControl(TRUE, FALSE);
 
@@ -491,11 +496,11 @@ void gfx_gx2_shutdown(void) {
         main_framebuffer.depth_buffer.surface.image = nullptr;
     }
 
-    for (int i = 0; i < 1024; ++i) {
-        free(vbo_pool[i]);
+    if (draw_buffer) {
+        free(draw_buffer);
+        draw_buffer = nullptr;
+        draw_ptr = nullptr;
     }
-
-    vbo_pool.clear();
 }
 
 static void gfx_gx2_on_resize(void) {
@@ -535,7 +540,7 @@ static void gfx_gx2_start_frame(void) {
 }
 
 static void gfx_gx2_end_frame(void) {
-    draw_index = 0;
+    draw_ptr = draw_buffer;
 
     GX2CopyColorBufferToScanBuffer(&main_framebuffer.color_buffer, GX2_SCAN_TARGET_TV);
     GX2CopyColorBufferToScanBuffer(&main_framebuffer.color_buffer, GX2_SCAN_TARGET_DRC);

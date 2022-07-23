@@ -63,6 +63,8 @@ namespace Ship {
         dwPressedButtons[slot] = 0;
         wStickX = 0;
         wStickY = 0;
+        wCamX = 0;
+        wCamY = 0;
 
         if (SohImGui::hasImGuiOverlay || SohImGui::hasKeyboardOverlay) {
             return;
@@ -73,16 +75,27 @@ namespace Ship {
                 for (uint32_t i = WPAD_PRO_BUTTON_UP; i <= WPAD_PRO_STICK_R_EMULATION_UP; i <<= 1) {
                     if (profile.Mappings.contains(i)) {
                         // check if the stick is mapped to an analog stick
-                        if ((profile.Mappings[i] == BTN_STICKRIGHT || profile.Mappings[i] == BTN_STICKLEFT) && (i >= WPAD_PRO_STICK_L_EMULATION_LEFT)) {
-                            float axis = i >= WPAD_PRO_STICK_R_EMULATION_LEFT ? kStatus.pro.rightStick.x : kStatus.pro.leftStick.x;
-                            wStickX = axis * 84;
-                        } else if ((profile.Mappings[i] == BTN_STICKDOWN || profile.Mappings[i] == BTN_STICKUP) && (i >= WPAD_PRO_STICK_L_EMULATION_LEFT)) {
-                            float axis = i >= WPAD_PRO_STICK_R_EMULATION_LEFT ? kStatus.pro.rightStick.y : kStatus.pro.leftStick.y;
-                            wStickY = axis * 84;
-                        } else {
-                            if (kStatus.pro.hold & i) {
-                                dwPressedButtons[slot] |= profile.Mappings[i];
+                        if (i >= WPAD_PRO_STICK_L_EMULATION_LEFT) {
+                            float axisX = i >= WPAD_PRO_STICK_R_EMULATION_LEFT ? kStatus.pro.rightStick.x : kStatus.pro.leftStick.x;
+                            float axisY = i >= WPAD_PRO_STICK_R_EMULATION_LEFT ? kStatus.pro.rightStick.y : kStatus.pro.leftStick.y;
+
+                            if (profile.Mappings[i] == BTN_STICKRIGHT || profile.Mappings[i] == BTN_STICKLEFT) {
+                                wStickX = axisX * 84;
+                                continue;
+                            } else if (profile.Mappings[i] == BTN_STICKDOWN || profile.Mappings[i] == BTN_STICKUP) {
+                                wStickY = axisY * 84;
+                                continue;
+                            } else if (profile.Mappings[i] == BTN_VSTICKRIGHT || profile.Mappings[i] == BTN_VSTICKLEFT) {
+                                wCamX = axisX * 84 * profile.Thresholds[SENSITIVITY];
+                                continue;
+                            } else if (profile.Mappings[i] == BTN_VSTICKDOWN || profile.Mappings[i] == BTN_VSTICKUP) {
+                                wCamY = axisY * 84 * profile.Thresholds[SENSITIVITY];
+                                continue;
                             }
+                        }
+
+                        if (kStatus.pro.hold & i) {
+                            dwPressedButtons[slot] |= profile.Mappings[i];
                         }
                     }
                 }
@@ -92,16 +105,27 @@ namespace Ship {
                 for (uint32_t i = WPAD_CLASSIC_BUTTON_UP; i <= WPAD_CLASSIC_STICK_R_EMULATION_UP; i <<= 1) {
                     if (profile.Mappings.contains(i)) {
                         // check if the stick is mapped to an analog stick
-                        if ((profile.Mappings[i] == BTN_STICKRIGHT || profile.Mappings[i] == BTN_STICKLEFT) && (i >= WPAD_CLASSIC_STICK_L_EMULATION_LEFT)) {
-                            float axis = i >= WPAD_CLASSIC_STICK_R_EMULATION_LEFT ? kStatus.classic.rightStick.x : kStatus.classic.leftStick.x;
-                            wStickX = axis * 84;
-                        } else if ((profile.Mappings[i] == BTN_STICKDOWN || profile.Mappings[i] == BTN_STICKUP) && (i >= WPAD_CLASSIC_STICK_L_EMULATION_LEFT)) {
-                            float axis = i >= WPAD_CLASSIC_STICK_R_EMULATION_LEFT ? kStatus.classic.rightStick.y : kStatus.classic.leftStick.y;
-                            wStickY = axis * 84;
-                        } else {
-                            if (kStatus.classic.hold & i) {
-                                dwPressedButtons[slot] |= profile.Mappings[i];
+                        if (i >= WPAD_CLASSIC_STICK_L_EMULATION_LEFT) {
+                            float axisX = i >= WPAD_CLASSIC_STICK_R_EMULATION_LEFT ? kStatus.classic.rightStick.x : kStatus.classic.leftStick.x;
+                            float axisY = i >= WPAD_CLASSIC_STICK_R_EMULATION_LEFT ? kStatus.classic.rightStick.y : kStatus.classic.leftStick.y;
+
+                            if (profile.Mappings[i] == BTN_STICKRIGHT || profile.Mappings[i] == BTN_STICKLEFT) {
+                                wStickX = axisX * 84;
+                                continue;
+                            } else if (profile.Mappings[i] == BTN_STICKDOWN || profile.Mappings[i] == BTN_STICKUP) {
+                                wStickY = axisY * 84;
+                                continue;
+                            } else if (profile.Mappings[i] == BTN_VSTICKRIGHT || profile.Mappings[i] == BTN_VSTICKLEFT) {
+                                wCamX = axisX * 84 * profile.Thresholds[SENSITIVITY];
+                                continue;
+                            } else if (profile.Mappings[i] == BTN_VSTICKDOWN || profile.Mappings[i] == BTN_VSTICKUP) {
+                                wCamY = axisY * 84 * profile.Thresholds[SENSITIVITY];
+                                continue;
                             }
+                        }
+
+                        if (kStatus.classic.hold & i) {
+                            dwPressedButtons[slot] |= profile.Mappings[i];
                         }
                     }
                 }
@@ -383,6 +407,8 @@ namespace Ship {
                 profile.Mappings[WPAD_BUTTON_A] = BTN_A;
                 break;
         }
+
+        profile.Thresholds[SENSITIVITY] = 16.0f;
     }
 
     std::string WiiUController::GetControllerExtension() {

@@ -33,6 +33,7 @@
 #include "gfx_heap.h"
 
 #include "../../ImGuiImpl.h"
+#include "../../Hooks.h"
 
 bool has_foreground = false;
 static void *mem1_storage = nullptr;
@@ -211,6 +212,8 @@ static void gfx_wiiu_main_loop(void (*run_one_game_iter)(void)) {
     while (WHBProcIsRunning()) {
         run_one_game_iter();
     }
+
+    ModInternal::ExecuteHooks<ModInternal::ExitGame>();
 
     gfx_gx2_shutdown();
     gfx_wiiu_shutdown();

@@ -2,7 +2,7 @@
 
 #include "Window.h"
 #include "Controller.h"
-#include "DisconnectedController.h"
+#include "VirtualController.h"
 #include <Utils/StringHelper.h>
 
 #ifndef __WIIU__
@@ -35,8 +35,10 @@ void Ship::ControlDeck::ScanPhysicalDevices() {
 		}
 	}
 
+	physicalDevices.push_back(std::make_shared<VirtualController>("Auto", "Auto", true));
 	physicalDevices.push_back(std::make_shared<KeyboardController>());
 #else
+	physicalDevices.push_back(std::make_shared<VirtualController>("Auto", "Auto", true));
 	physicalDevices.push_back(std::make_shared<Ship::WiiUGamepad>());
 
 	for (int i = 0; i < 4; i++) {
@@ -46,7 +48,7 @@ void Ship::ControlDeck::ScanPhysicalDevices() {
 	}
 #endif
 
-	physicalDevices.push_back(std::make_shared<DisconnectedController>());
+	physicalDevices.push_back(std::make_shared<VirtualController>("Disconnected", "None", false));
 
 	for (const auto& device : physicalDevices) {
 		for (int i = 0; i < MAXCONTROLLERS; i++) {
@@ -69,11 +71,26 @@ void Ship::ControlDeck::SetPhysicalDevice(int slot, int deviceSlot) {
 
 void Ship::ControlDeck::WriteToPad(OSContPad* pad) const {
 	for (size_t i = 0; i < virtualDevices.size(); i++) {
-		physicalDevices[virtualDevices[i]]->Read(&pad[i], i);
+		const std::shared_ptr<Controller> backend = physicalDevices[virtualDevices[i]];
+		if (backend->GetGuid() == "Auto") {
+			for (const auto& device : physicalDevices) {
+				device->Read(&pad[i], i);
+			}
+			continue;
+		}
+		backend->Read(&pad[i], i);
 	}
 
 #ifdef __WIIU__
 	// Update non-active controllers as well so ImGui won't break
+
+	// If one of them is using Auto don't bother updating the rest
+	for (size_t i = 0; i < virtualDevices.size(); i++) {
+		if (physicalDevices[virtualDevices[i]]->GetGuid() == "Auto") {
+			return;
+		}
+	}
+
 	for (size_t i = 0; i < physicalDevices.size(); i++) {
 		if(std::find(virtualDevices.begin(), virtualDevices.end(), i) == virtualDevices.end()) {
 			physicalDevices[i]->ReadFromSource(0);

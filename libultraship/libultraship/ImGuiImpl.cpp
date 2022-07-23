@@ -33,6 +33,7 @@
 
 #include <gx2/registers.h>
 
+extern uint32_t frametime;
 void* gfx_gx2_texture_for_imgui(uint32_t texture_id);   
 #endif
 
@@ -250,6 +251,7 @@ namespace SohImGui {
         switch (impl.backend) {
 #ifdef __WIIU__
         case Backend::GX2:
+            io->DeltaTime = (float) frametime / 1000.0f / 1000.0f;
             ImGui_ImplGX2_NewFrame();
             break;
 #else

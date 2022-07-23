@@ -52,7 +52,7 @@ static uint32_t drc_scan_buffer_size = 0;
 
 static int frame_divisor = 1;
 
-// for DrawFramestats
+// for DrawFramestats and ImGui
 uint32_t frametime = 0;
 
 static uint32_t gfx_wiiu_proc_callback_acquired(void *context) {

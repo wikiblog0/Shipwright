@@ -223,6 +223,8 @@ static void gfx_wiiu_get_dimensions(uint32_t *width, uint32_t *height) {
 }
 
 static void gfx_wiiu_handle_events(void) {
+    SohImGui::EventImpl event_impl;
+    SohImGui::Update(event_impl);
 }
 
 static bool gfx_wiiu_start_frame(void) {

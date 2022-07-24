@@ -3,6 +3,7 @@
 #include "imgui.h"      // IMGUI_IMPL_API
 
 // GX2 Texture / contains a texture and sampler
+// Can be used as a ImTextureID with the GX2 backend
 struct ImGui_ImplGX2_Texture
 {
     struct GX2Texture* Texture;

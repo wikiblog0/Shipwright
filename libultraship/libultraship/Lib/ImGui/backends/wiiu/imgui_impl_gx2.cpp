@@ -195,21 +195,19 @@ void    ImGui_ImplGX2_RenderDrawData(ImDrawData* draw_data)
                 if (clip_max.x <= clip_min.x || clip_max.y <= clip_min.y)
                     continue;
 
-                // SoH addition, somehow causes a gpu crash here
-                if (clip_min.x < 0.0f || clip_min.y < 0.0f || clip_max.x > fb_width || clip_max.y > fb_height)
-                    break;//continue;
+                // Discard invalid draws to avoid GPU crash
+                if (clip_min.x < 0.0f || clip_min.y < 0.0f || clip_max.x > fb_width || clip_max.y > fb_height || !pcmd->ElemCount)
+                    continue;
 
                 // Apply scissor/clipping rectangle
                 GX2SetScissor((uint32_t)clip_min.x, (uint32_t)clip_min.y, (uint32_t)(clip_max.x - clip_min.x), (uint32_t)(clip_max.y - clip_min.y));
 
                 // Bind texture, Draw
                 ImGui_ImplGX2_Texture* tex = (ImGui_ImplGX2_Texture*) pcmd->GetTexID();
-                if (tex) {
-                    GX2SetPixelTexture(tex->Texture, 0);
-                    GX2SetPixelSampler(tex->Sampler, 0);
-                } else {
-                    printf("ImGui_ImplGX2_RenderDrawData: no texture!\n");
-                }
+                IM_ASSERT(tex && "TextureID cannot be NULL");
+
+                GX2SetPixelTexture(tex->Texture, 0);
+                GX2SetPixelSampler(tex->Sampler, 0);
 
                 GX2DrawIndexedEx(GX2_PRIMITIVE_MODE_TRIANGLES, pcmd->ElemCount,
                     sizeof(ImDrawIdx) == 2 ? GX2_INDEX_TYPE_U16 : GX2_INDEX_TYPE_U32,

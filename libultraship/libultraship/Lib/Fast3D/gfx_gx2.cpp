@@ -479,21 +479,23 @@ static void gfx_gx2_init(void) {
 }
 
 void gfx_gx2_shutdown(void) {
-    GX2DrawDone();
+    if (has_foreground) {
+        GX2DrawDone();
 
-    if (depthReadBuffer.surface.image) {
-        _GfxHeapFreeMEM1(depthReadBuffer.surface.image);
-        depthReadBuffer.surface.image = nullptr;
-    }
+        if (depthReadBuffer.surface.image) {
+            _GfxHeapFreeMEM1(depthReadBuffer.surface.image);
+            depthReadBuffer.surface.image = nullptr;
+        }
 
-    if (main_framebuffer.color_buffer.surface.image) {
-        _GfxHeapFreeMEM1(main_framebuffer.color_buffer.surface.image);
-        main_framebuffer.color_buffer.surface.image = nullptr;
-    }
+        if (main_framebuffer.color_buffer.surface.image) {
+            _GfxHeapFreeMEM1(main_framebuffer.color_buffer.surface.image);
+            main_framebuffer.color_buffer.surface.image = nullptr;
+        }
 
-    if (main_framebuffer.depth_buffer.surface.image) {
-        _GfxHeapFreeMEM1(main_framebuffer.depth_buffer.surface.image);
-        main_framebuffer.depth_buffer.surface.image = nullptr;
+        if (main_framebuffer.depth_buffer.surface.image) {
+            _GfxHeapFreeMEM1(main_framebuffer.depth_buffer.surface.image);
+            main_framebuffer.depth_buffer.surface.image = nullptr;
+        }
     }
 
     if (draw_buffer) {

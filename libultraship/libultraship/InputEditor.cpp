@@ -142,7 +142,7 @@ namespace Ship {
 
 				ImGui::BeginChild("##MSInput", ImVec2(90 * 2, 50 * 2), false);
 				ImGui::Text("Deadzone");
-				ImGui::PushItemWidth(80);
+				ImGui::PushItemWidth(80 * 2);
 				ImGui::InputFloat("##MDZone", &profile.Thresholds[LEFT_STICK], 1.0f, 0.0f, "%.0f");
 				ImGui::PopItemWidth();
 				ImGui::EndChild();
@@ -167,11 +167,11 @@ namespace Ship {
 				ImGui::SetCursorPosX(ImGui::GetCursorPosX() + 5);
 				ImGui::BeginChild("##CSInput", ImVec2(90 * 2, 85 * 2), false);
 					ImGui::Text("Deadzone");
-					ImGui::PushItemWidth(80);
+					ImGui::PushItemWidth(80 * 2);
 					ImGui::InputFloat("##MDZone", &profile.Thresholds[RIGHT_STICK], 1.0f, 0.0f, "%.0f");
 					ImGui::PopItemWidth();
 					ImGui::Text("Sensitivity");
-					ImGui::PushItemWidth(80);
+					ImGui::PushItemWidth(80 * 2);
 					ImGui::InputFloat("##MSensitivity", &profile.Thresholds[SENSITIVITY], 1.0f, 0.0f, "%.0f");
 					ImGui::PopItemWidth();
 				ImGui::EndChild();

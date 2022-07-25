@@ -10,7 +10,7 @@ namespace Ship {
             void ReadFromSource(int32_t slot) override;
             void WriteToSource(int32_t slot, ControllerCallback* controller) override;
             bool Connected() const override { return connected; };
-            bool CanGyro() const override { return false; }
+            bool CanGyro() const override { return true; }
             bool CanRumble() const override { return true; };
 
             void ClearRawPress() override {}

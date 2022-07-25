@@ -37,41 +37,60 @@ namespace Ship {
         wCamX = 0;
         wCamY = 0;
 
-        if (SohImGui::hasImGuiOverlay || SohImGui::hasKeyboardOverlay) {
-            return;
-        }
+        if (!SohImGui::hasImGuiOverlay && !SohImGui::hasKeyboardOverlay) {
+            for (uint32_t i = VPAD_BUTTON_SYNC; i <= VPAD_STICK_L_EMULATION_LEFT; i <<= 1) {
+                if (profile.Mappings.contains(i)) {
+                    // check if the stick is mapped to an analog stick
+                    if (i >= VPAD_STICK_R_EMULATION_DOWN) {
+                        float axisX = i >= VPAD_STICK_L_EMULATION_DOWN ? vStatus.leftStick.x : vStatus.rightStick.x;
+                        float axisY = i >= VPAD_STICK_L_EMULATION_DOWN ? vStatus.leftStick.y : vStatus.rightStick.y;
 
-        for (uint32_t i = VPAD_BUTTON_SYNC; i <= VPAD_STICK_L_EMULATION_LEFT; i <<= 1) {
-            if (profile.Mappings.contains(i)) {
-                // check if the stick is mapped to an analog stick
-                if (i >= VPAD_STICK_R_EMULATION_DOWN) {
-                    float axisX = i >= VPAD_STICK_L_EMULATION_DOWN ? vStatus.leftStick.x : vStatus.rightStick.x;
-                    float axisY = i >= VPAD_STICK_L_EMULATION_DOWN ? vStatus.leftStick.y : vStatus.rightStick.y;
-
-                    if (profile.Mappings[i] == BTN_STICKRIGHT || profile.Mappings[i] == BTN_STICKLEFT) {
-                        wStickX = axisX * 84;
-                        continue;
-                    } else if (profile.Mappings[i] == BTN_STICKDOWN || profile.Mappings[i] == BTN_STICKUP) {
-                        wStickY = axisY * 84;
-                        continue;
-                    } else if (profile.Mappings[i] == BTN_VSTICKRIGHT || profile.Mappings[i] == BTN_VSTICKLEFT) {
-                        wCamX = axisX * 84 * profile.Thresholds[SENSITIVITY];
-                        continue;
-                    } else if (profile.Mappings[i] == BTN_VSTICKDOWN || profile.Mappings[i] == BTN_VSTICKUP) {
-                        wCamY = axisY * 84 * profile.Thresholds[SENSITIVITY];
-                        continue;
+                        if (profile.Mappings[i] == BTN_STICKRIGHT || profile.Mappings[i] == BTN_STICKLEFT) {
+                            wStickX = axisX * 84;
+                            continue;
+                        } else if (profile.Mappings[i] == BTN_STICKDOWN || profile.Mappings[i] == BTN_STICKUP) {
+                            wStickY = axisY * 84;
+                            continue;
+                        } else if (profile.Mappings[i] == BTN_VSTICKRIGHT || profile.Mappings[i] == BTN_VSTICKLEFT) {
+                            wCamX = axisX * 84 * profile.Thresholds[SENSITIVITY];
+                            continue;
+                        } else if (profile.Mappings[i] == BTN_VSTICKDOWN || profile.Mappings[i] == BTN_VSTICKUP) {
+                            wCamY = axisY * 84 * profile.Thresholds[SENSITIVITY];
+                            continue;
+                        }
                     }
-                }
 
-                if (vStatus.hold & i) {
-                    dwPressedButtons[slot] |= profile.Mappings[i];
+                    if (vStatus.hold & i) {
+                        dwPressedButtons[slot] |= profile.Mappings[i];
+                    }
                 }
             }
         }
 
-        // TODO gyro
         if (profile.UseGyro) {
+            float gyroX = vStatus.gyro.x * -8.0f;
+            float gyroY = vStatus.gyro.z * 8.0f;
 
+            float gyro_drift_x = profile.Thresholds[DRIFT_X] / 100.0f;
+            float gyro_drift_y = profile.Thresholds[DRIFT_Y] / 100.0f;
+            const float gyro_sensitivity = profile.Thresholds[GYRO_SENSITIVITY];
+
+            if (gyro_drift_x == 0) {
+                gyro_drift_x = gyroX;
+            }
+
+            if (gyro_drift_y == 0) {
+                gyro_drift_y = gyroY;
+            }
+
+            profile.Thresholds[DRIFT_X] = gyro_drift_x * 100.0f;
+            profile.Thresholds[DRIFT_Y] = gyro_drift_y * 100.0f;
+
+            wGyroX = gyroX - gyro_drift_x;
+            wGyroY = gyroY - gyro_drift_y;
+
+            wGyroX *= gyro_sensitivity;
+            wGyroY *= gyro_sensitivity;
         }
     }
 
@@ -198,6 +217,9 @@ namespace Ship {
         profile.Mappings[VPAD_STICK_L_EMULATION_UP] = BTN_STICKUP;
 
         profile.Thresholds[SENSITIVITY] = 16.0f;
+        profile.Thresholds[GYRO_SENSITIVITY] = 1.0f;
+        profile.Thresholds[DRIFT_X] = 0.0f;
+        profile.Thresholds[DRIFT_Y] = 0.0f;
     }
 }
 #endif

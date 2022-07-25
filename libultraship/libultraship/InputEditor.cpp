@@ -179,8 +179,6 @@ namespace Ship {
 		}
 
 		if(Backend->CanGyro()) {
-			ImGui::SameLine();
-
 			SohImGui::BeginGroupPanel("Gyro Options", ImVec2(175 * 2, 20 * 2));
 			float cursorX = ImGui::GetCursorPosX() + 5;
 			ImGui::SetCursorPosX(cursorX);
@@ -204,11 +202,11 @@ namespace Ship {
 			ImGui::SetCursorPosX(ImGui::GetCursorPosX() + 5);
 			ImGui::BeginChild("##GyInput", ImVec2(90 * 2, 85 * 2), false);
 			ImGui::Text("Drift X");
-			ImGui::PushItemWidth(80);
+			ImGui::PushItemWidth(80 * 2);
 			ImGui::InputFloat("##GDriftX", &profile.Thresholds[DRIFT_X], 1.0f, 0.0f, "%.1f");
 			ImGui::PopItemWidth();
 			ImGui::Text("Drift Y");
-			ImGui::PushItemWidth(80);
+			ImGui::PushItemWidth(80 * 2);
 			ImGui::InputFloat("##GDriftY", &profile.Thresholds[DRIFT_Y], 1.0f, 0.0f, "%.1f");
 			ImGui::PopItemWidth();
 			ImGui::EndChild();

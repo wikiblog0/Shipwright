@@ -1330,7 +1330,13 @@ namespace SohImGui {
                 const char* fps_cvar = "gInterpolationFPS";
                 {
                     int val = CVar_GetS32(fps_cvar, 20);
+#ifdef __WIIU__
+                    val = MAX(MIN(val, 60), 20);
+                    // only support divisors of 60 on the Wii U
+                    val = 60 / (60 / val);
+#else
                     val = MAX(MIN(val, 250), 20);
+#endif
                     int fps = val;
 
                     if (fps == 20)
@@ -1345,15 +1351,29 @@ namespace SohImGui {
                     std::string MinusBTNFPSI = " - ##FPSInterpolation";
                     std::string PlusBTNFPSI = " + ##FPSInterpolation";
                     if (ImGui::Button(MinusBTNFPSI.c_str())) {
+#ifdef __WIIU__
+                        if (val >= 60) val = 30;
+                        else val = 20;
+#else
                         val--;
+#endif
                         CVar_SetS32(fps_cvar, val);
                         needs_save = true;
                     }
                     ImGui::SameLine();
                     ImGui::SetCursorPosX(ImGui::GetCursorPosX() - 7.0f);
 
+#ifdef __WIIU__
+                    if (ImGui::SliderInt("##FPSInterpolation", &val, 20, 60, "", ImGuiSliderFlags_AlwaysClamp))
+#else
                     if (ImGui::SliderInt("##FPSInterpolation", &val, 20, 250, "", ImGuiSliderFlags_AlwaysClamp))
+#endif
                     {
+#ifdef __WIIU__
+                        // only support divisors of 60 on the Wii U
+                        val = 60 / (60 / val);
+#endif
+
                         if (val > 250)
                         {
                             val = 250;
@@ -1377,7 +1397,12 @@ namespace SohImGui {
                     ImGui::SameLine();
                     ImGui::SetCursorPosX(ImGui::GetCursorPosX() - 7.0f);
                     if (ImGui::Button(PlusBTNFPSI.c_str())) {
+#ifdef __WIIU__
+                        if (val <= 20) val = 30;
+                        else val = 60;
+#else
                         val++;
+#endif
                         CVar_SetS32(fps_cvar, val);
                         needs_save = true;
                     }

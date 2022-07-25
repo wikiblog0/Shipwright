@@ -24,6 +24,7 @@ namespace Ship {
 
         private:
             bool connected = true;
+            float rumblePatternStrength;
             uint8_t rumblePattern[15];
     };
 }

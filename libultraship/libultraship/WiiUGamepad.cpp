@@ -6,8 +6,8 @@
 #include <vpad/input.h>
 
 namespace Ship {
-    WiiUGamepad::WiiUGamepad() : Controller() {
-        memset(rumblePattern, 0xFF, sizeof(rumblePattern));
+    WiiUGamepad::WiiUGamepad() : Controller(), connected(true), rumblePatternStrength(1.0f) {
+        memset(rumblePattern, 0xff, sizeof(rumblePattern));
 
         GUID = "WiiUGamepad";
     }
@@ -96,7 +96,29 @@ namespace Ship {
 
     void WiiUGamepad::WriteToSource(int32_t slot, ControllerCallback* controller) {
         if (profiles[slot].UseRumble) {
-            VPADControlMotor(VPAD_CHAN_0, rumblePattern, controller->rumble ? 120 : 0);
+            int patternSize = sizeof(rumblePattern) * 8;
+
+            // update rumble pattern if strength changed
+            if (rumblePatternStrength != profiles[slot].RumbleStrength) {
+                rumblePatternStrength = profiles[slot].RumbleStrength;
+                if (rumblePatternStrength > 1.0f) {
+                    rumblePatternStrength = 1.0f;
+                } else if (rumblePatternStrength < 0.0f) {
+                    rumblePatternStrength = 0.0f;
+                }
+
+                memset(rumblePattern, 0, sizeof(rumblePattern));
+
+                // distribute wanted amount of bits equally in pattern
+                float scale = (rumblePatternStrength * (1.0f - 0.3f)) + 0.3f;
+                int bitcnt = patternSize * scale;
+                for (int i = 0; i < bitcnt; i++) {
+                    int bitpos = ((i * patternSize) / bitcnt) % patternSize;
+                    rumblePattern[bitpos / 8] |= 1 << (bitpos % 8);
+                }
+            }
+
+            VPADControlMotor(VPAD_CHAN_0, rumblePattern, controller->rumble ? patternSize : 0);
         }
     }
 

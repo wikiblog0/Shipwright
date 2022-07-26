@@ -155,8 +155,8 @@ static void gfx_wiiu_init(const char *game_name, bool start_in_fullscreen, uint3
     GX2SetupContextStateEx(context_state, TRUE);
     GX2SetContextState(context_state);
 
-    GX2SetTVScale(tv_width, tv_height);
-    GX2SetDRCScale(tv_width, tv_height);
+    GX2SetTVScale(DEFAULT_FB_WIDTH, DEFAULT_FB_HEIGHT);
+    GX2SetDRCScale(DEFAULT_FB_WIDTH, DEFAULT_FB_HEIGHT);
 
     GX2SetSwapInterval(frame_divisor);
 
@@ -221,8 +221,8 @@ static void gfx_wiiu_main_loop(void (*run_one_game_iter)(void)) {
 }
 
 static void gfx_wiiu_get_dimensions(uint32_t *width, uint32_t *height) {
-    *width = tv_width;
-    *height = tv_height;
+    *width = DEFAULT_FB_WIDTH;
+    *height = DEFAULT_FB_HEIGHT;
 }
 
 static void gfx_wiiu_handle_events(void) {

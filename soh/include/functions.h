@@ -60,7 +60,11 @@ void Locale_ResetRegion(void);
 u32 func_80001F48(void);
 u32 func_80001F8C(void);
 u32 Locale_IsRegionNative(void);
+#ifdef __WIIU__
 void _assert(const char* exp, const char* file, s32 line);
+#elif !defined(__APPLE__) && !defined(__SWITCH__)
+void __assert(const char* exp, const char* file, s32 line);
+#endif
 void isPrintfInit(void);
 void osSyncPrintfUnused(const char* fmt, ...);
 //void osSyncPrintf(const char* fmt, ...);
@@ -1870,7 +1874,7 @@ void FaultDrawer_SetCharPad(s8, s8);
 void FaultDrawer_SetCursor(s32, s32);
 void FaultDrawer_FillScreen();
 void* FaultDrawer_FormatStringFunc(void*, const char*, u32);
-void FaultDrawer_VPrintf(const char*, char*);
+void FaultDrawer_VPrintf(const char*, va_list);
 void FaultDrawer_Printf(const char*, ...);
 void FaultDrawer_DrawText(s32, s32, const char*, ...);
 void FaultDrawer_SetDrawerFB(void*, u16, u16);

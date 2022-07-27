@@ -34,7 +34,17 @@
 #include <gx2/registers.h>
 
 extern uint32_t frametime;
-void* gfx_gx2_texture_for_imgui(uint32_t texture_id);   
+void* gfx_gx2_texture_for_imgui(uint32_t texture_id);
+#endif
+
+#if __APPLE__
+#include <SDL_hints.h>
+#else
+#include <SDL2/SDL_hints.h>
+#endif
+
+#ifdef __SWITCH__
+#include "SwitchImpl.h"
 #endif
 
 #ifdef ENABLE_OPENGL
@@ -152,6 +162,7 @@ namespace SohImGui {
             break;
 #else
         case Backend::SDL:
+            SDL_SetHint(SDL_HINT_TOUCH_MOUSE_EVENTS, "1");
             ImGui_ImplSDL2_InitForOpenGL(static_cast<SDL_Window*>(impl.sdl.window), impl.sdl.context);
             break;
 #endif
@@ -414,6 +425,9 @@ namespace SohImGui {
         io = &ImGui::GetIO();
         io->ConfigFlags |= ImGuiConfigFlags_DockingEnable;
         io->Fonts->AddFontDefault();
+    #ifdef __SWITCH__
+        Ship::Switch::SetupFont(io->Fonts);
+    #endif
 
 #ifdef __WIIU__
         // Scale everything by 2 for the Wii U
@@ -427,7 +441,11 @@ namespace SohImGui {
 
         lastBackendID = GetBackendID(GlobalCtx2::GetInstance()->GetConfig());
         if (CVar_GetS32("gOpenMenuBar", 0) != 1) {
+            #if defined(__SWITCH__) || defined(__WIIU__)
+            SohImGui::overlay->TextDrawNotification(30.0f, true, "Press - to access enhancements menu");
+            #else
             SohImGui::overlay->TextDrawNotification(30.0f, true, "Press F1 to access enhancements menu");
+            #endif
         }
 
         auto imguiIniPath = Ship::GlobalCtx2::GetPathRelativeToAppDirectory("imgui.ini");
@@ -444,6 +462,9 @@ namespace SohImGui {
         controller->Init();
         ImGuiWMInit();
         ImGuiBackendInit();
+    #ifdef __SWITCH__
+        ImGui::GetStyle().ScaleAllSizes(2);
+    #endif
 
         ModInternal::RegisterHook<ModInternal::GfxInit>([] {
             if (GlobalCtx2::GetInstance()->GetWindow()->IsFullscreen())
@@ -472,7 +493,10 @@ namespace SohImGui {
         CVar_SetS32("gNewSeedGenerated", 0);
         CVar_SetS32("gNewFileDropped", 0);
         CVar_SetString("gDroppedFile", "None");
-        // Game::SaveSettings();
+
+    #ifdef __SWITCH__
+        Switch::ApplyOverclock();
+    #endif
     }
 
     void Update(EventImpl event) {
@@ -820,7 +844,7 @@ namespace SohImGui {
 
         const ImGuiViewport* viewport = ImGui::GetMainViewport();
         ImGui::SetNextWindowPos(viewport->WorkPos);
-        ImGui::SetNextWindowSize(ImVec2(wnd->GetCurrentWidth(), wnd->GetCurrentHeight()));
+        ImGui::SetNextWindowSize(ImVec2((int) wnd->GetCurrentWidth(), (int) wnd->GetCurrentHeight()));
         ImGui::SetNextWindowViewport(viewport->ID);
         ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
         ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
@@ -843,11 +867,7 @@ namespace SohImGui {
 
         ImGui::DockSpace(dockId, ImVec2(0.0f, 0.0f), ImGuiDockNodeFlags_None | ImGuiDockNodeFlags_NoDockingInCentralNode);
 
-#ifdef __WIIU__
-        if (ImGui::IsKeyPressed(TOGGLE_PAD_BTN)) {
-#else
-        if (ImGui::IsKeyPressed(TOGGLE_BTN)) {
-#endif
+        if (ImGui::IsKeyPressed(TOGGLE_BTN) || ImGui::IsKeyPressed(TOGGLE_PAD_BTN)) {
             bool menu_bar = CVar_GetS32("gOpenMenuBar", 0);
             CVar_SetS32("gOpenMenuBar", !menu_bar);
             needs_save = true;
@@ -892,8 +912,13 @@ namespace SohImGui {
                 ImGui::SameLine();
                 ImGui::SetCursorPos(ImVec2(25 * 2, 0));
 #else
+            #ifdef __SWITCH__
+                ImVec2 iconSize = ImVec2(20.0f, 20.0f);
+            #else
+                ImVec2 iconSize = ImVec2(16.0f, 16.0f);
+            #endif
                 ImGui::SetCursorPos(ImVec2(5, 2.5f));
-                ImGui::Image(GetTextureByID(DefaultAssets["Game_Icon"]->textureId), ImVec2(16.0f, 16.0f));
+                ImGui::Image(GetTextureByID(DefaultAssets["Game_Icon"]->textureId), iconSize);
                 ImGui::SameLine();
                 ImGui::SetCursorPos(ImVec2(25, 0));
 #endif
@@ -1035,8 +1060,6 @@ namespace SohImGui {
                 EXPERIMENTAL();
                 ImGui::Text("Texture Filter (Needs reload)");
                 EnhancementCombobox("gTextureFilter", filters, 3, 0);
-                GfxRenderingAPI* gapi = gfx_get_current_rendering_api();
-                gapi->set_texture_filter((FilteringMode)CVar_GetS32("gTextureFilter", 0));
                 overlay->DrawSettings();
                 ImGui::EndMenu();
             }
@@ -1079,8 +1102,12 @@ namespace SohImGui {
                         Tooltip("The default response to Kaepora Gaebora is\nalways that you understood what he said");
                         EnhancementCheckbox("Fast Ocarina Playback", "gFastOcarinaPlayback");
                         Tooltip("Skip the part where the Ocarina playback is called when you play\na song");
+                        EnhancementCheckbox("Prevent Dropped Ocarina Inputs", "gDpadNoDropOcarinaInput");
+                        Tooltip("Prevent dropping inputs when playing the ocarina quickly");
                         EnhancementCheckbox("Instant Putaway", "gInstantPutaway");
                         Tooltip("Allow Link to put items away without having to wait around");
+                        EnhancementCheckbox("Mask Select in Inventory", "gMaskSelect");
+                        Tooltip("After completing the mask trading sub-quest,\npress A and any direction on the mask slot to change masks");
                         ImGui::EndMenu();
                     }
 
@@ -1121,6 +1148,8 @@ namespace SohImGui {
                         Tooltip("Disables random drops, except from the Goron Pot, Dampe, and bosses");
                         EnhancementCheckbox("No Heart Drops", "gNoHeartDrops");
                         Tooltip("Disables heart drops, but not heart placements, like from a Deku Scrub running off\nThis simulates Hero Mode from other games in the series");
+                        EnhancementCheckbox("Always Win Goron Pot", "gGoronPot");
+                        Tooltip("Always get the heart piece/purple rupee from the spinning Goron pot");
 
                         if (ImGui::BeginMenu("Potion Values"))
                         {
@@ -1234,6 +1263,8 @@ namespace SohImGui {
                         Tooltip("Allow you to rotate Link on the Equipment menu with the DPAD\nUse DPAD-Up or DPAD-Down to reset Link's rotation");
                         EnhancementRadioButton("Rotate Link with C-buttons", "gPauseLiveLinkRotation", 2);
                         Tooltip("Allow you to rotate Link on the Equipment menu with the C-buttons\nUse C-Up or C-Down to reset Link's rotation");
+                        EnhancementRadioButton("Rotate Link with Right Stick", "gPauseLiveLinkRotation", 3);
+                        Tooltip("Allow you to rotate Link on the Equipment menu with the Right Stick\nYou can zoom in by pointing up and reset Link's rotation by pointing down");
 
                         if (CVar_GetS32("gPauseLiveLinkRotation", 0) != 0) {
                             EnhancementSliderInt("Rotation Speed: %d", "##MinRotationSpeed", "gPauseLiveLinkRotationSpeed", 1, 20, "");
@@ -1261,6 +1292,8 @@ namespace SohImGui {
                         Tooltip("Randomize the animation played each time you open the menu");
                         EnhancementRadioButton("Random cycle", "gPauseLiveLink", 16);
                         Tooltip("Randomize the animation played on the menu after a certain time");
+                        EnhancementRadioButton("Random cycle (Idle)", "gPauseLiveLink", 17);
+                        Tooltip("Randomize the animation played on the menu after a certain time (Idle animations only)");
                         if (CVar_GetS32("gPauseLiveLink", 0) >= 16) {
                             EnhancementSliderInt("Frame to wait: %d", "##MinFrameCount", "gMinFrameCount", 1, 1000, "", 0, true);
                         }
@@ -1329,14 +1362,22 @@ namespace SohImGui {
 
                 const char* fps_cvar = "gInterpolationFPS";
                 {
-                    int val = CVar_GetS32(fps_cvar, 20);
+                #if defined(__SWITCH__) || defined(__WIIU__)
+                    int minFps = 20;
+                    int maxFps = 60;
+                #else
+                    int minFps = 20;
+                    int maxFps = 250;
+                #endif
+
+                    int val = CVar_GetS32(fps_cvar, minFps);
+                    val = MAX(MIN(val, maxFps), 20);
+
 #ifdef __WIIU__
-                    val = MAX(MIN(val, 60), 20);
                     // only support divisors of 60 on the Wii U
                     val = 60 / (60 / val);
-#else
-                    val = MAX(MIN(val, 250), 20);
 #endif
+
                     int fps = val;
 
                     if (fps == 20)
@@ -1363,11 +1404,7 @@ namespace SohImGui {
                     ImGui::SameLine();
                     ImGui::SetCursorPosX(ImGui::GetCursorPosX() - 7.0f);
 
-#ifdef __WIIU__
-                    if (ImGui::SliderInt("##FPSInterpolation", &val, 20, 60, "", ImGuiSliderFlags_AlwaysClamp))
-#else
-                    if (ImGui::SliderInt("##FPSInterpolation", &val, 20, 250, "", ImGuiSliderFlags_AlwaysClamp))
-#endif
+                    if (ImGui::SliderInt("##FPSInterpolation", &val, minFps, maxFps, "", ImGuiSliderFlags_AlwaysClamp))
                     {
 #ifdef __WIIU__
                         // only support divisors of 60 on the Wii U
@@ -1435,6 +1472,23 @@ namespace SohImGui {
                 EnhancementCheckbox("Free Camera", "gFreeCamera");
                 Tooltip("Enables camera control\nNote: You must remap C buttons off of\nthe right stick in the controller\nconfig menu, and map the camera stick\nto the right stick.");
 
+             #ifdef __SWITCH__
+                int slot = CVar_GetS32("gSwitchPerfMode", (int)SwitchProfiles::STOCK);
+                ImGui::Text("Switch performance mode");
+                if (ImGui::BeginCombo("##perf", SWITCH_CPU_PROFILES[slot])) {
+                    for (int sId = 0; sId <= SwitchProfiles::POWERSAVINGM3; sId++) {
+                        if (ImGui::Selectable(SWITCH_CPU_PROFILES[sId], sId == slot)) {
+                            INFO("Profile:: %s", SWITCH_CPU_PROFILES[sId]);
+                            CVar_SetS32("gSwitchPerfMode", sId);
+                            Switch::ApplyOverclock();
+                            needs_save = true;
+                        }
+
+                    }
+                    ImGui::EndCombo();
+                }
+             #endif
+
                 ImGui::EndMenu();
             }
 
@@ -1483,6 +1537,8 @@ namespace SohImGui {
             {
                 EnhancementCheckbox("OoT Debug Mode", "gDebugEnabled");
                 Tooltip("Enables Debug Mode, allowing you to select maps with L + R + Z, noclip with L + D-pad Right,\nand open the debug menu with L on the pause screen");
+                EnhancementCheckbox("OoT Skulltula Debug", "gSkulltulaDebugEnabled");
+                Tooltip("Enables Skulltula Debug, when moving the cursor in the menu above various map\nicons (boss key, compass, map screen locations, etc) will set the GS bits in that\narea. USE WITH CAUTION AS IT DOES NOT UPDATE THE GS COUNT.");
                 EnhancementCheckbox("Fast File Select", "gSkipLogoTitle");
                 Tooltip("Load the game to the selected menu or file\n\"Zelda Map Select\" require debug mode else you will fallback to File choose menu\nUsing a file number that don't have save will create a save file only\nif you toggle on \"Create a new save if none ?\" else it will bring you to the\nFile choose menu");
                 if (CVar_GetS32("gSkipLogoTitle", 0)) {
@@ -1543,14 +1599,18 @@ namespace SohImGui {
             ImGui::PushStyleColor(ImGuiCol_Border, ImVec4(0, 0, 0, 0));
             ImGui::Begin("Debug Stats", nullptr, ImGuiWindowFlags_NoFocusOnAppearing);
 
-#ifdef _WIN32
+#if defined(_WIN32)
             ImGui::Text("Platform: Windows");
-#elif __APPLE__
+#elif defined(__APPLE__)
             ImGui::Text("Platform: macOS");
-#elif __WIIU__
-            ImGui::Text("Platform: Wii U");
-#else
+#elif defined(__SWITCH__)
+            ImGui::Text("Platform: Nintendo Switch");
+#elif defined(__WIIU__)
+            ImGui::Text("Platform: Nintendo Wii U");
+#elif defined(__linux__)
             ImGui::Text("Platform: Linux");
+#else
+            ImGui::Text("Platform: Unknown");
 #endif
             ImGui::Text("Status: %.3f ms/frame (%.1f FPS)", 1000.0f / framerate, framerate);
             ImGui::End();

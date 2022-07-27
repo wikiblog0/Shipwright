@@ -29,6 +29,7 @@
 #include <chrono>
 #include "Hooks.h"
 #include "Console.h"
+#include "Cvar.h"
 
 #include <iostream>
 
@@ -41,7 +42,6 @@ extern "C" {
     struct OSMesgQueue;
 
     uint8_t __osMaxControllers = MAXCONTROLLERS;
-    uint8_t __enableGameInput = 1;
 
     int32_t osContInit(OSMesgQueue* mq, uint8_t* controllerBits, OSContStatus* status) {
         *controllerBits = 0;
@@ -52,6 +52,7 @@ extern "C" {
             exit(EXIT_FAILURE);
         }
 
+    #ifndef __SWITCH__
         const char* controllerDb = "gamecontrollerdb.txt";
         int mappingsAdded = SDL_GameControllerAddMappingsFromFile(controllerDb);
         if (mappingsAdded >= 0) {
@@ -59,6 +60,7 @@ extern "C" {
         } else {
             SPDLOG_ERROR("Failed add SDL game controller mappings from \"{}\" ({})", controllerDb, SDL_GetError());
         }
+    #endif
 #else
         KPADInit();
         WPADEnableURCC(true);
@@ -83,7 +85,14 @@ extern "C" {
         pad->gyro_x = 0;
         pad->gyro_y = 0;
 
-        if (__enableGameInput) {
+    #ifdef __SWITCH__
+        if(!CVar_GetS32("gOpenMenuBar", 0)) {
+    #elif defined(__WIIU__)
+        // TODO reword input for imgui
+        {
+    #else
+        if(!(CVar_GetS32("gControlNav", 0) && CVar_GetS32("gOpenMenuBar", 0))) {
+    #endif
             Ship::Window::ControllerApi->WriteToPad(pad);
         }
 
@@ -316,7 +325,6 @@ namespace Ship {
     void Window::MainLoop(void (*MainFunction)(void)) {
         WmApi->main_loop(MainFunction);
     }
-	
     bool Window::KeyUp(int32_t dwScancode) {
 #ifndef __WIIU__
         std::shared_ptr<Mercury> pConf = GlobalCtx2::GetInstance()->GetConfig();
@@ -329,7 +337,7 @@ namespace Ship {
         //if (dwScancode == Ship::stoi(Conf["KEYBOARD SHORTCUTS"]["KEY_CONSOLE"])) {
         //    ToggleConsole();
         //}
-		
+
         lastScancode = -1;
 
         bool bIsProcessed = false;

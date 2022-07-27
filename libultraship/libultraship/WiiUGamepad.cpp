@@ -129,7 +129,7 @@ namespace Ship {
 
         if (vError == VPAD_READ_SUCCESS) {
             for (uint32_t i = VPAD_BUTTON_SYNC; i <= VPAD_BUTTON_STICK_L; i <<= 1) {
-                if (vStatus.hold & i) {
+                if (vStatus.trigger & i) {
                     return i;
                 }
             }

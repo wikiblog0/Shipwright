@@ -161,7 +161,7 @@ namespace Ship {
             switch (extensionType) {
                 case WPAD_EXT_PRO_CONTROLLER:
                     for (uint32_t i = WPAD_PRO_BUTTON_UP; i <= WPAD_PRO_STICK_R_EMULATION_UP; i <<= 1) {
-                        if (kStatus.pro.hold & i) {
+                        if (kStatus.pro.trigger & i) {
                             return i;
                         }
                     }
@@ -195,7 +195,7 @@ namespace Ship {
                 case WPAD_EXT_CLASSIC:
                 case WPAD_EXT_MPLUS_CLASSIC:
                     for (uint32_t i = WPAD_CLASSIC_BUTTON_UP; i <= WPAD_CLASSIC_STICK_R_EMULATION_UP; i <<= 1) {
-                        if (kStatus.classic.hold & i) {
+                        if (kStatus.classic.trigger & i) {
                             return i;
                         }
                     }
@@ -230,7 +230,7 @@ namespace Ship {
                 case WPAD_EXT_MPLUS_NUNCHUK:
                 case WPAD_EXT_CORE:
                     for (uint32_t i = WPAD_BUTTON_LEFT; i <= WPAD_BUTTON_HOME; i <<= 1) {
-                        if (kStatus.hold & i) {
+                        if (kStatus.trigger & i) {
                             return i;
                         }
                     }

@@ -4,9 +4,14 @@ FROM devkitpro/devkitppc:20220531 AS wutbuild
 ENV PATH=$DEVKITPPC/bin:$PATH
 
 WORKDIR /
-RUN git clone https://github.com/devkitPro/wut
+RUN \
+mkdir wut && \
+cd wut && \
+git init . && \
+git remote add origin https://github.com/devkitPro/wut.git && \
+git fetch --depth 1 origin 028899ecd3febe6cadbd3934c240d5f5e7a1d40d && \
+git checkout FETCH_HEAD
 WORKDIR /wut
-RUN git checkout f1b5da996f4c4a58beb3d3ab93aa8e8b9f66e775
 RUN make -j$(nproc)
 RUN make install
 WORKDIR /
@@ -21,7 +26,13 @@ COPY --from=wutbuild /opt/devkitpro/wut /opt/devkitpro/wut
 FROM builder AS sdlbuild
 ENV WUT_ROOT=$DEVKITPRO/wut
 
-RUN git clone -b wiiu-2.0.9 --single-branch https://github.com/yawut/SDL
+RUN \
+mkdir SDL && \
+cd SDL && \
+git init . && \
+git remote add origin https://github.com/yawut/SDL.git && \
+git fetch --depth 1 origin 81eba84eb9cf213e4a4341727f436562270c8e08 && \
+git checkout FETCH_HEAD
 WORKDIR /SDL
 RUN mkdir build
 WORKDIR /SDL/build
@@ -35,7 +46,13 @@ WORKDIR /
 
 # build StormLib
 FROM builder as stormlibbuild
-RUN git clone -b wiiu --single-branch https://github.com/GaryOderNichts/StormLib
+RUN \
+mkdir StormLib && \
+cd StormLib && \
+git init . && \
+git remote add origin https://github.com/GaryOderNichts/StormLib.git && \
+git fetch --depth 1 origin af4f8098aa2ccd2997dbe14c8b63e93a57d8e1ba && \
+git checkout FETCH_HEAD
 WORKDIR /StormLib
 RUN mkdir build
 WORKDIR /StormLib/build

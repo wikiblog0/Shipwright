@@ -20,11 +20,6 @@ extern GlobalContext* gGlobalCtx;
 #include "textures/icon_item_24_static/icon_item_24_static.h"
 }
 
-#ifdef __WIIU__
-// Workaround for compiler bug with devkitPPC r41-2
-#pragma GCC optimize ("O0")
-#endif
-
 typedef struct {
     uint32_t id;
     std::string name;

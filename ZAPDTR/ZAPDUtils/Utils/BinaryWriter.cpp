@@ -1,20 +1,20 @@
 #include "BinaryWriter.h"
 
-BinaryWriter::BinaryWriter(Stream* nStream, Endianess endianess)
+BinaryWriter::BinaryWriter(Stream* nStream, Endianness endianness)
 {
-	this->endianess = endianess;
+	this->endianness = endianness;
 	stream.reset(nStream);
 }
 
-BinaryWriter::BinaryWriter(std::shared_ptr<Stream> nStream, Endianess endianess)
+BinaryWriter::BinaryWriter(std::shared_ptr<Stream> nStream, Endianness endianness)
 {
-	this->endianess = endianess;
+	this->endianness = endianness;
 	stream = nStream;
 }
 
-void BinaryWriter::SetEndianess(Endianess endianess)
+void BinaryWriter::SetEndianness(Endianness endianness)
 {
-	this->endianess = endianess;
+	this->endianness = endianness;
 }
 
 void BinaryWriter::Close()
@@ -54,7 +54,7 @@ void BinaryWriter::Write(uint8_t value)
 
 void BinaryWriter::Write(int16_t value)
 {
-	if (endianess != Endianess::Native)
+	if (endianness != Endianness::Native)
 		value = BSWAP16(value);
 
 	stream->Write((char*)&value, sizeof(int16_t));
@@ -62,7 +62,7 @@ void BinaryWriter::Write(int16_t value)
 
 void BinaryWriter::Write(uint16_t value)
 {
-	if (endianess != Endianess::Native)
+	if (endianness != Endianness::Native)
 		value = BSWAP16(value);
 
 	stream->Write((char*)&value, sizeof(uint16_t));
@@ -70,7 +70,7 @@ void BinaryWriter::Write(uint16_t value)
 
 void BinaryWriter::Write(int32_t value)
 {
-	if (endianess != Endianess::Native)
+	if (endianness != Endianness::Native)
 		value = BSWAP32(value);
 
 	stream->Write((char*)&value, sizeof(int32_t));
@@ -84,7 +84,7 @@ void BinaryWriter::Write(int32_t valueA, int32_t valueB)
 
 void BinaryWriter::Write(uint32_t value)
 {
-	if (endianess != Endianess::Native)
+	if (endianness != Endianness::Native)
 		value = BSWAP32(value);
 
 	stream->Write((char*)&value, sizeof(uint32_t));
@@ -92,7 +92,7 @@ void BinaryWriter::Write(uint32_t value)
 
 void BinaryWriter::Write(int64_t value)
 {
-	if (endianess != Endianess::Native)
+	if (endianness != Endianness::Native)
 		value = BSWAP64(value);
 
 	stream->Write((char*)&value, sizeof(int64_t));
@@ -100,7 +100,7 @@ void BinaryWriter::Write(int64_t value)
 
 void BinaryWriter::Write(uint64_t value)
 {
-	if (endianess != Endianess::Native)
+	if (endianness != Endianness::Native)
 		value = BSWAP64(value);
 
 	stream->Write((char*)&value, sizeof(uint64_t));
@@ -108,22 +108,16 @@ void BinaryWriter::Write(uint64_t value)
 
 void BinaryWriter::Write(float value)
 {
-	if (endianess != Endianess::Native)
-	{
-		uint32_t tmp = __builtin_bswap32(*(uint32_t*)&value);
-		value = *(float*)&tmp;
-	}
+	if (endianness != Endianness::Native)
+		value = BitConverter::ToFloatBE((uint8_t*)&value, 0);
 
 	stream->Write((char*)&value, sizeof(float));
 }
 
 void BinaryWriter::Write(double value)
 {
-	if (endianess != Endianess::Native)
-	{
-		uint64_t tmp = __builtin_bswap64(*(uint64_t*)&value);
-		value = *(double*)&tmp;
-	}
+	if (endianness != Endianness::Native)
+		value = BitConverter::ToDoubleBE((uint8_t*)&value, 0);
 
 	stream->Write((char*)&value, sizeof(double));
 }

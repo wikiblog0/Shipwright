@@ -1,6 +1,8 @@
 #ifndef COLOR_H
 #define COLOR_H
 
+#include "endianness.h"
+
 typedef struct {
     u8 r, g, b;
 } Color_RGB8;
@@ -12,7 +14,7 @@ typedef struct {
 // only use when necessary for alignment purposes
 typedef union {
     struct {
-#ifdef BIGENDIAN
+#ifdef IS_BIGENDIAN
         u8 r, g, b, a;
 #else
         u8 a, b, g, r;

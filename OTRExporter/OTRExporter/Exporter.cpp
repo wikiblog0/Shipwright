@@ -4,9 +4,9 @@
 void OTRExporter::WriteHeader(ZResource* res, const fs::path& outPath, BinaryWriter* writer, Ship::ResourceType resType, Ship::Version resVersion)
 {
 #ifdef EXPORT_BIG_ENDIAN
-	writer->Write((uint8_t)Endianess::Big); // 0x00
+	writer->Write((uint8_t)Endianness::Big); // 0x00
 #else
-	writer->Write((uint8_t)Endianess::Little); // 0x00
+	writer->Write((uint8_t)Endianness::Little); // 0x00
 #endif
 	writer->Write((uint8_t)0); // 0x01
 	writer->Write((uint8_t)0); // 0x02

@@ -20,18 +20,6 @@ enum class SeekOffsetType
 	End
 };
 
-enum class Endianess
-{
-	Little = 0,
-	Big = 1,
-
-#if (defined(__BYTE_ORDER__) && (__BYTE_ORDER__ == __ORDER_BIG_ENDIAN__)) || defined(__BIG_ENDIAN__)
-    Native = Big,
-#else
-    Native = Little,
-#endif
-};
-
 class Stream
 {
 public:

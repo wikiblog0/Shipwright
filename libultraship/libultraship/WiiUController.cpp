@@ -4,8 +4,7 @@
 #include "Window.h"
 #include "ImGuiImpl.h"
 
-#include <padscore/kpad.h>
-#include <padscore/wpad.h>
+#include "Lib/Fast3D/gfx_wiiu.h"
 
 namespace Ship {
     WiiUController::WiiUController(WPADChan chan) : Controller(), chan(chan) {
@@ -16,16 +15,18 @@ namespace Ship {
     }
 
     bool WiiUController::Open() {
-		if (WPADProbe(chan, &extensionType) != 0) {
+        KPADStatus* status = gfx_wiiu_get_kpad_status(chan);
+        if (!status) {
             Close();
             return false;
         }
 
         connected = true;
+        extensionType = (WPADExtensionType) status->extensionType;
 
         // Create a GUID and name based on extension and channel
-        GUID = std::string("WiiU") + GetControllerExtension() + std::to_string((int) chan);
-        controllerName = std::string("Wii U ") + GetControllerExtension() + std::string(" ") + std::to_string((int) chan);
+        GUID = std::string("WiiU") + GetControllerExtensionName() + std::to_string((int) chan);
+        controllerName = std::string("Wii U ") + GetControllerExtensionName() + std::string(" ") + std::to_string((int) chan);
 
         return true;
     }
@@ -33,32 +34,29 @@ namespace Ship {
     void WiiUController::Close() {
         connected = false;
         extensionType = (WPADExtensionType) -1;
+
+        for (int32_t& btn : dwPressedButtons) {
+            btn = 0;
+        }
+        wStickX = 0;
+        wStickY = 0;
+        wCamX = 0;
+        wCamY = 0;
     }
 
     void WiiUController::ReadFromSource(int32_t slot) {
         DeviceProfile& profile = profiles[slot];
-        KPADStatus kStatus;
-        KPADError kError;
-        WPADExtensionType kType;
-
-        if (WPADProbe(chan, &kType) != 0) {
+        KPADStatus* status = gfx_wiiu_get_kpad_status(chan);
+        if (!status) {
             Close();
             return;
         }
 
-        // Rescan if type changed
-        if (kType != extensionType) {
-            Window::ControllerApi->ScanPhysicalDevices();
+        // Make sure the controller type doesn't change after opening
+        if (status->extensionType != extensionType) {
+            Close();
             return;
         }
-
-        KPADReadEx(chan, &kStatus, 1, &kError);
-        if (kError != KPAD_ERROR_OK) {
-            return;
-        }
-
-        SohImGui::controllerInput.has_kpad[chan] = true;
-        SohImGui::controllerInput.kpad[chan] = kStatus;
 
         dwPressedButtons[slot] = 0;
         wStickX = 0;
@@ -66,18 +64,14 @@ namespace Ship {
         wCamX = 0;
         wCamY = 0;
 
-        if (SohImGui::hasImGuiOverlay || SohImGui::hasKeyboardOverlay) {
-            return;
-        }
-
-        switch (kType) {
+        switch (extensionType) {
             case WPAD_EXT_PRO_CONTROLLER:
                 for (uint32_t i = WPAD_PRO_BUTTON_UP; i <= WPAD_PRO_STICK_R_EMULATION_UP; i <<= 1) {
                     if (profile.Mappings.contains(i)) {
                         // check if the stick is mapped to an analog stick
                         if (i >= WPAD_PRO_STICK_L_EMULATION_LEFT) {
-                            float axisX = i >= WPAD_PRO_STICK_R_EMULATION_LEFT ? kStatus.pro.rightStick.x : kStatus.pro.leftStick.x;
-                            float axisY = i >= WPAD_PRO_STICK_R_EMULATION_LEFT ? kStatus.pro.rightStick.y : kStatus.pro.leftStick.y;
+                            float axisX = i >= WPAD_PRO_STICK_R_EMULATION_LEFT ? status->pro.rightStick.x : status->pro.leftStick.x;
+                            float axisY = i >= WPAD_PRO_STICK_R_EMULATION_LEFT ? status->pro.rightStick.y : status->pro.leftStick.y;
 
                             if (profile.Mappings[i] == BTN_STICKRIGHT || profile.Mappings[i] == BTN_STICKLEFT) {
                                 wStickX = axisX * 84;
@@ -94,7 +88,7 @@ namespace Ship {
                             }
                         }
 
-                        if (kStatus.pro.hold & i) {
+                        if (status->pro.hold & i) {
                             dwPressedButtons[slot] |= profile.Mappings[i];
                         }
                     }
@@ -106,8 +100,8 @@ namespace Ship {
                     if (profile.Mappings.contains(i)) {
                         // check if the stick is mapped to an analog stick
                         if (i >= WPAD_CLASSIC_STICK_L_EMULATION_LEFT) {
-                            float axisX = i >= WPAD_CLASSIC_STICK_R_EMULATION_LEFT ? kStatus.classic.rightStick.x : kStatus.classic.leftStick.x;
-                            float axisY = i >= WPAD_CLASSIC_STICK_R_EMULATION_LEFT ? kStatus.classic.rightStick.y : kStatus.classic.leftStick.y;
+                            float axisX = i >= WPAD_CLASSIC_STICK_R_EMULATION_LEFT ? status->classic.rightStick.x : status->classic.leftStick.x;
+                            float axisY = i >= WPAD_CLASSIC_STICK_R_EMULATION_LEFT ? status->classic.rightStick.y : status->classic.leftStick.y;
 
                             if (profile.Mappings[i] == BTN_STICKRIGHT || profile.Mappings[i] == BTN_STICKLEFT) {
                                 wStickX = axisX * 84;
@@ -124,7 +118,7 @@ namespace Ship {
                             }
                         }
 
-                        if (kStatus.classic.hold & i) {
+                        if (status->classic.hold & i) {
                             dwPressedButtons[slot] |= profile.Mappings[i];
                         }
                     }
@@ -135,13 +129,13 @@ namespace Ship {
             case WPAD_EXT_CORE:
                 for (uint32_t i = WPAD_BUTTON_LEFT; i <= WPAD_BUTTON_HOME; i <<= 1) {
                     if (profile.Mappings.contains(i)) {
-                        if (kStatus.hold & i) {
+                        if (status->hold & i) {
                             dwPressedButtons[slot] |= profile.Mappings[i];
                         }
                     }
                 }
-                wStickX += kStatus.nunchuck.stick.x * 84;
-                wStickY += kStatus.nunchuck.stick.y * 84;
+                wStickX += status->nunchuck.stick.x * 84;
+                wStickY += status->nunchuck.stick.y * 84;
                 break;
         }
     }
@@ -153,89 +147,88 @@ namespace Ship {
     }
 
     int32_t WiiUController::ReadRawPress() {
-        KPADStatus kStatus;
-        KPADError kError;
+        KPADStatus* status = gfx_wiiu_get_kpad_status(chan);
+        if (!status) {
+            return -1;
+        }
 
-        KPADReadEx(chan, &kStatus, 1, &kError);
-        if (kError == KPAD_ERROR_OK) {
-            switch (extensionType) {
-                case WPAD_EXT_PRO_CONTROLLER:
-                    for (uint32_t i = WPAD_PRO_BUTTON_UP; i <= WPAD_PRO_STICK_R_EMULATION_UP; i <<= 1) {
-                        if (kStatus.pro.trigger & i) {
-                            return i;
-                        }
+        switch (extensionType) {
+            case WPAD_EXT_PRO_CONTROLLER:
+                for (uint32_t i = WPAD_PRO_BUTTON_UP; i <= WPAD_PRO_STICK_R_EMULATION_UP; i <<= 1) {
+                    if (status->pro.trigger & i) {
+                        return i;
                     }
+                }
 
-                    if (kStatus.pro.leftStick.x > 0.7f) {
-                        return WPAD_PRO_STICK_L_EMULATION_RIGHT;
-                    }
-                    if (kStatus.pro.leftStick.x < -0.7f) {
-                        return WPAD_PRO_STICK_L_EMULATION_LEFT;
-                    }
-                    if (kStatus.pro.leftStick.y > 0.7f) {
-                        return WPAD_PRO_STICK_L_EMULATION_UP;
-                    }
-                    if (kStatus.pro.leftStick.y < -0.7f) {
-                        return WPAD_PRO_STICK_L_EMULATION_DOWN;
-                    }
+                if (status->pro.leftStick.x > 0.7f) {
+                    return WPAD_PRO_STICK_L_EMULATION_RIGHT;
+                }
+                if (status->pro.leftStick.x < -0.7f) {
+                    return WPAD_PRO_STICK_L_EMULATION_LEFT;
+                }
+                if (status->pro.leftStick.y > 0.7f) {
+                    return WPAD_PRO_STICK_L_EMULATION_UP;
+                }
+                if (status->pro.leftStick.y < -0.7f) {
+                    return WPAD_PRO_STICK_L_EMULATION_DOWN;
+                }
 
-                    if (kStatus.pro.rightStick.x > 0.7f) {
-                        return WPAD_PRO_STICK_R_EMULATION_RIGHT;
+                if (status->pro.rightStick.x > 0.7f) {
+                    return WPAD_PRO_STICK_R_EMULATION_RIGHT;
+                }
+                if (status->pro.rightStick.x < -0.7f) {
+                    return WPAD_PRO_STICK_R_EMULATION_LEFT;
+                }
+                if (status->pro.rightStick.y > 0.7f) {
+                    return WPAD_PRO_STICK_R_EMULATION_UP;
+                }
+                if (status->pro.rightStick.y < -0.7f) {
+                    return WPAD_PRO_STICK_R_EMULATION_DOWN;
+                }
+                break;
+            case WPAD_EXT_CLASSIC:
+            case WPAD_EXT_MPLUS_CLASSIC:
+                for (uint32_t i = WPAD_CLASSIC_BUTTON_UP; i <= WPAD_CLASSIC_STICK_R_EMULATION_UP; i <<= 1) {
+                    if (status->classic.trigger & i) {
+                        return i;
                     }
-                    if (kStatus.pro.rightStick.x < -0.7f) {
-                        return WPAD_PRO_STICK_R_EMULATION_LEFT;
-                    }
-                    if (kStatus.pro.rightStick.y > 0.7f) {
-                        return WPAD_PRO_STICK_R_EMULATION_UP;
-                    }
-                    if (kStatus.pro.rightStick.y < -0.7f) {
-                        return WPAD_PRO_STICK_R_EMULATION_DOWN;
-                    }
-                    break;
-                case WPAD_EXT_CLASSIC:
-                case WPAD_EXT_MPLUS_CLASSIC:
-                    for (uint32_t i = WPAD_CLASSIC_BUTTON_UP; i <= WPAD_CLASSIC_STICK_R_EMULATION_UP; i <<= 1) {
-                        if (kStatus.classic.trigger & i) {
-                            return i;
-                        }
-                    }
+                }
 
-                    if (kStatus.classic.leftStick.x > 0.7f) {
-                        return WPAD_CLASSIC_STICK_L_EMULATION_RIGHT;
-                    }
-                    if (kStatus.classic.leftStick.x < -0.7f) {
-                        return WPAD_CLASSIC_STICK_L_EMULATION_LEFT;
-                    }
-                    if (kStatus.classic.leftStick.y > 0.7f) {
-                        return WPAD_CLASSIC_STICK_L_EMULATION_UP;
-                    }
-                    if (kStatus.classic.leftStick.y < -0.7f) {
-                        return WPAD_CLASSIC_STICK_L_EMULATION_DOWN;
-                    }
+                if (status->classic.leftStick.x > 0.7f) {
+                    return WPAD_CLASSIC_STICK_L_EMULATION_RIGHT;
+                }
+                if (status->classic.leftStick.x < -0.7f) {
+                    return WPAD_CLASSIC_STICK_L_EMULATION_LEFT;
+                }
+                if (status->classic.leftStick.y > 0.7f) {
+                    return WPAD_CLASSIC_STICK_L_EMULATION_UP;
+                }
+                if (status->classic.leftStick.y < -0.7f) {
+                    return WPAD_CLASSIC_STICK_L_EMULATION_DOWN;
+                }
 
-                    if (kStatus.classic.rightStick.x > 0.7f) {
-                        return WPAD_CLASSIC_STICK_R_EMULATION_RIGHT;
+                if (status->classic.rightStick.x > 0.7f) {
+                    return WPAD_CLASSIC_STICK_R_EMULATION_RIGHT;
+                }
+                if (status->classic.rightStick.x < -0.7f) {
+                    return WPAD_CLASSIC_STICK_R_EMULATION_LEFT;
+                }
+                if (status->classic.rightStick.y > 0.7f) {
+                    return WPAD_CLASSIC_STICK_R_EMULATION_UP;
+                }
+                if (status->classic.rightStick.y < -0.7f) {
+                    return WPAD_CLASSIC_STICK_R_EMULATION_DOWN;
+                }
+                break;
+            case WPAD_EXT_NUNCHUK:
+            case WPAD_EXT_MPLUS_NUNCHUK:
+            case WPAD_EXT_CORE:
+                for (uint32_t i = WPAD_BUTTON_LEFT; i <= WPAD_BUTTON_HOME; i <<= 1) {
+                    if (status->trigger & i) {
+                        return i;
                     }
-                    if (kStatus.classic.rightStick.x < -0.7f) {
-                        return WPAD_CLASSIC_STICK_R_EMULATION_LEFT;
-                    }
-                    if (kStatus.classic.rightStick.y > 0.7f) {
-                        return WPAD_CLASSIC_STICK_R_EMULATION_UP;
-                    }
-                    if (kStatus.classic.rightStick.y < -0.7f) {
-                        return WPAD_CLASSIC_STICK_R_EMULATION_DOWN;
-                    }
-                    break;
-                case WPAD_EXT_NUNCHUK:
-                case WPAD_EXT_MPLUS_NUNCHUK:
-                case WPAD_EXT_CORE:
-                    for (uint32_t i = WPAD_BUTTON_LEFT; i <= WPAD_BUTTON_HOME; i <<= 1) {
-                        if (kStatus.trigger & i) {
-                            return i;
-                        }
-                    }
-                    break;
-            }
+                }
+                break;
         }
 
         return -1;
@@ -411,7 +404,7 @@ namespace Ship {
         profile.Thresholds[SENSITIVITY] = 16.0f;
     }
 
-    std::string WiiUController::GetControllerExtension() {
+    std::string WiiUController::GetControllerExtensionName() {
         switch (extensionType) {
             case WPAD_EXT_PRO_CONTROLLER:
                 return "ProController";

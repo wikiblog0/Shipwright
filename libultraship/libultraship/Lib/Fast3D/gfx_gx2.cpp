@@ -99,13 +99,13 @@ static GX2CompareFunction current_depth_compare_function = GX2_COMPARE_FUNC_LESS
 
 static float current_viewport_x = 0.0f;
 static float current_viewport_y = 0.0f;
-static float current_viewport_width = DEFAULT_FB_WIDTH;
-static float current_viewport_height = DEFAULT_FB_HEIGHT;
+static float current_viewport_width = WIIU_DEFAULT_FB_WIDTH;
+static float current_viewport_height = WIIU_DEFAULT_FB_HEIGHT;
 
 static uint32_t current_scissor_x = 0;
 static uint32_t current_scissor_y = 0;
-static uint32_t current_scissor_width = DEFAULT_FB_WIDTH;
-static uint32_t current_scissor_height = DEFAULT_FB_HEIGHT;
+static uint32_t current_scissor_width = WIIU_DEFAULT_FB_WIDTH;
+static uint32_t current_scissor_height = WIIU_DEFAULT_FB_HEIGHT;
 
 static bool current_zmode_decal = false;
 static bool current_use_alpha = false;
@@ -426,7 +426,8 @@ static void gfx_gx2_draw_triangles(float buf_vbo[], size_t buf_vbo_len, size_t b
 }
 
 static void gfx_gx2_init(void) {
-    gfx_gx2_init_framebuffer(&main_framebuffer, DEFAULT_FB_WIDTH, DEFAULT_FB_HEIGHT);
+    // Init the default framebuffer
+    gfx_gx2_init_framebuffer(&main_framebuffer, WIIU_DEFAULT_FB_WIDTH, WIIU_DEFAULT_FB_HEIGHT);
 
     GX2CalcSurfaceSizeAndAlignment(&main_framebuffer.color_buffer.surface);
     GX2InitColorBufferRegs(&main_framebuffer.color_buffer);

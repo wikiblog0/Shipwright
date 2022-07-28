@@ -80,23 +80,6 @@ void Ship::ControlDeck::WriteToPad(OSContPad* pad) const {
 		}
 		backend->Read(&pad[i], i);
 	}
-
-#ifdef __WIIU__
-	// Update non-active controllers as well so ImGui won't break
-
-	// If one of them is using Auto don't bother updating the rest
-	for (size_t i = 0; i < virtualDevices.size(); i++) {
-		if (physicalDevices[virtualDevices[i]]->GetGuid() == "Auto") {
-			return;
-		}
-	}
-
-	for (size_t i = 0; i < physicalDevices.size(); i++) {
-		if(std::find(virtualDevices.begin(), virtualDevices.end(), i) == virtualDevices.end()) {
-			physicalDevices[i]->ReadFromSource(0);
-		}
-	}
-#endif
 }
 
 #define NESTED(key, ...) StringHelper::Sprintf("Controllers.%s.Slot_%d." key, device->GetGuid().c_str(), slot, __VA_ARGS__)

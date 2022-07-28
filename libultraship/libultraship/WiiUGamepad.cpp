@@ -3,7 +3,7 @@
 #include "GlobalCtx2.h"
 #include "ImGuiImpl.h"
 
-#include <vpad/input.h>
+#include "Lib/Fast3D/gfx_wiiu.h"
 
 namespace Ship {
     WiiUGamepad::WiiUGamepad() : Controller(), connected(true), rumblePatternStrength(1.0f) {
@@ -15,21 +15,16 @@ namespace Ship {
     void WiiUGamepad::ReadFromSource(int32_t slot) {
         DeviceProfile& profile = profiles[slot];
 
-        VPADStatus vStatus;
-        VPADReadError vError;
-        VPADRead(VPAD_CHAN_0, &vStatus, 1, &vError);
-
-        if (vError != VPAD_READ_SUCCESS) {
-            if (vError == VPAD_READ_INVALID_CONTROLLER) {
-                connected = false;
-            }
+        VPADStatus* status = gfx_wiiu_get_vpad_status();
+        if (!status) {
+            connected = false;
+            dwPressedButtons[slot] = 0;
+            wStickX = 0;
+            wStickY = 0;
+            wCamX = 0;
+            wCamY = 0;
             return;
-        } else {
-            connected = true;
         }
-
-        SohImGui::controllerInput.has_vpad = true;
-        SohImGui::controllerInput.vpad = vStatus;
 
         dwPressedButtons[slot] = 0;
         wStickX = 0;
@@ -37,39 +32,37 @@ namespace Ship {
         wCamX = 0;
         wCamY = 0;
 
-        if (!SohImGui::hasImGuiOverlay && !SohImGui::hasKeyboardOverlay) {
-            for (uint32_t i = VPAD_BUTTON_SYNC; i <= VPAD_STICK_L_EMULATION_LEFT; i <<= 1) {
-                if (profile.Mappings.contains(i)) {
-                    // check if the stick is mapped to an analog stick
-                    if (i >= VPAD_STICK_R_EMULATION_DOWN) {
-                        float axisX = i >= VPAD_STICK_L_EMULATION_DOWN ? vStatus.leftStick.x : vStatus.rightStick.x;
-                        float axisY = i >= VPAD_STICK_L_EMULATION_DOWN ? vStatus.leftStick.y : vStatus.rightStick.y;
+        for (uint32_t i = VPAD_BUTTON_SYNC; i <= VPAD_STICK_L_EMULATION_LEFT; i <<= 1) {
+            if (profile.Mappings.contains(i)) {
+                // check if the stick is mapped to an analog stick
+                if (i >= VPAD_STICK_R_EMULATION_DOWN) {
+                    float axisX = i >= VPAD_STICK_L_EMULATION_DOWN ? status->leftStick.x : status->rightStick.x;
+                    float axisY = i >= VPAD_STICK_L_EMULATION_DOWN ? status->leftStick.y : status->rightStick.y;
 
-                        if (profile.Mappings[i] == BTN_STICKRIGHT || profile.Mappings[i] == BTN_STICKLEFT) {
-                            wStickX = axisX * 84;
-                            continue;
-                        } else if (profile.Mappings[i] == BTN_STICKDOWN || profile.Mappings[i] == BTN_STICKUP) {
-                            wStickY = axisY * 84;
-                            continue;
-                        } else if (profile.Mappings[i] == BTN_VSTICKRIGHT || profile.Mappings[i] == BTN_VSTICKLEFT) {
-                            wCamX = axisX * 84 * profile.Thresholds[SENSITIVITY];
-                            continue;
-                        } else if (profile.Mappings[i] == BTN_VSTICKDOWN || profile.Mappings[i] == BTN_VSTICKUP) {
-                            wCamY = axisY * 84 * profile.Thresholds[SENSITIVITY];
-                            continue;
-                        }
+                    if (profile.Mappings[i] == BTN_STICKRIGHT || profile.Mappings[i] == BTN_STICKLEFT) {
+                        wStickX = axisX * 84;
+                        continue;
+                    } else if (profile.Mappings[i] == BTN_STICKDOWN || profile.Mappings[i] == BTN_STICKUP) {
+                        wStickY = axisY * 84;
+                        continue;
+                    } else if (profile.Mappings[i] == BTN_VSTICKRIGHT || profile.Mappings[i] == BTN_VSTICKLEFT) {
+                        wCamX = axisX * 84 * profile.Thresholds[SENSITIVITY];
+                        continue;
+                    } else if (profile.Mappings[i] == BTN_VSTICKDOWN || profile.Mappings[i] == BTN_VSTICKUP) {
+                        wCamY = axisY * 84 * profile.Thresholds[SENSITIVITY];
+                        continue;
                     }
+                }
 
-                    if (vStatus.hold & i) {
-                        dwPressedButtons[slot] |= profile.Mappings[i];
-                    }
+                if (status->hold & i) {
+                    dwPressedButtons[slot] |= profile.Mappings[i];
                 }
             }
         }
 
         if (profile.UseGyro) {
-            float gyroX = vStatus.gyro.x * -8.0f;
-            float gyroY = vStatus.gyro.z * 8.0f;
+            float gyroX = status->gyro.x * -8.0f;
+            float gyroY = status->gyro.z * 8.0f;
 
             float gyro_drift_x = profile.Thresholds[DRIFT_X] / 100.0f;
             float gyro_drift_y = profile.Thresholds[DRIFT_Y] / 100.0f;
@@ -123,41 +116,40 @@ namespace Ship {
     }
 
     int32_t WiiUGamepad::ReadRawPress() {
-        VPADStatus vStatus;
-        VPADReadError vError;
-        VPADRead(VPAD_CHAN_0, &vStatus, 1, &vError);
+        VPADStatus* status = gfx_wiiu_get_vpad_status();
+        if (!status) {
+            return -1;
+        }
 
-        if (vError == VPAD_READ_SUCCESS) {
-            for (uint32_t i = VPAD_BUTTON_SYNC; i <= VPAD_BUTTON_STICK_L; i <<= 1) {
-                if (vStatus.trigger & i) {
-                    return i;
-                }
+        for (uint32_t i = VPAD_BUTTON_SYNC; i <= VPAD_BUTTON_STICK_L; i <<= 1) {
+            if (status->trigger & i) {
+                return i;
             }
         }
 
-        if (vStatus.leftStick.x > 0.7f) {
+        if (status->leftStick.x > 0.7f) {
             return VPAD_STICK_L_EMULATION_RIGHT;
         }
-        if (vStatus.leftStick.x < -0.7f) {
+        if (status->leftStick.x < -0.7f) {
             return VPAD_STICK_L_EMULATION_LEFT;
         }
-        if (vStatus.leftStick.y > 0.7f) {
+        if (status->leftStick.y > 0.7f) {
             return VPAD_STICK_L_EMULATION_UP;
         }
-        if (vStatus.leftStick.y < -0.7f) {
+        if (status->leftStick.y < -0.7f) {
             return VPAD_STICK_L_EMULATION_DOWN;
         }
 
-        if (vStatus.rightStick.x > 0.7f) {
+        if (status->rightStick.x > 0.7f) {
             return VPAD_STICK_R_EMULATION_RIGHT;
         }
-        if (vStatus.rightStick.x < -0.7f) {
+        if (status->rightStick.x < -0.7f) {
             return VPAD_STICK_R_EMULATION_LEFT;
         }
-        if (vStatus.rightStick.y > 0.7f) {
+        if (status->rightStick.y > 0.7f) {
             return VPAD_STICK_R_EMULATION_UP;
         }
-        if (vStatus.rightStick.y < -0.7f) {
+        if (status->rightStick.y < -0.7f) {
             return VPAD_STICK_R_EMULATION_DOWN;
         }
 

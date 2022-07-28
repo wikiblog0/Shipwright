@@ -27,7 +27,7 @@ namespace Ship {
             void CreateDefaultBinding(int32_t slot) override;
 
         private:
-            std::string GetControllerExtension();
+            std::string GetControllerExtensionName();
             std::string controllerName;
 
             bool connected;

@@ -87,9 +87,6 @@ extern "C" {
 
     #ifdef __SWITCH__
         if(!CVar_GetS32("gOpenMenuBar", 0)) {
-    #elif defined(__WIIU__)
-        // TODO reword input for imgui
-        {
     #else
         if(!(CVar_GetS32("gControlNav", 0) && CVar_GetS32("gOpenMenuBar", 0))) {
     #endif

@@ -21,6 +21,9 @@
 #include <proc_ui/procui.h>
 #include <proc_ui/memory.h>
 
+#include <vpad/input.h>
+#include <padscore/kpad.h>
+
 #ifndef _LANGUAGE_C
 #define _LANGUAGE_C
 #endif
@@ -32,8 +35,10 @@
 #include "gfx_wiiu.h"
 #include "gfx_heap.h"
 
+#include "Lib/ImGui/backends/wiiu/imgui_impl_wiiu.h"
 #include "../../ImGuiImpl.h"
 #include "../../Hooks.h"
+#include "../../Window.h"
 
 bool has_foreground = false;
 static void *mem1_storage = nullptr;
@@ -53,7 +58,13 @@ static uint32_t drc_scan_buffer_size = 0;
 static int frame_divisor = 1;
 
 // for DrawFramestats and ImGui
-uint32_t frametime = 0;
+// (initialized to 1 to not trigger imgui assert on initial draw)
+uint32_t frametime = 1;
+
+static bool has_vpad = false;
+static VPADStatus vpad_status;
+static bool has_kpad[4] = { false };
+static KPADStatus kpad_status[4];
 
 static uint32_t gfx_wiiu_proc_callback_acquired(void *context) {
     has_foreground = true;
@@ -155,18 +166,18 @@ static void gfx_wiiu_init(const char *game_name, bool start_in_fullscreen, uint3
     GX2SetupContextStateEx(context_state, TRUE);
     GX2SetContextState(context_state);
 
-    GX2SetTVScale(DEFAULT_FB_WIDTH, DEFAULT_FB_HEIGHT);
-    GX2SetDRCScale(DEFAULT_FB_WIDTH, DEFAULT_FB_HEIGHT);
+    GX2SetTVScale(WIIU_DEFAULT_FB_WIDTH, WIIU_DEFAULT_FB_HEIGHT);
+    GX2SetDRCScale(WIIU_DEFAULT_FB_WIDTH, WIIU_DEFAULT_FB_HEIGHT);
 
     GX2SetSwapInterval(frame_divisor);
 
-    gfx_current_dimensions.width = gfx_current_game_window_viewport.width = DEFAULT_FB_WIDTH;
-    gfx_current_dimensions.height = gfx_current_game_window_viewport.height = DEFAULT_FB_HEIGHT;
+    gfx_current_dimensions.width = gfx_current_game_window_viewport.width = WIIU_DEFAULT_FB_WIDTH;
+    gfx_current_dimensions.height = gfx_current_game_window_viewport.height = WIIU_DEFAULT_FB_HEIGHT;
 
     SohImGui::WindowImpl window_impl;
     window_impl.backend = SohImGui::Backend::GX2;
-    window_impl.gx2.width = DEFAULT_FB_WIDTH;
-    window_impl.gx2.height = DEFAULT_FB_HEIGHT;
+    window_impl.gx2.width = WIIU_DEFAULT_FB_WIDTH;
+    window_impl.gx2.height = WIIU_DEFAULT_FB_HEIGHT;
     SohImGui::Init(window_impl);
 }
 
@@ -221,13 +232,66 @@ static void gfx_wiiu_main_loop(void (*run_one_game_iter)(void)) {
 }
 
 static void gfx_wiiu_get_dimensions(uint32_t *width, uint32_t *height) {
-    *width = DEFAULT_FB_WIDTH;
-    *height = DEFAULT_FB_HEIGHT;
+    *width = WIIU_DEFAULT_FB_WIDTH;
+    *height = WIIU_DEFAULT_FB_HEIGHT;
 }
 
 static void gfx_wiiu_handle_events(void) {
+    bool rescan = false;
+    ImGui_ImplWiiU_ControllerInput input;
+
+    VPADReadError vpad_error;
+    VPADRead(VPAD_CHAN_0, &vpad_status, 1, &vpad_error);
+    if (vpad_error == VPAD_READ_SUCCESS) {
+        if (!has_vpad) {
+            rescan = true;
+        }
+
+        has_vpad = true;
+        input.vpad = &vpad_status;
+    } else {
+        if (has_vpad) {
+            rescan = true;
+        }
+
+        has_vpad = false;
+    }
+
+    for (int i = 0; i < 4; i++) {
+        KPADError kpad_error;
+        KPADReadEx((KPADChan) i, &kpad_status[i], 1, &kpad_error);
+        if (kpad_error == KPAD_ERROR_OK && kpad_status[i].extensionType != 255) {
+            if (!has_kpad[i]) {
+                rescan = true;
+            }
+
+            has_kpad[i] = true;
+            input.kpad[i] = &kpad_status[i];
+        } else {
+            if (has_kpad[i]) {
+                rescan = true;
+            }
+
+            has_kpad[i] = false;
+        }
+    }
+
+    // rescan devices if connection state changed
+    if (rescan) {
+		Ship::Window::ControllerApi->ScanPhysicalDevices();
+    }
+
     SohImGui::EventImpl event_impl;
+    event_impl.gx2.input = &input;
     SohImGui::Update(event_impl);
+}
+
+VPADStatus* gfx_wiiu_get_vpad_status(void) {
+    return has_vpad ? &vpad_status : nullptr;
+}
+
+KPADStatus* gfx_wiiu_get_kpad_status(WPADChan chan) {
+    return has_kpad[chan] ? &kpad_status[chan] : nullptr;
 }
 
 static bool gfx_wiiu_start_frame(void) {

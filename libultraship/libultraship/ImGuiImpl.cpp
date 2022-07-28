@@ -28,13 +28,13 @@
 #include "Utils/StringHelper.h"
 
 #ifdef __WIIU__
+#include <gx2/registers.h> // GX2SetViewport / GX2SetScissor
+
 #include "Lib/ImGui/backends/wiiu/imgui_impl_gx2.h"
 #include "Lib/ImGui/backends/wiiu/imgui_impl_wiiu.h"
 
-#include <gx2/registers.h>
-
-extern uint32_t frametime;
-void* gfx_gx2_texture_for_imgui(uint32_t texture_id);
+#include "Lib/Fast3D/gfx_wiiu.h"
+#include "Lib/Fast3D/gfx_gx2.h"
 #endif
 
 #if __APPLE__
@@ -89,12 +89,6 @@ namespace SohImGui {
     bool p_open = false;
     bool needs_save = false;
     int lastBackendID = 0;
-
-#ifdef __WIIU__
-    ControllerInput controllerInput;
-    bool hasKeyboardOverlay = false;
-    bool hasImGuiOverlay = false;
-#endif
 
     const char* filters[3] = {
         "Three-Point",
@@ -205,7 +199,13 @@ namespace SohImGui {
 
     void ImGuiProcessEvent(EventImpl event) {
         switch (impl.backend) {
-#ifndef __WIIU__
+#ifdef __WIIU__
+        case Backend::GX2:
+            if (!ImGui_ImplWiiU_ProcessInput((ImGui_ImplWiiU_ControllerInput*)event.gx2.input)) {
+                
+            }
+            break;
+#else
         case Backend::SDL:
             ImGui_ImplSDL2_ProcessEvent(static_cast<const SDL_Event*>(event.sdl.event));
             break;
@@ -223,26 +223,8 @@ namespace SohImGui {
     void ImGuiWMNewFrame() {
         switch (impl.backend) {
 #ifdef __WIIU__
-        case Backend::GX2: {
-            ImGui_ImplWiiU_ControllerInput input;
-            input.vpad = controllerInput.has_vpad ? &controllerInput.vpad : nullptr;
-            input.kpad[0] = controllerInput.has_kpad[0] ? &controllerInput.kpad[0] : nullptr;
-            input.kpad[1] = controllerInput.has_kpad[1] ? &controllerInput.kpad[1] : nullptr;
-            input.kpad[2] = controllerInput.has_kpad[2] ? &controllerInput.kpad[2] : nullptr;
-            input.kpad[3] = controllerInput.has_kpad[3] ? &controllerInput.kpad[3] : nullptr;
-
-            if (input.vpad || input.kpad[0] || input.kpad[1] || input.kpad[2] || input.kpad[3]) {
-                if (ImGui_ImplWiiU_ProcessInput(&input)) {
-                    // disable inputs if virtual keyboard is opened
-                    hasKeyboardOverlay = true;
-                } else {
-                    hasKeyboardOverlay = false;
-                }
-            }
-
-            memset(&controllerInput, 0, sizeof(controllerInput));
+        case Backend::GX2:
             break;
-        }
 #else
         case Backend::SDL:
             ImGui_ImplSDL2_NewFrame(static_cast<SDL_Window*>(impl.sdl.window));
@@ -883,10 +865,6 @@ namespace SohImGui {
             } else {
                 io->ConfigFlags &= ~ImGuiConfigFlags_NavEnableGamepad;
             }
-
-#ifdef __WIIU__
-            hasImGuiOverlay = CVar_GetS32("gOpenMenuBar", 0) && CVar_GetS32("gControlNav", 0);
-#endif
         }
 
         #if __APPLE__

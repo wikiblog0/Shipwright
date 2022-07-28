@@ -151,6 +151,12 @@ void SaveManager::Init() {
     // If the global save file exist, load it. Otherwise, create it.
     if (std::filesystem::exists(sGlobalPath)) {
         std::ifstream input(sGlobalPath);
+
+#ifdef __WIIU__
+        alignas(0x40) char buffer[8192];
+        input.rdbuf()->pubsetbuf(buffer, sizeof(buffer));
+#endif
+
         nlohmann::json globalBlock;
         input >> globalBlock;
 
@@ -461,6 +467,12 @@ void SaveManager::SaveFile(int fileNum) {
     }
 
     std::ofstream output(GetFileName(fileNum));
+
+#ifdef __WIIU__
+    alignas(0x40) char buffer[8192];
+    output.rdbuf()->pubsetbuf(buffer, sizeof(buffer));
+#endif
+
     output << std::setw(4) << baseBlock << std::endl;
 
     InitMeta(fileNum);
@@ -472,7 +484,14 @@ void SaveManager::SaveGlobal() {
     globalBlock["audioSetting"] = gSaveContext.audioSetting;
     globalBlock["zTargetSetting"] = gSaveContext.zTargetSetting;
     globalBlock["language"] = gSaveContext.language;
+
     std::ofstream output("Save/global.sav");
+
+#ifdef __WIIU__
+    alignas(0x40) char buffer[8192];
+    output.rdbuf()->pubsetbuf(buffer, sizeof(buffer));
+#endif
+
     output << std::setw(4) << globalBlock << std::endl;
 }
 
@@ -481,6 +500,12 @@ void SaveManager::LoadFile(int fileNum) {
     InitFile(false);
 
     std::ifstream input(GetFileName(fileNum));
+
+#ifdef __WIIU__
+    alignas(0x40) char buffer[8192];
+    input.rdbuf()->pubsetbuf(buffer, sizeof(buffer));
+#endif
+
     nlohmann::json saveBlock;
     input >> saveBlock;
     if (!saveBlock.contains("version")) {
@@ -1303,6 +1328,12 @@ void SaveManager::ConvertFromUnversioned() {
 #define SLOT_OFFSET(index) (SRAM_HEADER_SIZE + 0x10 + (index * SLOT_SIZE))
 
     std::ifstream input("oot_save.sav", std::ios::binary);
+
+#ifdef __WIIU__
+    alignas(0x40) char buffer[8192];
+    input.rdbuf()->pubsetbuf(buffer, sizeof(buffer));
+#endif
+
     std::vector<char> data(std::istreambuf_iterator<char>(input), {});
     input.close();
 

@@ -1505,6 +1505,11 @@ void Randomizer::ParseRandomizerSettingsFile(const char* spoilerFileName) {
     if (!spoilerFileStream)
         return;
 
+#ifdef __WIIU__
+    alignas(0x40) char buffer[8192];
+    spoilerFileStream.rdbuf()->pubsetbuf(buffer, sizeof(buffer));
+#endif
+
     bool success = false;
 
     try {
@@ -1869,6 +1874,11 @@ void Randomizer::ParseHintLocationsFile(const char* spoilerFileName) {
     if (!spoilerFileStream)
         return;
 
+#ifdef __WIIU__
+    alignas(0x40) char buffer[8192];
+    spoilerFileStream.rdbuf()->pubsetbuf(buffer, sizeof(buffer));
+#endif
+
     bool success = false;
 
     try {
@@ -1912,6 +1922,11 @@ void Randomizer::ParseItemLocationsFile(const char* spoilerFileName, bool silent
     std::ifstream spoilerFileStream(sanitize(spoilerFileName));
     if (!spoilerFileStream)
         return;
+
+#ifdef __WIIU__
+    alignas(0x40) char buffer[8192];
+    spoilerFileStream.rdbuf()->pubsetbuf(buffer, sizeof(buffer));
+#endif
 
     bool success = false;
 

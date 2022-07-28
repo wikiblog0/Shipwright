@@ -733,6 +733,12 @@ const char* SpoilerLog_Write(int language) {
     std::string jsonString = jsonData.dump(4);
     std::ofstream jsonFile(Ship::GlobalCtx2::GetPathRelativeToAppDirectory(
         (std::string("Randomizer/") + std::string(Settings::seed) + std::string(".json")).c_str()));
+
+#ifdef __WIIU__
+    alignas(0x40) char buffer[8192];
+    jsonFile.rdbuf()->pubsetbuf(buffer, sizeof(buffer));
+#endif
+
     jsonFile << std::setw(4) << jsonString << std::endl;
     jsonFile.close();
 

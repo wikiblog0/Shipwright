@@ -360,7 +360,7 @@ void OTRExporter_DisplayList::Save(ZResource* res, const fs::path& outPath, Bina
 					{
 						MemoryStream* dlStream = new MemoryStream();
 #ifdef EXPORT_BIG_ENDIAN
-						BinaryWriter dlWriter = BinaryWriter(dlStream, Endianess::Big);
+						BinaryWriter dlWriter = BinaryWriter(dlStream, Endianness::Big);
 #else
 						BinaryWriter dlWriter = BinaryWriter(dlStream);
 #endif
@@ -450,7 +450,7 @@ void OTRExporter_DisplayList::Save(ZResource* res, const fs::path& outPath, Bina
 						{
 							MemoryStream* dlStream = new MemoryStream();
 #ifdef EXPORT_BIG_ENDIAN
-							BinaryWriter dlWriter = BinaryWriter(dlStream, Endianess::Big);
+							BinaryWriter dlWriter = BinaryWriter(dlStream, Endianness::Big);
 #else
 							BinaryWriter dlWriter = BinaryWriter(dlStream);
 #endif
@@ -775,7 +775,7 @@ void OTRExporter_DisplayList::Save(ZResource* res, const fs::path& outPath, Bina
 						// Write vertices to file
 						MemoryStream* vtxStream = new MemoryStream();
 #ifdef EXPORT_BIG_ENDIAN
-						BinaryWriter vtxWriter = BinaryWriter(vtxStream, Endianess::Big);
+						BinaryWriter vtxWriter = BinaryWriter(vtxStream, Endianness::Big);
 #else
 						BinaryWriter vtxWriter = BinaryWriter(vtxStream);
 #endif

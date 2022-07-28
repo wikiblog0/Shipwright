@@ -89,7 +89,7 @@ void OTRExporter_Audio::Save(ZResource* res, const fs::path& outPath, BinaryWrit
 	{
 		MemoryStream* sampleStream = new MemoryStream();
 #ifdef EXPORT_BIG_ENDIAN
-		BinaryWriter sampleWriter = BinaryWriter(sampleStream, Endianess::Big);
+		BinaryWriter sampleWriter = BinaryWriter(sampleStream, Endianness::Big);
 #else
 		BinaryWriter sampleWriter = BinaryWriter(sampleStream);
 #endif
@@ -118,7 +118,7 @@ void OTRExporter_Audio::Save(ZResource* res, const fs::path& outPath, BinaryWrit
 	{
 		MemoryStream* fntStream = new MemoryStream();
 #ifdef EXPORT_BIG_ENDIAN
-		BinaryWriter fntWriter = BinaryWriter(fntStream, Endianess::Big);
+		BinaryWriter fntWriter = BinaryWriter(fntStream, Endianness::Big);
 #else
 		BinaryWriter fntWriter = BinaryWriter(fntStream);
 #endif
@@ -181,7 +181,7 @@ void OTRExporter_Audio::Save(ZResource* res, const fs::path& outPath, BinaryWrit
 
 		MemoryStream* seqStream = new MemoryStream();
 #ifdef EXPORT_BIG_ENDIAN
-		BinaryWriter seqWriter = BinaryWriter(seqStream, Endianess::Big);
+		BinaryWriter seqWriter = BinaryWriter(seqStream, Endianness::Big);
 #else
 		BinaryWriter seqWriter = BinaryWriter(seqStream);
 #endif

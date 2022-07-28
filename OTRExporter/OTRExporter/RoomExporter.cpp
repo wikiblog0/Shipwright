@@ -450,7 +450,7 @@ void OTRExporter_Room::Save(ZResource* res, const fs::path& outPath, BinaryWrite
 
 			MemoryStream* csStream = new MemoryStream();
 #ifdef EXPORT_BIG_ENDIAN
-			BinaryWriter csWriter = BinaryWriter(csStream, Endianess::Big);
+			BinaryWriter csWriter = BinaryWriter(csStream, Endianness::Big);
 #else
 			BinaryWriter csWriter = BinaryWriter(csStream);
 #endif
@@ -475,7 +475,7 @@ void OTRExporter_Room::Save(ZResource* res, const fs::path& outPath, BinaryWrite
 
 				MemoryStream* pathStream = new MemoryStream();
 #ifdef EXPORT_BIG_ENDIAN
-				BinaryWriter pathWriter = BinaryWriter(pathStream, Endianess::Big);
+				BinaryWriter pathWriter = BinaryWriter(pathStream, Endianness::Big);
 #else
 				BinaryWriter pathWriter = BinaryWriter(pathStream);
 #endif

@@ -381,7 +381,7 @@ void ZFile::ExtractResources()
 
 		auto memStreamRes = std::shared_ptr<MemoryStream>(new MemoryStream());
 #ifdef EXPORT_BIG_ENDIAN
-		BinaryWriter writerRes = BinaryWriter(memStreamRes, Endianess::Big);
+		BinaryWriter writerRes = BinaryWriter(memStreamRes, Endianness::Big);
 #else
 		BinaryWriter writerRes = BinaryWriter(memStreamRes);
 #endif

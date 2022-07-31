@@ -39,7 +39,10 @@ void Ship::ControlDeck::ScanPhysicalDevices() {
 	physicalDevices.push_back(std::make_shared<KeyboardController>());
 #else
 	physicalDevices.push_back(std::make_shared<VirtualController>("Auto", "Auto", true));
-	physicalDevices.push_back(std::make_shared<Ship::WiiUGamepad>());
+
+	auto gamepad = std::make_shared<Ship::WiiUGamepad>();
+	gamepad->Open();
+	physicalDevices.push_back(gamepad);
 
 	for (int i = 0; i < 4; i++) {
 		auto controller = std::make_shared<Ship::WiiUController>((WPADChan) i);

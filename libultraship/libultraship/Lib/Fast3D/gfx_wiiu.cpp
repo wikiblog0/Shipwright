@@ -62,8 +62,11 @@ static int frame_divisor = 1;
 uint32_t frametime = 1;
 
 static bool has_vpad = false;
+static VPADReadError vpad_error;
 static VPADStatus vpad_status;
+
 static bool has_kpad[4] = { false };
+static KPADError kpad_error[4] = { KPAD_ERROR_OK };
 static KPADStatus kpad_status[4];
 
 static uint32_t gfx_wiiu_proc_callback_acquired(void *context) {
@@ -240,7 +243,6 @@ static void gfx_wiiu_handle_events(void) {
     bool rescan = false;
     ImGui_ImplWiiU_ControllerInput input;
 
-    VPADReadError vpad_error;
     VPADRead(VPAD_CHAN_0, &vpad_status, 1, &vpad_error);
     if (vpad_error == VPAD_READ_SUCCESS) {
         if (!has_vpad) {
@@ -249,7 +251,7 @@ static void gfx_wiiu_handle_events(void) {
 
         has_vpad = true;
         input.vpad = &vpad_status;
-    } else {
+    } else if (vpad_error != VPAD_READ_NO_SAMPLES) {
         if (has_vpad) {
             rescan = true;
         }
@@ -258,16 +260,15 @@ static void gfx_wiiu_handle_events(void) {
     }
 
     for (int i = 0; i < 4; i++) {
-        KPADError kpad_error;
-        KPADReadEx((KPADChan) i, &kpad_status[i], 1, &kpad_error);
-        if (kpad_error == KPAD_ERROR_OK && kpad_status[i].extensionType != 255) {
+        KPADReadEx((KPADChan) i, &kpad_status[i], 1, &kpad_error[i]);
+        if (kpad_error[i] == KPAD_ERROR_OK && kpad_status[i].extensionType != 255) {
             if (!has_kpad[i]) {
                 rescan = true;
             }
 
             has_kpad[i] = true;
             input.kpad[i] = &kpad_status[i];
-        } else {
+        } else if (kpad_error[i] != KPAD_ERROR_NO_SAMPLES) {
             if (has_kpad[i]) {
                 rescan = true;
             }
@@ -286,11 +287,13 @@ static void gfx_wiiu_handle_events(void) {
     SohImGui::Update(event_impl);
 }
 
-VPADStatus* gfx_wiiu_get_vpad_status(void) {
+VPADStatus *gfx_wiiu_get_vpad_status(VPADReadError *error) {
+    *error = vpad_error;
     return has_vpad ? &vpad_status : nullptr;
 }
 
-KPADStatus* gfx_wiiu_get_kpad_status(WPADChan chan) {
+KPADStatus *gfx_wiiu_get_kpad_status(WPADChan chan, KPADError *error) {
+    *error = kpad_error[chan];
     return has_kpad[chan] ? &kpad_status[chan] : nullptr;
 }
 

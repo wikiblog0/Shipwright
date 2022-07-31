@@ -5,7 +5,7 @@
 
 void gfx_gx2_shutdown(void);
 
-void* gfx_gx2_texture_for_imgui(uint32_t texture_id);
+struct ImGui_ImplGX2_Texture* gfx_gx2_texture_for_imgui(uint32_t texture_id);
 
 extern struct GfxRenderingAPI gfx_gx2_api;
 

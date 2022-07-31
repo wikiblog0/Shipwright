@@ -12,17 +12,29 @@ namespace Ship {
         GUID = "WiiUGamepad";
     }
 
+    bool WiiUGamepad::Open() {
+        return true;
+    }
+
+    void WiiUGamepad::Close() {
+        connected = false;
+
+        for (int32_t& btn : dwPressedButtons) {
+            btn = 0;
+        }
+        wStickX = 0;
+        wStickY = 0;
+        wCamX = 0;
+        wCamY = 0;
+    }
+
     void WiiUGamepad::ReadFromSource(int32_t slot) {
         DeviceProfile& profile = profiles[slot];
 
-        VPADStatus* status = gfx_wiiu_get_vpad_status();
+        VPADReadError error;
+        VPADStatus* status = gfx_wiiu_get_vpad_status(&error);
         if (!status) {
-            connected = false;
-            dwPressedButtons[slot] = 0;
-            wStickX = 0;
-            wStickY = 0;
-            wCamX = 0;
-            wCamY = 0;
+            Close();
             return;
         }
 
@@ -31,6 +43,10 @@ namespace Ship {
         wStickY = 0;
         wCamX = 0;
         wCamY = 0;
+
+        if (error != VPAD_READ_SUCCESS) {
+            return; 
+        }
 
         for (uint32_t i = VPAD_BUTTON_SYNC; i <= VPAD_STICK_L_EMULATION_LEFT; i <<= 1) {
             if (profile.Mappings.contains(i)) {
@@ -116,8 +132,9 @@ namespace Ship {
     }
 
     int32_t WiiUGamepad::ReadRawPress() {
-        VPADStatus* status = gfx_wiiu_get_vpad_status();
-        if (!status) {
+        VPADReadError error;
+        VPADStatus* status = gfx_wiiu_get_vpad_status(&error);
+        if (!status || error != VPAD_READ_SUCCESS) {
             return -1;
         }
 

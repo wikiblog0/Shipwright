@@ -15,8 +15,9 @@ namespace Ship {
     }
 
     bool WiiUController::Open() {
-        KPADStatus* status = gfx_wiiu_get_kpad_status(chan);
-        if (!status) {
+        KPADError error;
+        KPADStatus* status = gfx_wiiu_get_kpad_status(chan, &error);
+        if (!status || error != KPAD_ERROR_OK) {
             Close();
             return false;
         }
@@ -46,7 +47,9 @@ namespace Ship {
 
     void WiiUController::ReadFromSource(int32_t slot) {
         DeviceProfile& profile = profiles[slot];
-        KPADStatus* status = gfx_wiiu_get_kpad_status(chan);
+
+        KPADError error;
+        KPADStatus* status = gfx_wiiu_get_kpad_status(chan, &error);
         if (!status) {
             Close();
             return;
@@ -63,6 +66,10 @@ namespace Ship {
         wStickY = 0;
         wCamX = 0;
         wCamY = 0;
+
+        if (error != KPAD_ERROR_OK) {
+            return;
+        }
 
         switch (extensionType) {
             case WPAD_EXT_PRO_CONTROLLER:
@@ -147,8 +154,9 @@ namespace Ship {
     }
 
     int32_t WiiUController::ReadRawPress() {
-        KPADStatus* status = gfx_wiiu_get_kpad_status(chan);
-        if (!status) {
+        KPADError error;
+        KPADStatus* status = gfx_wiiu_get_kpad_status(chan, &error);
+        if (!status || error != KPAD_ERROR_OK) {
             return -1;
         }
 

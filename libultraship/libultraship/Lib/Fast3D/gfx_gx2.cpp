@@ -780,7 +780,7 @@ FilteringMode gfx_gx2_get_texture_filter(void) {
     return FILTER_NONE;
 }
 
-void* gfx_gx2_texture_for_imgui(uint32_t texture_id) {
+ImGui_ImplGX2_Texture* gfx_gx2_texture_for_imgui(uint32_t texture_id) {
     struct Texture *tex = (struct Texture *) texture_id;
     return &tex->imtex;
 }

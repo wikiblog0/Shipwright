@@ -7,6 +7,9 @@ namespace Ship {
         public:
             WiiUGamepad();
 
+            bool Open();
+            void Close();
+
             void ReadFromSource(int32_t slot) override;
             void WriteToSource(int32_t slot, ControllerCallback* controller) override;
             bool Connected() const override { return connected; };

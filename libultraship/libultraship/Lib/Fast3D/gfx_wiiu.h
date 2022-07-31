@@ -15,9 +15,9 @@ extern uint32_t frametime;
 
 void gfx_wiiu_set_context_state(void);
 
-VPADStatus* gfx_wiiu_get_vpad_status(void);
+VPADStatus *gfx_wiiu_get_vpad_status(VPADReadError *error);
 
-KPADStatus* gfx_wiiu_get_kpad_status(WPADChan chan);
+KPADStatus *gfx_wiiu_get_kpad_status(WPADChan chan, KPADError *error);
 
 extern struct GfxWindowManagerAPI gfx_wiiu;
 

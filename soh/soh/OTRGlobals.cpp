@@ -454,6 +454,12 @@ extern "C" char* ResourceMgr_LoadJPEG(char* data, int dataSize)
 
 extern "C" char* ResourceMgr_LoadTexByName(const char* texPath);
 
+extern "C" uint16_t ResourceMgr_LoadTexWidthByName(char* texPath);
+
+extern "C" uint16_t ResourceMgr_LoadTexHeightByName(char* texPath);
+
+extern "C" uint32_t ResourceMgr_LoadTexSizeByName(const char* texPath);
+
 extern "C" char* ResourceMgr_LoadTexOrDListByName(const char* filePath) {
     auto res = OTRGlobals::Instance->context->GetResourceManager()->LoadResource(filePath);
 
@@ -1509,4 +1515,8 @@ extern "C" s32 Randomizer_GetRandomizedItemId(GetItemID ogId, s16 actorId, s16 a
 
 extern "C" s32 Randomizer_GetItemIdFromKnownCheck(RandomizerCheck randomizerCheck, GetItemID ogId) {
     return OTRGlobals::Instance->gRandomizer->GetRandomizedItemIdFromKnownCheck(randomizerCheck, ogId);
+}
+
+extern "C" bool Randomizer_ItemIsIceTrap(RandomizerCheck randomizerCheck, GetItemID ogId) {
+    return gSaveContext.n64ddFlag && Randomizer_GetItemIdFromKnownCheck(randomizerCheck, ogId) == GI_ICE_TRAP;
 }

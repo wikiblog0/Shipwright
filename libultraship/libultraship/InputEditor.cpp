@@ -45,6 +45,9 @@ namespace Ship {
 			if(btn != -1) {
 				backend->SetButtonMapping(CurrentPort, n64Btn, btn);
 				BtnReading = -1;
+
+				// avoid immediately triggering another button during gamepad nav
+				ImGui::SetKeyboardFocusHere(0);
 			}
 		}
 

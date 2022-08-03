@@ -241,7 +241,7 @@ static void gfx_wiiu_get_dimensions(uint32_t *width, uint32_t *height) {
 
 static void gfx_wiiu_handle_events(void) {
     bool rescan = false;
-    ImGui_ImplWiiU_ControllerInput input;
+    ImGui_ImplWiiU_ControllerInput input{};
 
     VPADRead(VPAD_CHAN_0, &vpad_status, 1, &vpad_error);
     if (vpad_error == VPAD_READ_SUCCESS) {

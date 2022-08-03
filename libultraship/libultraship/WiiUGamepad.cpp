@@ -133,40 +133,41 @@ namespace Ship {
 
     int32_t WiiUGamepad::ReadRawPress() {
         VPADReadError error;
-        VPADStatus* status = gfx_wiiu_get_vpad_status(&error);
-        if (!status || error != VPAD_READ_SUCCESS) {
+        VPADStatus status;
+        VPADRead(VPAD_CHAN_0, &status, 1, &error);
+        if (error != VPAD_READ_SUCCESS) {
             return -1;
         }
 
         for (uint32_t i = VPAD_BUTTON_SYNC; i <= VPAD_BUTTON_STICK_L; i <<= 1) {
-            if (status->trigger & i) {
+            if (status.trigger & i) {
                 return i;
             }
         }
 
-        if (status->leftStick.x > 0.7f) {
+        if (status.leftStick.x > 0.7f) {
             return VPAD_STICK_L_EMULATION_RIGHT;
         }
-        if (status->leftStick.x < -0.7f) {
+        if (status.leftStick.x < -0.7f) {
             return VPAD_STICK_L_EMULATION_LEFT;
         }
-        if (status->leftStick.y > 0.7f) {
+        if (status.leftStick.y > 0.7f) {
             return VPAD_STICK_L_EMULATION_UP;
         }
-        if (status->leftStick.y < -0.7f) {
+        if (status.leftStick.y < -0.7f) {
             return VPAD_STICK_L_EMULATION_DOWN;
         }
 
-        if (status->rightStick.x > 0.7f) {
+        if (status.rightStick.x > 0.7f) {
             return VPAD_STICK_R_EMULATION_RIGHT;
         }
-        if (status->rightStick.x < -0.7f) {
+        if (status.rightStick.x < -0.7f) {
             return VPAD_STICK_R_EMULATION_LEFT;
         }
-        if (status->rightStick.y > 0.7f) {
+        if (status.rightStick.y > 0.7f) {
             return VPAD_STICK_R_EMULATION_UP;
         }
-        if (status->rightStick.y < -0.7f) {
+        if (status.rightStick.y < -0.7f) {
             return VPAD_STICK_R_EMULATION_DOWN;
         }
 

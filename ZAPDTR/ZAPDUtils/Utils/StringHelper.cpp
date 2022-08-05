@@ -1,5 +1,4 @@
 #include "StringHelper.h"
-#include <sstream>
 
 #pragma optimize("2", on)
 #define _CRT_SECURE_NO_WARNINGS
@@ -54,19 +53,12 @@ std::string StringHelper::Replace(std::string str, const std::string& from,
 
 void StringHelper::ReplaceOriginal(std::string& str, const std::string& from, const std::string& to)
 {
-	if (from.size() == 1 && to.size() == 1)
-	{
-		std::replace(str.begin(), str.end(), from[0], to[0]);
-	}
-	else
-	{
-		size_t start_pos = str.find(from);
+	size_t start_pos = str.find(from);
 
-		while (start_pos != std::string::npos)
-		{
-			str.replace(start_pos, from.length(), to);
-			start_pos = str.find(from);
-		}
+	while (start_pos != std::string::npos)
+	{
+		str.replace(start_pos, from.length(), to);
+		start_pos = str.find(from);
 	}
 }
 

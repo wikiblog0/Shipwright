@@ -5,11 +5,7 @@
 #include "Archive.h"
 #include "GameVersions.h"
 #include <Utils/StringHelper.h>
-#ifdef __WIIU__
-#include <StormLib.h>
-#else
 #include "StormLib.h"
-#endif
 
 namespace Ship {
 
@@ -289,7 +285,7 @@ namespace Ship {
 		auto fileList = OTR->ListFiles(SearchMask);
 
 		for (DWORD i = 0; i < fileList.size(); i++) {
-			auto resource = LoadResourceAsync(fileList.operator[](i).c_str());
+			auto resource = LoadResourceAsync(fileList.operator[](i).cFileName);
 			if (std::holds_alternative<std::shared_ptr<Resource>>(resource))
 			{
 				auto promise = std::make_shared<ResourcePromise>();
@@ -349,7 +345,7 @@ namespace Ship {
 		auto fileList = OTR->ListFiles(SearchMask);
 
 		for (DWORD i = 0; i < fileList.size(); i++) {
-			result->push_back(fileList[i]);
+			result->push_back(fileList[i].cFileName);
 		}
 
 		return result;

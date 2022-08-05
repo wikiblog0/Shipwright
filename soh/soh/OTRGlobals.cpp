@@ -120,8 +120,8 @@ extern "C" void InitOTR() {
     clearMtx = (uintptr_t)&gMtxClear;
     OTRMessage_Init();
     OTRAudio_Init();
-    DebugConsole_Init();
     InitCosmeticsEditor();
+    DebugConsole_Init();
     Debug_Init();
     Rando_Init();
     InitItemTracker();

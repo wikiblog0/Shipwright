@@ -3,16 +3,6 @@
 #include <cstdint>
 #include <memory>
 
-#ifdef _MSC_VER
-#define BSWAP16 _byteswap_ushort
-#define BSWAP32 _byteswap_ulong
-#define BSWAP64 _byteswap_uint64
-#else
-#define BSWAP16 __builtin_bswap16
-#define BSWAP32 __builtin_bswap32
-#define BSWAP64 __builtin_bswap64
-#endif
-
 enum class SeekOffsetType
 {
 	Start,

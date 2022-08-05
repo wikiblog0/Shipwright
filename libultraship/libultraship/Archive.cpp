@@ -221,95 +221,7 @@ namespace Ship {
 		return true;
 	}
 
-#if 1
-	// Converts ASCII characters to uppercase
-	// Converts slash (0x2F) to backslash (0x5C)
-	static const unsigned char AsciiToUpperTable[256] =
-	{
-		0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F,
-		0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x18, 0x19, 0x1A, 0x1B, 0x1C, 0x1D, 0x1E, 0x1F,
-		0x20, 0x21, 0x22, 0x23, 0x24, 0x25, 0x26, 0x27, 0x28, 0x29, 0x2A, 0x2B, 0x2C, 0x2D, 0x2E, 0x5C,
-		0x30, 0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37, 0x38, 0x39, 0x3A, 0x3B, 0x3C, 0x3D, 0x3E, 0x3F,
-		0x40, 0x41, 0x42, 0x43, 0x44, 0x45, 0x46, 0x47, 0x48, 0x49, 0x4A, 0x4B, 0x4C, 0x4D, 0x4E, 0x4F,
-		0x50, 0x51, 0x52, 0x53, 0x54, 0x55, 0x56, 0x57, 0x58, 0x59, 0x5A, 0x5B, 0x5C, 0x5D, 0x5E, 0x5F,
-		0x60, 0x41, 0x42, 0x43, 0x44, 0x45, 0x46, 0x47, 0x48, 0x49, 0x4A, 0x4B, 0x4C, 0x4D, 0x4E, 0x4F,
-		0x50, 0x51, 0x52, 0x53, 0x54, 0x55, 0x56, 0x57, 0x58, 0x59, 0x5A, 0x7B, 0x7C, 0x7D, 0x7E, 0x7F,
-		0x80, 0x81, 0x82, 0x83, 0x84, 0x85, 0x86, 0x87, 0x88, 0x89, 0x8A, 0x8B, 0x8C, 0x8D, 0x8E, 0x8F,
-		0x90, 0x91, 0x92, 0x93, 0x94, 0x95, 0x96, 0x97, 0x98, 0x99, 0x9A, 0x9B, 0x9C, 0x9D, 0x9E, 0x9F,
-		0xA0, 0xA1, 0xA2, 0xA3, 0xA4, 0xA5, 0xA6, 0xA7, 0xA8, 0xA9, 0xAA, 0xAB, 0xAC, 0xAD, 0xAE, 0xAF,
-		0xB0, 0xB1, 0xB2, 0xB3, 0xB4, 0xB5, 0xB6, 0xB7, 0xB8, 0xB9, 0xBA, 0xBB, 0xBC, 0xBD, 0xBE, 0xBF,
-		0xC0, 0xC1, 0xC2, 0xC3, 0xC4, 0xC5, 0xC6, 0xC7, 0xC8, 0xC9, 0xCA, 0xCB, 0xCC, 0xCD, 0xCE, 0xCF,
-		0xD0, 0xD1, 0xD2, 0xD3, 0xD4, 0xD5, 0xD6, 0xD7, 0xD8, 0xD9, 0xDA, 0xDB, 0xDC, 0xDD, 0xDE, 0xDF,
-		0xE0, 0xE1, 0xE2, 0xE3, 0xE4, 0xE5, 0xE6, 0xE7, 0xE8, 0xE9, 0xEA, 0xEB, 0xEC, 0xED, 0xEE, 0xEF,
-		0xF0, 0xF1, 0xF2, 0xF3, 0xF4, 0xF5, 0xF6, 0xF7, 0xF8, 0xF9, 0xFA, 0xFB, 0xFC, 0xFD, 0xFE, 0xFF
-	};
-
-	static bool SFileCheckWildCard(const char * szString, const char * szWildCard)
-	{
-		const char * szWildCardPtr;
-
-		for(;;)
-		{
-			// If there is '?' in the wildcard, we skip one char
-			while(szWildCard[0] == '?')
-			{
-				if(szString[0] == 0)
-					return false;
-
-				szWildCard++;
-				szString++;
-			}
-
-			// Handle '*'
-			szWildCardPtr = szWildCard;
-			if(szWildCardPtr[0] != 0)
-			{
-				if(szWildCardPtr[0] == '*')
-				{
-					while(szWildCardPtr[0] == '*')
-						szWildCardPtr++;
-
-					if(szWildCardPtr[0] == 0)
-						return true;
-
-					if(AsciiToUpperTable[(int) szWildCardPtr[0]] == AsciiToUpperTable[(int) szString[0]])
-					{
-						if(SFileCheckWildCard(szString, szWildCardPtr))
-							return true;
-					}
-				}
-				else
-				{
-					if(AsciiToUpperTable[(int) szWildCardPtr[0]] != AsciiToUpperTable[(int) szString[0]])
-						return false;
-
-					szWildCard = szWildCardPtr + 1;
-				}
-
-				if(szString[0] == 0)
-					return false;
-				szString++;
-			}
-			else
-			{
-				return (szString[0] == 0) ? true : false;
-			}
-		}
-	}
-#endif
-
-	std::vector<std::string> Archive::ListFiles(const std::string& searchMask) const {
-#if 1
-		std::vector<std::string> fileList;
-
-		for (auto& file : filenameList) {
-			if (SFileCheckWildCard(file.c_str(), searchMask.c_str())) {
-				fileList.push_back(file);
-			}
-		}
-
-		return fileList;
-#else
+	std::vector<SFILE_FIND_DATA> Archive::ListFiles(const std::string& searchMask) const {
 		auto fileList = std::vector<SFILE_FIND_DATA>();
 		SFILE_FIND_DATA findContext;
 		HANDLE hFind;
@@ -351,7 +263,6 @@ namespace Ship {
 		}
 
 		return fileList;
-#endif
 	}
 
 	bool Archive::HasFile(const std::string& filename) const {
@@ -361,7 +272,7 @@ namespace Ship {
 		auto lst = ListFiles(filename);
 
 		for (const auto& item : lst) {
-			if (item == filename) {
+			if (item.cFileName == filename) {
 				result = true;
 				break;
 			}
@@ -426,22 +337,10 @@ namespace Ship {
 		std::string fullPath = std::filesystem::absolute(MainPath).string();
 #endif
 
-		DWORD dwFlags = 0;
-
-#if 1
-		// parsing the listfile takes really long so just skip opening it
-		// Handle listing files based on the listfile manually below
-		dwFlags |= MPQ_OPEN_NO_LISTFILE;
-#endif
-
-		if (!enableWriting) {
-			dwFlags |= MPQ_OPEN_READ_ONLY;
-		}
-
-#ifdef _MSC_VER
-		if (!SFileOpenArchive(wfullPath.c_str(), 0, dwFlags, &mpqHandle)) {
+#ifdef _WIN32
+		if (!SFileOpenArchive(wfullPath.c_str(), 0, enableWriting ? 0 : MPQ_OPEN_READ_ONLY, &mpqHandle)) {
 #else
-		if (!SFileOpenArchive(fullPath.c_str(), 0, dwFlags, &mpqHandle)) {
+		if (!SFileOpenArchive(fullPath.c_str(), 0, enableWriting ? 0 : MPQ_OPEN_READ_ONLY, &mpqHandle)) {
 #endif
 
 	#ifdef __SWITCH__
@@ -454,21 +353,19 @@ namespace Ship {
 		mpqHandles[fullPath] = mpqHandle;
 		mainMPQ = mpqHandle;
 
-		filenameList.clear();
-
-		auto listFile = LoadFile("(listfile)", false);
-
-		std::vector<std::string> lines = StringHelper::Split(std::string(listFile->buffer.get(), listFile->dwBufferSize), "\n");
-
-		for (size_t i = 0; i < lines.size(); i++) {
-			std::string line = StringHelper::Strip(lines[i], "\r");
-			filenameList.push_back(line);
-		}
-
 		if (genCRCMap) {
-			for (size_t i = 0; i < filenameList.size(); i++) {
-				uint64_t hash = CRC64(filenameList[i].c_str());
-				hashes[hash] = filenameList[i];
+			auto listFile = LoadFile("(listfile)", false);
+
+			std::vector<std::string> lines = StringHelper::Split(std::string(listFile->buffer.get(), listFile->dwBufferSize), "\n");
+
+			for (size_t i = 0; i < lines.size(); i++) {
+				std::string line = StringHelper::Replace(StringHelper::Strip(lines[i], "\r"), "/", "\\");
+				std::string line2 = StringHelper::Replace(line, "\\", "/");
+
+				uint64_t hash = CRC64(StringHelper::Replace(line, "/", "\\").c_str());
+				uint64_t hash2 = CRC64(StringHelper::Replace(line, "\\", "/").c_str());
+				hashes[hash] = line;
+				hashes[hash2] = line2;
 			}
 		}
 

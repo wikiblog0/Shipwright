@@ -11,11 +11,7 @@
 #include <vector>
 #include "Resource.h"
 //#include "Lib/StrHash64.h"
-#ifdef __WIIU__
-#include <StormLib.h>
-#else
 #include "StormLib.h"
-#endif
 
 namespace Ship
 {
@@ -38,7 +34,7 @@ namespace Ship
 		bool AddFile(const std::string& path, uintptr_t fileData, DWORD dwFileSize);
 		bool RemoveFile(const std::string& path);
 		bool RenameFile(const std::string& oldPath, const std::string& newPath);
-		std::vector<std::string> ListFiles(const std::string& searchMask) const;
+		std::vector<SFILE_FIND_DATA> ListFiles(const std::string& searchMask) const;
 		bool HasFile(const std::string& searchMask) const;
 		const std::string* HashToString(uint64_t hash) const;
 	protected:
@@ -47,10 +43,9 @@ namespace Ship
 	private:
 		std::string MainPath;
 		std::string PatchesPath;
-		std::unordered_map<std::string, HANDLE> mpqHandles;
+		std::map<std::string, HANDLE> mpqHandles;
 		std::vector<std::string> addedFiles;
 		std::unordered_map<uint64_t, std::string> hashes;
-		std::vector<std::string> filenameList;
 		HANDLE mainMPQ;
 
 		bool LoadMainMPQ(bool enableWriting, bool genCRCMap);

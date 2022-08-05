@@ -18,10 +18,6 @@
 #include "AudioFactory.h"
 #include <Utils/MemoryStream.h>
 
-#ifdef __WIIU__
-#include <coreinit/debug.h>
-#endif
-
 namespace Ship
 {
     Resource* ResourceLoader::LoadResource(std::shared_ptr<File> FileToLoad)

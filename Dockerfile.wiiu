@@ -44,22 +44,6 @@ RUN /opt/devkitpro/portlibs/wiiu/bin/powerpc-eabi-cmake .. -DCMAKE_INSTALL_PREFI
 RUN make -j$(nproc) && make install
 WORKDIR /
 
-# build StormLib
-FROM builder as stormlibbuild
-RUN \
-mkdir StormLib && \
-cd StormLib && \
-git init . && \
-git remote add origin https://github.com/GaryOderNichts/StormLib.git && \
-git fetch --depth 1 origin af4f8098aa2ccd2997dbe14c8b63e93a57d8e1ba && \
-git checkout FETCH_HEAD
-WORKDIR /StormLib
-RUN mkdir build
-WORKDIR /StormLib/build
-RUN /opt/devkitpro/portlibs/wiiu/bin/powerpc-eabi-cmake .. -DCMAKE_INSTALL_PREFIX=$DEVKITPRO/portlibs/wiiu -DCMAKE_BUILD_TYPE=Release
-RUN make -j$(nproc) && make install
-WORKDIR /
-
 # build final container
 FROM devkitpro/devkitppc:20220531 AS final
 
@@ -69,10 +53,5 @@ COPY --from=wutbuild /opt/devkitpro/wut /opt/devkitpro/wut
 # copy in SDL2
 COPY --from=sdlbuild /opt/devkitpro/portlibs/wiiu/lib/libSDL2.a /opt/devkitpro/portlibs/wiiu/lib/
 COPY --from=sdlbuild /opt/devkitpro/portlibs/wiiu/include/SDL2 /opt/devkitpro/portlibs/wiiu/include/SDL2/
-
-# copy in StormLib
-COPY --from=stormlibbuild /opt/devkitpro/portlibs/wiiu/lib/libstorm.a /opt/devkitpro/portlibs/wiiu/lib/
-COPY --from=stormlibbuild /opt/devkitpro/portlibs/wiiu/include/StormLib.h /opt/devkitpro/portlibs/wiiu/include/
-COPY --from=stormlibbuild /opt/devkitpro/portlibs/wiiu/include/StormPort.h /opt/devkitpro/portlibs/wiiu/include/
 
 WORKDIR /project

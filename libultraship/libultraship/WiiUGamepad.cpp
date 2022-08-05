@@ -13,6 +13,13 @@ namespace Ship {
     }
 
     bool WiiUGamepad::Open() {
+        VPADReadError error;
+        VPADStatus* status = gfx_wiiu_get_vpad_status(&error);
+        if (!status || error == VPAD_READ_INVALID_CONTROLLER) {
+            Close();
+            return false;
+        }
+
         return true;
     }
 
@@ -214,7 +221,7 @@ namespace Ship {
     }
 
     const char* WiiUGamepad::GetControllerName() {
-        return "Wii U GamePad";
+        return Connected() ? "Wii U GamePad" : "Wii U GamePad (Disconnected)";
     }
 
     void WiiUGamepad::CreateDefaultBinding(int32_t slot) {

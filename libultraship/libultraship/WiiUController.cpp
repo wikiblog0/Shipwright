@@ -11,7 +11,7 @@ namespace Ship {
         connected = false;
         extensionType = (WPADExtensionType) -1;
 
-        controllerName = "Wii U Controller (Disconnected)";
+        controllerName = std::string("Wii U Controller ") + std::to_string((int) chan) + " (Disconnected)";
     }
 
     bool WiiUController::Open() {

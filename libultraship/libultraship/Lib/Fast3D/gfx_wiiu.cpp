@@ -227,7 +227,7 @@ static void gfx_wiiu_main_loop(void (*run_one_game_iter)(void)) {
         run_one_game_iter();
     }
 
-    ModInternal::ExecuteHooks<ModInternal::ExitGame>();
+    Ship::ExecuteHooks<Ship::ExitGame>();
 
     gfx_gx2_shutdown();
     gfx_wiiu_shutdown();
@@ -279,7 +279,7 @@ static void gfx_wiiu_handle_events(void) {
 
     // rescan devices if connection state changed
     if (rescan) {
-		Ship::Window::ControllerApi->ScanPhysicalDevices();
+		Ship::GlobalCtx2::GetInstance()->GetWindow()->GetControlDeck()->ScanPhysicalDevices();
     }
 
     SohImGui::EventImpl event_impl;

@@ -9,7 +9,6 @@
 #include "KeyboardController.h"
 #include "SDLController.h"
 #else
-#include <padscore/wpad.h>
 #include "WiiUGamepad.h"
 #include "WiiUController.h"
 #endif

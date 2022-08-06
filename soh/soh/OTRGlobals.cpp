@@ -49,6 +49,8 @@
 
 #ifdef __SWITCH__
 #include "SwitchImpl.h"
+#elif defined(__WIIU__)
+#include "WiiUImpl.h"
 #endif
 
 #include <Audio.h>
@@ -106,6 +108,8 @@ extern "C" void OTRExtScanner() {
 extern "C" void InitOTR() {
 #ifdef __SWITCH__
     Ship::Switch::Init(Ship::PreInitPhase);
+#elif defined(__WIIU__)
+    Ship::WiiU::Init();
 #endif
     OTRGlobals::Instance = new OTRGlobals();
     SaveManager::Instance = new SaveManager();

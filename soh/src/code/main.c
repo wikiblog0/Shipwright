@@ -3,33 +3,7 @@
 #include <soh/Enhancements/bootcommands.h>
 #include "soh/OTRGlobals.h"
 
-#if defined(__WIIU__) && defined(DEBUG_BUILD)
-#include <stdio.h>
-#include <unistd.h>
-#include <whb/log.h>
-#include <whb/log_udp.h>
-#include <sys/iosupport.h>
-#include <coreinit/debug.h>
 
-static ssize_t wiiu_log_write(struct _reent* r, void* fd, const char* ptr, size_t len) {
-    char buf[1024];
-    snprintf(buf, sizeof(buf), "%*.*s", len, len, ptr);
-    OSReport(buf);
-    WHBLogWritef("%*.*s", len, len, ptr);
-    return len;
-}
-static const devoptab_t dotab_stdout = {
-    .name = "stdout_whb",
-    .write_r = wiiu_log_write,
-};
-
-void __wrap_abort() {
-    printf("Abort called.\n");
-    // force a stack trace
-    *(uint32_t*)0xdeadc0de = 0xcafebabe;
-    while(1);
-}
-#endif
 
 s32 gScreenWidth = SCREEN_WIDTH;
 s32 gScreenHeight = SCREEN_HEIGHT;
@@ -65,23 +39,6 @@ void Main_LogSystemHeap(void) {
 
 void main(int argc, char** argv)
 {
-#ifdef __WIIU__
-#ifdef DEBUG_BUILD
-    WHBLogUdpInit();
-    WHBLogPrint("Hello World!");
-
-    devoptab_list[STD_OUT] = &dotab_stdout;
-    devoptab_list[STD_ERR] = &dotab_stdout;
-#endif
-
-    // make sure the required folders exist
-    mkdir("/vol/external01/wiiu/", 0755);
-    mkdir("/vol/external01/wiiu/apps/", 0755);
-    mkdir("/vol/external01/wiiu/apps/soh/", 0755);
-
-    chdir("/vol/external01/wiiu/apps/soh/");
-#endif
-
     GameConsole_Init();
     InitOTR();
     BootCommands_Init();

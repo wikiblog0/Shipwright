@@ -1,4 +1,4 @@
-#ifdef DEBUG_BUILD
+#ifdef _DEBUG
 #include <coreinit/time.h>
 #include <stdio.h>
 

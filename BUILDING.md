@@ -164,7 +164,7 @@ cmake --build build-cmake --target ExtractAssets
 docker build -t sohwiiubuilder -f Dockerfile.wiiu .
 
 # Setup cmake project for building for Wii U
-docker run -it --rm -v ${PWD}:/project sohwiiubuilder cmake -H. -Bbuild-wiiu -GNinja -DCMAKE_TOOLCHAIN_FILE=/opt/devkitpro/cmake/WiiU.cmake
+docker run -it --rm -v ${PWD}:/project sohwiiubuilder cmake -H. -Bbuild-wiiu -GNinja -DCMAKE_TOOLCHAIN_FILE=/opt/devkitpro/cmake/WiiU.cmake # -DCMAKE_BUILD_TYPE:STRING=Release (if you're packaging)
 
 # Build project and generate rpx
 docker run -it --rm -v ${PWD}:/project sohwiiubuilder cmake --build build-wiiu --target soh

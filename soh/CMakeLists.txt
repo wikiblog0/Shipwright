@@ -1689,7 +1689,7 @@ elseif (CMAKE_SYSTEM_NAME STREQUAL "CafeOS")
 		"$<$<CONFIG:Release>:"
 			"NDEBUG"
 		">"
-		"SPDLOG_ACTIVE_LEVEL=0;"
+        "SPDLOG_ACTIVE_LEVEL=3;"
 		"SPDLOG_NO_THREAD_ID;"
         "SPDLOG_NO_TLS;"
 		"STBI_NO_THREAD_LOCALS;"
@@ -1824,26 +1824,23 @@ if (CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang|AppleClang")
         )
     elseif (CMAKE_SYSTEM_NAME STREQUAL "CafeOS")
         target_compile_options(${PROJECT_NAME} PRIVATE
-            -Wall -Wextra -O2
+            -O2
 
             # disable some warnings to not clutter output
+            -Wno-multichar
             -Wno-return-type
-            -Wno-unused-parameter
-            -Wno-unused-function
-            -Wno-unused-variable
-            -Wno-missing-field-initializers
-            -Wno-missing-braces
-            -Wno-parentheses
             -Wno-narrowing
-            $<$<COMPILE_LANGUAGE:C>:-Wno-incompatible-pointer-types>
-            $<$<COMPILE_LANGUAGE:C>:-Wno-int-conversion>
-            $<$<COMPILE_LANGUAGE:C>:-Wno-builtin-declaration-mismatch>
-            $<$<COMPILE_LANGUAGE:C>:-Wno-implicit-function-declaration>
-            $<$<COMPILE_LANGUAGE:C>:-Wno-stringop-overflow>
-            $<$<COMPILE_LANGUAGE:C>:-Wno-discarded-qualifiers>
-            $<$<COMPILE_LANGUAGE:C>:-Wno-switch-unreachable>
-            $<$<COMPILE_LANGUAGE:CXX>:-fpermissive>
-            $<$<COMPILE_LANGUAGE:CXX>:-Wno-deprecated-enum-enum-conversion>
+            -Wno-switch-outside-range
+            $<$<COMPILE_LANGUAGE:C>:
+                -Wno-incompatible-pointer-types
+                -Wno-discarded-array-qualifiers
+                -Wno-discarded-qualifiers
+                -Wno-int-conversion
+                -Wno-implicit-function-declaration
+                -Wno-builtin-declaration-mismatch
+                -Wno-switch-unreachable
+                -Wno-stringop-overflow
+            >
         )
     else()
         if(CMAKE_SYSTEM_PROCESSOR MATCHES "x86_64")
@@ -1934,6 +1931,8 @@ elseif(CMAKE_SYSTEM_NAME STREQUAL "CafeOS")
         "libultraship;"
         "ZAPDUtils;"
         SDL2::SDL2-static
+
+        "$<$<CONFIG:Debug>:-Wl,--wrap=abort>"
     )
     target_include_directories(${PROJECT_NAME} PRIVATE
         ${DEVKITPRO}/portlibs/wiiu/include/

@@ -3,7 +3,7 @@
 #include "GlobalCtx2.h"
 #include "ImGuiImpl.h"
 
-#include "Lib/Fast3D/gfx_wiiu.h"
+#include "WiiUImpl.h"
 
 namespace Ship {
     WiiUGamepad::WiiUGamepad() : Controller(), connected(true), rumblePatternStrength(1.0f) {
@@ -14,7 +14,7 @@ namespace Ship {
 
     bool WiiUGamepad::Open() {
         VPADReadError error;
-        VPADStatus* status = gfx_wiiu_get_vpad_status(&error);
+        VPADStatus* status = Ship::WiiU::GetVPADStatus(&error);
         if (!status || error == VPAD_READ_INVALID_CONTROLLER) {
             Close();
             return false;
@@ -39,7 +39,7 @@ namespace Ship {
         DeviceProfile& profile = profiles[slot];
 
         VPADReadError error;
-        VPADStatus* status = gfx_wiiu_get_vpad_status(&error);
+        VPADStatus* status = Ship::WiiU::GetVPADStatus(&error);
         if (!status) {
             Close();
             return;

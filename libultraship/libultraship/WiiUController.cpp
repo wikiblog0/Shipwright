@@ -4,7 +4,7 @@
 #include "Window.h"
 #include "ImGuiImpl.h"
 
-#include "Lib/Fast3D/gfx_wiiu.h"
+#include "WiiUImpl.h"
 
 namespace Ship {
     WiiUController::WiiUController(WPADChan chan) : Controller(), chan(chan) {
@@ -16,7 +16,7 @@ namespace Ship {
 
     bool WiiUController::Open() {
         KPADError error;
-        KPADStatus* status = gfx_wiiu_get_kpad_status(chan, &error);
+        KPADStatus* status = Ship::WiiU::GetKPADStatus(chan, &error);
         if (!status || error != KPAD_ERROR_OK) {
             Close();
             return false;
@@ -49,7 +49,7 @@ namespace Ship {
         DeviceProfile& profile = profiles[slot];
 
         KPADError error;
-        KPADStatus* status = gfx_wiiu_get_kpad_status(chan, &error);
+        KPADStatus* status = Ship::WiiU::GetKPADStatus(chan, &error);
         if (!status) {
             Close();
             return;
@@ -133,6 +133,7 @@ namespace Ship {
                 break;
             case WPAD_EXT_NUNCHUK:
             case WPAD_EXT_MPLUS_NUNCHUK:
+            case WPAD_EXT_MPLUS:
             case WPAD_EXT_CORE:
                 for (uint32_t i = WPAD_BUTTON_LEFT; i <= WPAD_BUTTON_HOME; i <<= 1) {
                     if (profile.Mappings.contains(i)) {
@@ -231,6 +232,7 @@ namespace Ship {
                 break;
             case WPAD_EXT_NUNCHUK:
             case WPAD_EXT_MPLUS_NUNCHUK:
+            case WPAD_EXT_MPLUS:
             case WPAD_EXT_CORE:
                 for (uint32_t i = WPAD_BUTTON_LEFT; i <= WPAD_BUTTON_HOME; i <<= 1) {
                     if (status.trigger & i) {
@@ -311,6 +313,7 @@ namespace Ship {
                 break;
             case WPAD_EXT_NUNCHUK:
             case WPAD_EXT_MPLUS_NUNCHUK:
+            case WPAD_EXT_MPLUS:
             case WPAD_EXT_CORE:
                 switch (btn) {
                     case WPAD_BUTTON_A: return "A";
@@ -396,6 +399,7 @@ namespace Ship {
                 break;
             case WPAD_EXT_NUNCHUK:
             case WPAD_EXT_MPLUS_NUNCHUK:
+            case WPAD_EXT_MPLUS:
             case WPAD_EXT_CORE:
                 profile.Mappings[WPAD_BUTTON_1] = BTN_R;
                 profile.Mappings[WPAD_BUTTON_2] = BTN_L;
@@ -422,6 +426,7 @@ namespace Ship {
                 return "ClassicController";
             case WPAD_EXT_NUNCHUK:
             case WPAD_EXT_MPLUS_NUNCHUK:
+            case WPAD_EXT_MPLUS:
             case WPAD_EXT_CORE:
                 return "WiiRemote";
         }

@@ -23,11 +23,6 @@
 
 #include <iostream>
 
-#ifdef __WIIU__
-#include <padscore/kpad.h>
-#include <padscore/wpad.h>
-#endif
-
 #define LOAD_TEX(texPath) static_cast<Ship::Texture*>(Ship::GlobalCtx2::GetInstance()->GetResourceManager()->LoadResource(texPath).get());
 
 extern "C" {
@@ -53,9 +48,6 @@ extern "C" {
             SPDLOG_ERROR("Failed add SDL game controller mappings from \"{}\" ({})", controllerDb, SDL_GetError());
         }
     #endif
-#else
-        KPADInit();
-        WPADEnableURCC(true);
 #endif
 
         Ship::GlobalCtx2::GetInstance()->GetWindow()->GetControlDeck()->Init(controllerBits);
@@ -236,9 +228,6 @@ namespace Ship {
 
     Window::~Window() {
         SPDLOG_INFO("destruct window");
-#ifdef __WIIU__
-        KPADShutdown();
-#endif
     }
 
     void Window::CreateDefaults() {

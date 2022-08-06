@@ -13,7 +13,7 @@ jobs:
         7za x soh/assets.zip -aoa -osoh/assets
     - name: Build binary
       run: |
-        docker run --rm -v ${PWD}:/project garyodernichts/sohwiiubuilder cmake -H. -Bbuild-wiiu -GNinja -DCMAKE_TOOLCHAIN_FILE=/opt/devkitpro/cmake/WiiU.cmake
+        docker run --rm -v ${PWD}:/project garyodernichts/sohwiiubuilder cmake -H. -Bbuild-wiiu -GNinja -DCMAKE_TOOLCHAIN_FILE=/opt/devkitpro/cmake/WiiU.cmake -DCMAKE_BUILD_TYPE:STRING=Release
         docker run --rm -v ${PWD}:/project garyodernichts/sohwiiubuilder cmake --build build-wiiu --target soh
     - uses: actions/upload-artifact@v2
       with:

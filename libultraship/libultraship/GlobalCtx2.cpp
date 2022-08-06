@@ -11,10 +11,8 @@
 #include "OSXFolderManager.h"
 #elif defined(__SWITCH__)
 #include "SwitchImpl.h"
-#endif
-
-#ifdef __WIIU__
-#include <coreinit/debug.h>
+#elif defined(__WIIU__)
+#include "WiiUImpl.h"
 #endif
 
 namespace Ship {
@@ -80,7 +78,7 @@ namespace Ship {
             SPDLOG_ERROR("Main OTR file not found!");
 #endif
 #ifdef __WIIU__
-            OSFatal("Main OTR file not found!");
+            Ship::WiiU::ThrowMissingOTR(MainPath.c_str());
 #endif
             exit(1);
         }
@@ -108,7 +106,7 @@ namespace Ship {
             GetLogger()->set_pattern("[%Y-%m-%d %H:%M:%S.%e] [%@] [%l] %v");
             spdlog::register_logger(GetLogger());
             spdlog::set_default_logger(GetLogger());
-#elif defined(DEBUG_BUILD)
+#elif defined(_DEBUG)
             // Setup Logging
             auto ConsoleSink = std::make_shared<spdlog::sinks::stdout_color_sink_mt>();
             ConsoleSink->set_level(spdlog::level::trace);

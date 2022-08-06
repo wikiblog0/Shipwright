@@ -359,6 +359,8 @@ set(Source_Files__CafeOS
     "WiiUController.h"
     "WiiUGamepad.cpp"
     "WiiUGamepad.h"
+    "WiiUImpl.cpp"
+    "WiiUImpl.h"
 )
 source_group("Source Files\\CafeOS" FILES ${Source_Files__CafeOS})
 endif()
@@ -497,13 +499,13 @@ if (CMAKE_SYSTEM_NAME STREQUAL "Windows")
 
 elseif (CMAKE_SYSTEM_NAME STREQUAL "CafeOS")
 	target_compile_definitions(${PROJECT_NAME} PRIVATE
-		"$<$<CONFIG:Debug>:"
-				"_DEBUG"
-			">"
-			"$<$<CONFIG:Release>:"
-				"NDEBUG"
-			">"
-            "SPDLOG_ACTIVE_LEVEL=0;"
+            "$<$<CONFIG:Debug>:"
+                "_DEBUG"
+            ">"
+            "$<$<CONFIG:Release>:"
+                "NDEBUG"
+            ">"
+            "SPDLOG_ACTIVE_LEVEL=3;"
             "SPDLOG_NO_THREAD_ID;"
             "SPDLOG_NO_TLS;"
             "STBI_NO_THREAD_LOCALS;"

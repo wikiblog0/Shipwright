@@ -39,12 +39,12 @@
 #include "gfx_wiiu.h"
 
 #include "Lib/ImGui/backends/wiiu/imgui_impl_wiiu.h"
+#include "../../WiiUImpl.h"
 #include "../../ImGuiImpl.h"
 #include "../../Hooks.h"
-#include "../../Window.h"
 
-static MEMHeapHandle heapMEM1 = NULL;
-static MEMHeapHandle heapForeground = NULL;
+static MEMHeapHandle heap_MEM1 = nullptr;
+static MEMHeapHandle heap_foreground = nullptr;
 
 bool has_foreground = false;
 static void *mem1_storage = nullptr;
@@ -67,16 +67,7 @@ static int frame_divisor = 1;
 // (initialized to 1 to not trigger imgui assert on initial draw)
 uint32_t frametime = 1;
 
-static bool has_vpad = false;
-static VPADReadError vpad_error;
-static VPADStatus vpad_status;
-
-static bool has_kpad[4] = { false };
-static KPADError kpad_error[4] = { KPAD_ERROR_OK };
-static KPADStatus kpad_status[4];
-
-bool gfx_wiiu_init_mem1(void)
-{
+bool gfx_wiiu_init_mem1(void) {
     MEMHeapHandle heap = MEMGetBaseHeapHandle(MEM_BASE_HEAP_MEM1);
     uint32_t size;
     void *base;
@@ -93,27 +84,25 @@ bool gfx_wiiu_init_mem1(void)
         return false;
     }
 
-    heapMEM1 = MEMCreateExpHeapEx(base, size, 0);
-    if (!heapMEM1) {
-        printf("%s: MEMCreateExpHeapEx(0x%08X, 0x%X, 0) failed", __FUNCTION__, base, size);
+    heap_MEM1 = MEMCreateExpHeapEx(base, size, 0);
+    if (!heap_MEM1) {
+        printf("%s: MEMCreateExpHeapEx(%p, 0x%X, 0) failed", __FUNCTION__, base, size);
         return false;
     }
 
     return true;
 }
 
-void gfx_wiiu_destroy_mem1(void)
-{
+void gfx_wiiu_destroy_mem1(void) {
     MEMHeapHandle heap = MEMGetBaseHeapHandle(MEM_BASE_HEAP_MEM1);
 
-    if (heapMEM1) {
-        MEMDestroyExpHeap(heapMEM1);
-        heapMEM1 = NULL;
+    if (heap_MEM1) {
+        MEMDestroyExpHeap(heap_MEM1);
+        heap_MEM1 = NULL;
     }
 }
 
-bool gfx_wiiu_init_foreground(void)
-{
+bool gfx_wiiu_init_foreground(void) {
     MEMHeapHandle heap = MEMGetBaseHeapHandle(MEM_BASE_HEAP_FG);
     uint32_t size;
     void *base;
@@ -130,32 +119,30 @@ bool gfx_wiiu_init_foreground(void)
         return false;
     }
 
-    heapForeground = MEMCreateExpHeapEx(base, size, 0);
-    if (!heapForeground) {
-        printf("%s: MEMCreateExpHeapEx(0x%08X, 0x%X, 0)", __FUNCTION__, base, size);
+    heap_foreground = MEMCreateExpHeapEx(base, size, 0);
+    if (!heap_foreground) {
+        printf("%s: MEMCreateExpHeapEx(%p, 0x%X, 0)", __FUNCTION__, base, size);
         return false;
     }
 
     return true;
 }
 
-void gfx_wiiu_destroy_foreground(void)
-{
+void gfx_wiiu_destroy_foreground(void) {
     MEMHeapHandle foreground = MEMGetBaseHeapHandle(MEM_BASE_HEAP_FG);
 
-    if (heapForeground) {
-        MEMDestroyExpHeap(heapForeground);
-        heapForeground = NULL;
+    if (heap_foreground) {
+        MEMDestroyExpHeap(heap_foreground);
+        heap_foreground = NULL;
     }
 
     MEMFreeToFrmHeap(foreground, MEM_FRM_HEAP_FREE_ALL);
 }
 
-void *gfx_wiiu_alloc_mem1(uint32_t size, uint32_t alignment)
-{
+void *gfx_wiiu_alloc_mem1(uint32_t size, uint32_t alignment) {
     void *block;
 
-    if (!heapMEM1) {
+    if (!heap_MEM1) {
         return NULL;
     }
 
@@ -163,24 +150,22 @@ void *gfx_wiiu_alloc_mem1(uint32_t size, uint32_t alignment)
         alignment = 4;
     }
 
-    block = MEMAllocFromExpHeapEx(heapMEM1, size, alignment);
+    block = MEMAllocFromExpHeapEx(heap_MEM1, size, alignment);
     return block;
 }
 
-void gfx_wiiu_free_mem1(void *block)
-{
-    if (!heapMEM1) {
+void gfx_wiiu_free_mem1(void *block) {
+    if (!heap_MEM1) {
         return;
     }
 
-    MEMFreeToExpHeap(heapMEM1, block);
+    MEMFreeToExpHeap(heap_MEM1, block);
 }
 
-void *gfx_wiiu_alloc_foreground(uint32_t size, uint32_t alignment)
-{
+void *gfx_wiiu_alloc_foreground(uint32_t size, uint32_t alignment) {
     void *block;
 
-    if (!heapForeground) {
+    if (!heap_foreground) {
         return NULL;
     }
 
@@ -188,23 +173,23 @@ void *gfx_wiiu_alloc_foreground(uint32_t size, uint32_t alignment)
         alignment = 4;
     }
 
-    block = MEMAllocFromExpHeapEx(heapForeground, size, alignment);
+    block = MEMAllocFromExpHeapEx(heap_foreground, size, alignment);
     return block;
 }
 
-void gfx_wiiu_free_foreground(void *block)
-{
-    if (!heapForeground) {
+void gfx_wiiu_free_foreground(void *block) {
+    if (!heap_foreground) {
         return;
     }
 
-    MEMFreeToExpHeap(heapForeground, block);
+    MEMFreeToExpHeap(heap_foreground, block);
 }
 
 static uint32_t gfx_wiiu_proc_callback_acquired(void *context) {
     has_foreground = true;
 
-    assert(gfx_wiiu_init_foreground());
+    bool result = gfx_wiiu_init_foreground();
+    assert(result);
 
     tv_scan_buffer = gfx_wiiu_alloc_foreground(tv_scan_buffer_size, GX2_SCAN_BUFFER_ALIGNMENT);
     assert(tv_scan_buffer);
@@ -249,7 +234,8 @@ static void gfx_wiiu_init(const char *game_name, bool start_in_fullscreen, uint3
 
     ProcUISetMEM1Storage(mem1_storage, mem1_size);
 
-    assert(gfx_wiiu_init_mem1());
+    bool result = gfx_wiiu_init_mem1();
+    assert(result);
 
     command_buffer_pool = memalign(GX2_COMMAND_BUFFER_ALIGNMENT, 0x400000);
     assert(command_buffer_pool);
@@ -360,6 +346,7 @@ static void gfx_wiiu_main_loop(void (*run_one_game_iter)(void)) {
     }
 
     Ship::ExecuteHooks<Ship::ExitGame>();
+    Ship::WiiU::Exit();
 
     gfx_gx2_shutdown();
     gfx_wiiu_shutdown();
@@ -372,46 +359,22 @@ static void gfx_wiiu_get_dimensions(uint32_t *width, uint32_t *height) {
 }
 
 static void gfx_wiiu_handle_events(void) {
-    bool rescan = false;
+    Ship::WiiU::Update();
+
     ImGui_ImplWiiU_ControllerInput input{};
 
-    VPADRead(VPAD_CHAN_0, &vpad_status, 1, &vpad_error);
-    if (vpad_error == VPAD_READ_SUCCESS) {
-        if (!has_vpad) {
-            rescan = true;
-        }
-
-        has_vpad = true;
-        input.vpad = &vpad_status;
-    } else if (vpad_error != VPAD_READ_NO_SAMPLES) {
-        if (has_vpad) {
-            rescan = true;
-        }
-
-        has_vpad = false;
+    VPADReadError vpad_error;
+    input.vpad = Ship::WiiU::GetVPADStatus(&vpad_error);
+    if (vpad_error != VPAD_READ_SUCCESS) {
+        input.vpad = nullptr;
     }
 
+    KPADError kpad_error;
     for (int i = 0; i < 4; i++) {
-        KPADReadEx((KPADChan) i, &kpad_status[i], 1, &kpad_error[i]);
-        if (kpad_error[i] == KPAD_ERROR_OK && kpad_status[i].extensionType != 255) {
-            if (!has_kpad[i]) {
-                rescan = true;
-            }
-
-            has_kpad[i] = true;
-            input.kpad[i] = &kpad_status[i];
-        } else if (kpad_error[i] != KPAD_ERROR_NO_SAMPLES) {
-            if (has_kpad[i]) {
-                rescan = true;
-            }
-
-            has_kpad[i] = false;
+        input.kpad[i] = Ship::WiiU::GetKPADStatus((WPADChan) i, &kpad_error);
+        if (kpad_error != KPAD_ERROR_OK) {
+            input.kpad[i] = nullptr;
         }
-    }
-
-    // rescan devices if connection state changed
-    if (rescan) {
-		Ship::GlobalCtx2::GetInstance()->GetWindow()->GetControlDeck()->ScanPhysicalDevices();
     }
 
     SohImGui::EventImpl event_impl;
@@ -419,34 +382,24 @@ static void gfx_wiiu_handle_events(void) {
     SohImGui::Update(event_impl);
 }
 
-VPADStatus *gfx_wiiu_get_vpad_status(VPADReadError *error) {
-    *error = vpad_error;
-    return has_vpad ? &vpad_status : nullptr;
-}
-
-KPADStatus *gfx_wiiu_get_kpad_status(WPADChan chan, KPADError *error) {
-    *error = kpad_error[chan];
-    return has_kpad[chan] ? &kpad_status[chan] : nullptr;
-}
-
 static bool gfx_wiiu_start_frame(void) {
-    uint32_t swapCount, flipCount;
-    OSTime lastFlip, lastVsync;
-    uint32_t waitCount = 0;
+    uint32_t swap_count, flip_count;
+    OSTime last_flip, last_vsync;
+    uint32_t wait_count = 0;
 
     while (true) {
-        GX2GetSwapStatus(&swapCount, &flipCount, &lastFlip, &lastVsync);
+        GX2GetSwapStatus(&swap_count, &flip_count, &last_flip, &last_vsync);
 
-        if (flipCount >= swapCount) {
+        if (flip_count >= swap_count) {
             break;
         }
 
-        if (waitCount >= 10) {
+        if (wait_count >= 10) {
             // GPU timed out, drop frame
             return false;
         }
 
-        waitCount++;
+        wait_count++;
         GX2WaitForVsync();
     }
 

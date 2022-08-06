@@ -19,7 +19,7 @@ WORKDIR /
 # set up builder image
 FROM devkitpro/devkitppc:20220531 AS builder
 
-RUN apt-get update && apt-get -y install --no-install-recommends wget tar autoconf automake libtool && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get -y install --no-install-recommends build-essential libssl-dev wget tar autoconf automake libtool && rm -rf /var/lib/apt/lists/*
 COPY --from=wutbuild /opt/devkitpro/wut /opt/devkitpro/wut
 
 # build SDL2
@@ -44,8 +44,17 @@ RUN /opt/devkitpro/portlibs/wiiu/bin/powerpc-eabi-cmake .. -DCMAKE_INSTALL_PREFI
 RUN make -j$(nproc) && make install
 WORKDIR /
 
+FROM builder as cmakebuild
+ARG cmake_ver=3.22.6
+RUN wget https://github.com/Kitware/CMake/releases/download/v$cmake_ver/cmake-$cmake_ver.tar.gz && mkdir /cmake && tar xf cmake-$cmake_ver.tar.gz -C /cmake --strip-components=1
+WORKDIR /cmake
+RUN ./bootstrap && make && make install
+WORKDIR /
+
 # build final container
 FROM devkitpro/devkitppc:20220531 AS final
+
+RUN apt-get update && apt-get -y install --no-install-recommends ninja-build && rm -rf /var/lib/apt/lists/*
 
 # copy in wut
 COPY --from=wutbuild /opt/devkitpro/wut /opt/devkitpro/wut
@@ -53,5 +62,9 @@ COPY --from=wutbuild /opt/devkitpro/wut /opt/devkitpro/wut
 # copy in SDL2
 COPY --from=sdlbuild /opt/devkitpro/portlibs/wiiu/lib/libSDL2.a /opt/devkitpro/portlibs/wiiu/lib/
 COPY --from=sdlbuild /opt/devkitpro/portlibs/wiiu/include/SDL2 /opt/devkitpro/portlibs/wiiu/include/SDL2/
+
+# copy in cmake
+COPY --from=cmakebuild /usr/local/bin/cmake /usr/bin/cmake 
+COPY --from=cmakebuild /usr/local/share/cmake-3.22 /usr/share/cmake-3.22/
 
 WORKDIR /project

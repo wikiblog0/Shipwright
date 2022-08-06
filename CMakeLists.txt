@@ -107,6 +107,13 @@ include(CMake/GlobalSettingsInclude.cmake OPTIONAL)
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
 ################################################################################
+# Workaround for current WiiU toolchain issue
+################################################################################
+if(CMAKE_SYSTEM_NAME MATCHES "CafeOS")
+    list(INSERT ${DKP_PREFIX_VAR} 0 "${DEVKITPRO}/portlibs/ppc")
+endif()
+
+################################################################################
 # Sub-projects
 ################################################################################
 add_subdirectory(libultraship/libultraship ${CMAKE_BINARY_DIR}/libultraship)
@@ -114,7 +121,7 @@ add_subdirectory(ZAPDTR/ZAPD ${CMAKE_BINARY_DIR}/ZAPD)
 add_subdirectory(ZAPDTR/ZAPDUtils ${CMAKE_BINARY_DIR}/ZAPDUtils)
 add_subdirectory(OTRExporter)
 add_subdirectory(soh)
-if(NOT CMAKE_SYSTEM_NAME MATCHES "Darwin|NintendoSwitch")
+if(NOT CMAKE_SYSTEM_NAME MATCHES "Darwin|NintendoSwitch|CafeOS")
 add_subdirectory(OTRGui)
 endif()
 
@@ -176,13 +183,13 @@ add_custom_target(CreateOSXIcons
 add_dependencies(soh CreateOSXIcons)
 endif()
 
-if(CMAKE_SYSTEM_NAME MATCHES "Windows|NintendoSwitch")
+if(CMAKE_SYSTEM_NAME MATCHES "Windows|NintendoSwitch|CafeOS")
 INSTALL(FILES ${CMAKE_SOURCE_DIR}/README.md DESTINATION . COMPONENT ship RENAME readme.txt )
 endif()
 
 if(CMAKE_SYSTEM_NAME MATCHES "Linux")
 	set(CPACK_GENERATOR "External")
-elseif(CMAKE_SYSTEM_NAME MATCHES "Windows|NintendoSwitch")
+elseif(CMAKE_SYSTEM_NAME MATCHES "Windows|NintendoSwitch|CafeOS")
     set(CPACK_GENERATOR "ZIP")
 elseif(CMAKE_SYSTEM_NAME MATCHES "Darwin")
     set(CPACK_GENERATOR "Bundle")

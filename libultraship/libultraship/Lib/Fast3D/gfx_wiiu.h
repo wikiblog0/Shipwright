@@ -1,5 +1,6 @@
 #ifndef GFX_WIIU_H
 #define GFX_WIIU_H
+#ifdef __WIIU__
 
 #include <vpad/input.h>
 #include <padscore/kpad.h>
@@ -21,4 +22,5 @@ KPADStatus *gfx_wiiu_get_kpad_status(WPADChan chan, KPADError *error);
 
 extern struct GfxWindowManagerAPI gfx_wiiu;
 
+#endif
 #endif

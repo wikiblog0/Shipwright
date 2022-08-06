@@ -8,6 +8,10 @@
 #include <coreinit/thread.h>
 #include <coreinit/foreground.h>
 #include <coreinit/memory.h>
+#include <coreinit/memheap.h>
+#include <coreinit/memdefaultheap.h>
+#include <coreinit/memexpheap.h>
+#include <coreinit/memfrmheap.h>
 
 #include <gx2/state.h>
 #include <gx2/context.h>
@@ -33,12 +37,14 @@
 #include "gfx_pc.h"
 #include "gfx_gx2.h"
 #include "gfx_wiiu.h"
-#include "gfx_heap.h"
 
 #include "Lib/ImGui/backends/wiiu/imgui_impl_wiiu.h"
 #include "../../ImGuiImpl.h"
 #include "../../Hooks.h"
 #include "../../Window.h"
+
+static MEMHeapHandle heapMEM1 = NULL;
+static MEMHeapHandle heapForeground = NULL;
 
 bool has_foreground = false;
 static void *mem1_storage = nullptr;
@@ -69,18 +75,144 @@ static bool has_kpad[4] = { false };
 static KPADError kpad_error[4] = { KPAD_ERROR_OK };
 static KPADStatus kpad_status[4];
 
+bool gfx_wiiu_init_mem1(void)
+{
+    MEMHeapHandle heap = MEMGetBaseHeapHandle(MEM_BASE_HEAP_MEM1);
+    uint32_t size;
+    void *base;
+
+    size = MEMGetAllocatableSizeForFrmHeapEx(heap, 4);
+    if (!size) {
+        printf("%s: MEMGetAllocatableSizeForFrmHeapEx == 0", __FUNCTION__);
+        return false;
+    }
+
+    base = MEMAllocFromFrmHeapEx(heap, size, 4);
+    if (!base) {
+        printf("%s: MEMAllocFromFrmHeapEx(heap, 0x%X, 4) failed", __FUNCTION__, size);
+        return false;
+    }
+
+    heapMEM1 = MEMCreateExpHeapEx(base, size, 0);
+    if (!heapMEM1) {
+        printf("%s: MEMCreateExpHeapEx(0x%08X, 0x%X, 0) failed", __FUNCTION__, base, size);
+        return false;
+    }
+
+    return true;
+}
+
+void gfx_wiiu_destroy_mem1(void)
+{
+    MEMHeapHandle heap = MEMGetBaseHeapHandle(MEM_BASE_HEAP_MEM1);
+
+    if (heapMEM1) {
+        MEMDestroyExpHeap(heapMEM1);
+        heapMEM1 = NULL;
+    }
+}
+
+bool gfx_wiiu_init_foreground(void)
+{
+    MEMHeapHandle heap = MEMGetBaseHeapHandle(MEM_BASE_HEAP_FG);
+    uint32_t size;
+    void *base;
+
+    size = MEMGetAllocatableSizeForFrmHeapEx(heap, 4);
+    if (!size) {
+        printf("%s: MEMAllocFromFrmHeapEx(heap, 0x%X, 4)", __FUNCTION__, size);
+        return false;
+    }
+
+    base = MEMAllocFromFrmHeapEx(heap, size, 4);
+    if (!base) {
+        printf("%s: MEMGetAllocatableSizeForFrmHeapEx == 0", __FUNCTION__);
+        return false;
+    }
+
+    heapForeground = MEMCreateExpHeapEx(base, size, 0);
+    if (!heapForeground) {
+        printf("%s: MEMCreateExpHeapEx(0x%08X, 0x%X, 0)", __FUNCTION__, base, size);
+        return false;
+    }
+
+    return true;
+}
+
+void gfx_wiiu_destroy_foreground(void)
+{
+    MEMHeapHandle foreground = MEMGetBaseHeapHandle(MEM_BASE_HEAP_FG);
+
+    if (heapForeground) {
+        MEMDestroyExpHeap(heapForeground);
+        heapForeground = NULL;
+    }
+
+    MEMFreeToFrmHeap(foreground, MEM_FRM_HEAP_FREE_ALL);
+}
+
+void *gfx_wiiu_alloc_mem1(uint32_t size, uint32_t alignment)
+{
+    void *block;
+
+    if (!heapMEM1) {
+        return NULL;
+    }
+
+    if (alignment < 4) {
+        alignment = 4;
+    }
+
+    block = MEMAllocFromExpHeapEx(heapMEM1, size, alignment);
+    return block;
+}
+
+void gfx_wiiu_free_mem1(void *block)
+{
+    if (!heapMEM1) {
+        return;
+    }
+
+    MEMFreeToExpHeap(heapMEM1, block);
+}
+
+void *gfx_wiiu_alloc_foreground(uint32_t size, uint32_t alignment)
+{
+    void *block;
+
+    if (!heapForeground) {
+        return NULL;
+    }
+
+    if (alignment < 4) {
+        alignment = 4;
+    }
+
+    block = MEMAllocFromExpHeapEx(heapForeground, size, alignment);
+    return block;
+}
+
+void gfx_wiiu_free_foreground(void *block)
+{
+    if (!heapForeground) {
+        return;
+    }
+
+    MEMFreeToExpHeap(heapForeground, block);
+}
+
 static uint32_t gfx_wiiu_proc_callback_acquired(void *context) {
     has_foreground = true;
 
-    assert(_GfxHeapInitForeground());
+    assert(gfx_wiiu_init_foreground());
 
-    tv_scan_buffer = _GfxHeapAllocForeground(tv_scan_buffer_size, GX2_SCAN_BUFFER_ALIGNMENT);
+    tv_scan_buffer = gfx_wiiu_alloc_foreground(tv_scan_buffer_size, GX2_SCAN_BUFFER_ALIGNMENT);
     assert(tv_scan_buffer);
 
     GX2Invalidate(GX2_INVALIDATE_MODE_CPU, tv_scan_buffer, tv_scan_buffer_size);
     GX2SetTVBuffer(tv_scan_buffer, tv_scan_buffer_size, tv_render_mode, GX2_SURFACE_FORMAT_UNORM_R8_G8_B8_A8, GX2_BUFFERING_MODE_DOUBLE);
 
-    drc_scan_buffer = _GfxHeapAllocForeground(drc_scan_buffer_size, GX2_SCAN_BUFFER_ALIGNMENT);
+    drc_scan_buffer = gfx_wiiu_alloc_foreground(drc_scan_buffer_size, GX2_SCAN_BUFFER_ALIGNMENT);
     assert(drc_scan_buffer);
 
     GX2Invalidate(GX2_INVALIDATE_MODE_CPU, drc_scan_buffer, drc_scan_buffer_size);
@@ -91,16 +223,16 @@ static uint32_t gfx_wiiu_proc_callback_acquired(void *context) {
 
 static uint32_t gfx_wiiu_proc_callback_released(void* context) {
     if (tv_scan_buffer) {
-        _GfxHeapFreeForeground(tv_scan_buffer);
+        gfx_wiiu_free_foreground(tv_scan_buffer);
         tv_scan_buffer = nullptr;
     }
 
     if (drc_scan_buffer) {
-        _GfxHeapFreeForeground(drc_scan_buffer);
+        gfx_wiiu_free_foreground(drc_scan_buffer);
         drc_scan_buffer = nullptr;
     }
 
-    _GfxHeapDestroyForeground();
+    gfx_wiiu_destroy_foreground();
 
     has_foreground = false;
 
@@ -117,7 +249,7 @@ static void gfx_wiiu_init(const char *game_name, bool start_in_fullscreen, uint3
 
     ProcUISetMEM1Storage(mem1_storage, mem1_size);
 
-    assert(_GfxHeapInitMEM1());
+    assert(gfx_wiiu_init_mem1());
 
     command_buffer_pool = memalign(GX2_COMMAND_BUFFER_ALIGNMENT, 0x400000);
     assert(command_buffer_pool);
@@ -187,7 +319,7 @@ static void gfx_wiiu_init(const char *game_name, bool start_in_fullscreen, uint3
 static void gfx_wiiu_shutdown(void) {
     if (has_foreground) {
         gfx_wiiu_proc_callback_released(nullptr);
-        _GfxHeapDestroyMEM1();
+        gfx_wiiu_destroy_mem1();
     }
 
     GX2Shutdown();

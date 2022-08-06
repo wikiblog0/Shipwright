@@ -2440,7 +2440,7 @@ static void gfx_run_dl(Gfx* cmd) {
                 uintptr_t addr = cmd->words.w1;
                 cmd++;
                 uint64_t hash = ((uint64_t)cmd->words.w0 << 32) + (uint64_t)cmd->words.w1;
-                //ResourceMgr_GetNameByCRC(hash, fileName);
+                fileName = ResourceMgr_GetNameByCRC(hash);
 
 
 #if _DEBUG && 0

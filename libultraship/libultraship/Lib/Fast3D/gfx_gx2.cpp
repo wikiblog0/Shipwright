@@ -32,7 +32,6 @@
 #include <gx2/display.h>
 #include "gx2_shader_gen.h"
 #include "gx2_shader_debug.h"
-#include "gfx_heap.h"
 
 #include <proc_ui/procui.h>
 #include <coreinit/memory.h>
@@ -431,13 +430,13 @@ static void gfx_gx2_init(void) {
     GX2CalcSurfaceSizeAndAlignment(&main_framebuffer.color_buffer.surface);
     GX2InitColorBufferRegs(&main_framebuffer.color_buffer);
 
-    main_framebuffer.color_buffer.surface.image = _GfxHeapAllocMEM1(main_framebuffer.color_buffer.surface.imageSize, main_framebuffer.color_buffer.surface.alignment);
+    main_framebuffer.color_buffer.surface.image = gfx_wiiu_alloc_mem1(main_framebuffer.color_buffer.surface.imageSize, main_framebuffer.color_buffer.surface.alignment);
     assert(main_framebuffer.color_buffer.surface.image);
 
     GX2CalcSurfaceSizeAndAlignment(&main_framebuffer.depth_buffer.surface);
     GX2InitDepthBufferRegs(&main_framebuffer.depth_buffer);
 
-    main_framebuffer.depth_buffer.surface.image = _GfxHeapAllocMEM1(main_framebuffer.depth_buffer.surface.imageSize, main_framebuffer.depth_buffer.surface.alignment);
+    main_framebuffer.depth_buffer.surface.image = gfx_wiiu_alloc_mem1(main_framebuffer.depth_buffer.surface.imageSize, main_framebuffer.depth_buffer.surface.alignment);
     assert(main_framebuffer.depth_buffer.surface.image);
 
     main_framebuffer.imtex.Texture = &main_framebuffer.texture;
@@ -452,7 +451,7 @@ static void gfx_gx2_init(void) {
 
     GX2CalcSurfaceSizeAndAlignment(&depthReadBuffer.surface);
 
-    depthReadBuffer.surface.image = _GfxHeapAllocMEM1(depthReadBuffer.surface.alignment, depthReadBuffer.surface.imageSize);
+    depthReadBuffer.surface.image = gfx_wiiu_alloc_mem1(depthReadBuffer.surface.alignment, depthReadBuffer.surface.imageSize);
     assert(depthReadBuffer.surface.image);
     GX2Invalidate(GX2_INVALIDATE_MODE_CPU | GX2_INVALIDATE_MODE_DEPTH_BUFFER, depthReadBuffer.surface.image, depthReadBuffer.surface.imageSize);
 
@@ -483,17 +482,17 @@ void gfx_gx2_shutdown(void) {
         GX2DrawDone();
 
         if (depthReadBuffer.surface.image) {
-            _GfxHeapFreeMEM1(depthReadBuffer.surface.image);
+            gfx_wiiu_free_mem1(depthReadBuffer.surface.image);
             depthReadBuffer.surface.image = nullptr;
         }
 
         if (main_framebuffer.color_buffer.surface.image) {
-            _GfxHeapFreeMEM1(main_framebuffer.color_buffer.surface.image);
+            gfx_wiiu_free_mem1(main_framebuffer.color_buffer.surface.image);
             main_framebuffer.color_buffer.surface.image = nullptr;
         }
 
         if (main_framebuffer.depth_buffer.surface.image) {
-            _GfxHeapFreeMEM1(main_framebuffer.depth_buffer.surface.image);
+            gfx_wiiu_free_mem1(main_framebuffer.depth_buffer.surface.image);
             main_framebuffer.depth_buffer.surface.image = nullptr;
         }
     }
@@ -582,7 +581,7 @@ static void gfx_gx2_update_framebuffer_parameters(int fb, uint32_t width, uint32
 
     if (buffer->texture.surface.image) {
         if (buffer->colorBufferMem1) {
-            _GfxHeapFreeMEM1(buffer->texture.surface.image);
+            gfx_wiiu_free_mem1(buffer->texture.surface.image);
         } else {
             free(buffer->texture.surface.image);
         }
@@ -591,7 +590,7 @@ static void gfx_gx2_update_framebuffer_parameters(int fb, uint32_t width, uint32
 
     if (buffer->depth_buffer.surface.image) {
         if (buffer->depthBufferMem1) {
-            _GfxHeapFreeMEM1(buffer->depth_buffer.surface.image);
+            gfx_wiiu_free_mem1(buffer->depth_buffer.surface.image);
         } else {
             free(buffer->depth_buffer.surface.image);
         }
@@ -603,7 +602,7 @@ static void gfx_gx2_update_framebuffer_parameters(int fb, uint32_t width, uint32
     GX2CalcSurfaceSizeAndAlignment(&buffer->depth_buffer.surface);
     GX2InitDepthBufferRegs(&buffer->depth_buffer);
 
-    buffer->depth_buffer.surface.image = _GfxHeapAllocMEM1(buffer->depth_buffer.surface.imageSize, buffer->depth_buffer.surface.alignment);
+    buffer->depth_buffer.surface.image = gfx_wiiu_alloc_mem1(buffer->depth_buffer.surface.imageSize, buffer->depth_buffer.surface.alignment);
     // fall back to mem2
     if (!buffer->depth_buffer.surface.image) {
         buffer->depth_buffer.surface.image = memalign(buffer->depth_buffer.surface.alignment, buffer->depth_buffer.surface.imageSize);
@@ -638,7 +637,7 @@ static void gfx_gx2_update_framebuffer_parameters(int fb, uint32_t width, uint32
     // the texture and color buffer share a buffer
     assert(buffer->color_buffer.surface.imageSize == buffer->texture.surface.imageSize);
 
-    buffer->texture.surface.image = _GfxHeapAllocMEM1(buffer->texture.surface.imageSize, buffer->texture.surface.alignment);
+    buffer->texture.surface.image = gfx_wiiu_alloc_mem1(buffer->texture.surface.imageSize, buffer->texture.surface.alignment);
     // fall back to mem2
     if (!buffer->texture.surface.image) {
         buffer->texture.surface.image = memalign(buffer->texture.surface.alignment, buffer->texture.surface.imageSize);

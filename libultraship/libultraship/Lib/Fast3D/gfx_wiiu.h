@@ -14,6 +14,22 @@
 extern bool has_foreground;
 extern uint32_t frametime;
 
+bool gfx_wiiu_init_mem1(void);
+
+void gfx_wiiu_destroy_mem1(void);
+
+bool gfx_wiiu_init_foreground(void);
+
+void gfx_wiiu_destroy_foreground(void);
+
+void *gfx_wiiu_alloc_mem1(uint32_t size, uint32_t alignment);
+
+void gfx_wiiu_free_mem1(void *block);
+
+void *gfx_wiiu_alloc_foreground(uint32_t size, uint32_t alignment);
+
+void gfx_wiiu_free_foreground(void *block);
+
 void gfx_wiiu_set_context_state(void);
 
 VPADStatus *gfx_wiiu_get_vpad_status(VPADReadError *error);

@@ -109,7 +109,11 @@ namespace SohImGui {
     int lastBackendID = 0;
 
     const char* filters[3] = {
+#ifdef __WIIU__
+        "",
+#else
         "Three-Point",
+#endif
         "Linear",
         "None"
     };

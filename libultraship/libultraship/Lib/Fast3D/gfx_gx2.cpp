@@ -90,6 +90,7 @@ static uint8_t *draw_ptr = nullptr;
 
 static uint32_t frame_count;
 static float current_noise_scale;
+static FilteringMode current_filter_mode = FILTER_LINEAR;
 
 static BOOL current_depth_test = TRUE;
 static BOOL current_depth_write = TRUE;
@@ -340,7 +341,10 @@ static void gfx_gx2_set_sampler_parameters(int tile, bool linear_filter, uint32_
 
     current_tile = tile;
 
-    GX2InitSampler(&tex->sampler, GX2_TEX_CLAMP_MODE_CLAMP, linear_filter ? GX2_TEX_XY_FILTER_MODE_LINEAR : GX2_TEX_XY_FILTER_MODE_POINT);
+    GX2InitSampler(&tex->sampler, GX2_TEX_CLAMP_MODE_CLAMP,
+        (linear_filter && current_filter_mode == FILTER_LINEAR) ? 
+        GX2_TEX_XY_FILTER_MODE_LINEAR : GX2_TEX_XY_FILTER_MODE_POINT);
+
     GX2InitSamplerClamping(&tex->sampler, gfx_cm_to_gx2(cms), gfx_cm_to_gx2(cmt), GX2_TEX_CLAMP_MODE_WRAP);
 
     if (current_shader_program) {
@@ -771,11 +775,17 @@ static std::unordered_map<std::pair<float, float>, uint16_t, hash_pair_ff> gfx_g
 }
 
 void gfx_gx2_set_texture_filter(FilteringMode mode) {
+    // three-point is not implemented in the shaders yet
+    if (mode == FILTER_THREE_POINT) {
+        mode = FILTER_LINEAR;
+    }
 
+    current_filter_mode = mode;
+    gfx_texture_cache_clear();
 }
 
 FilteringMode gfx_gx2_get_texture_filter(void) {
-    return FILTER_NONE;
+    return current_filter_mode;
 }
 
 ImGui_ImplGX2_Texture* gfx_gx2_texture_for_imgui(uint32_t texture_id) {

@@ -217,8 +217,9 @@ namespace Ship {
 		}
 
 		if(Backend->CanGyro()) {
+		#ifndef __WIIU__
 			ImGui::SameLine();
-
+		#endif
 			SohImGui::BeginGroupPanel("Gyro Options", ImVec2(175, 20));
 				float cursorX = ImGui::GetCursorPosX() + 5;
 				ImGui::SetCursorPosX(cursorX);
@@ -273,9 +274,7 @@ namespace Ship {
 		#endif
 		}
 
-	#ifndef __WIIU__
 		ImGui::SameLine();
-	#endif
 
 		const ImVec2 cursor = ImGui::GetCursorPos();
 

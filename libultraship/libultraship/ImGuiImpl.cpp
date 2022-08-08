@@ -923,23 +923,21 @@ namespace SohImGui {
 
         if (ImGui::BeginMenuBar()) {
             if (DefaultAssets.contains("Game_Icon")) {
-#ifdef __WIIU__
-                // adjust icon for scaling TODO make this a vector which can be multiplied with
-                ImGui::SetCursorPos(ImVec2(5 * 2, 2.5f * 2));
-                ImGui::Image(GetTextureByID(DefaultAssets["Game_Icon"]->textureId), ImVec2(16.0f * 2, 16.0f * 2));
-                ImGui::SameLine();
-                ImGui::SetCursorPos(ImVec2(25 * 2, 0));
-#else
+
             #ifdef __SWITCH__
                 ImVec2 iconSize = ImVec2(20.0f, 20.0f);
+                float posScale = 1.0f;
+            #elif defined(__WIIU__)
+                ImVec2 iconSize = ImVec2(16.0f * 2, 16.0f * 2);
+                float posScale = 2.0f;
             #else
                 ImVec2 iconSize = ImVec2(16.0f, 16.0f);
+                float posScale = 1.0f;
             #endif
-                ImGui::SetCursorPos(ImVec2(5, 2.5f));
+                ImGui::SetCursorPos(ImVec2(5, 2.5f) * posScale);
                 ImGui::Image(GetTextureByID(DefaultAssets["Game_Icon"]->textureId), iconSize);
                 ImGui::SameLine();
-                ImGui::SetCursorPos(ImVec2(25, 0));
-#endif
+                ImGui::SetCursorPos(ImVec2(25, 0) * posScale);
             }
 
             if (ImGui::BeginMenu("Shipwright")) {
@@ -1011,7 +1009,7 @@ namespace SohImGui {
                 Tooltip("Multiplies your output resolution by the value inputted, as a more intensive but effective form of anti-aliasing");
                 gfx_current_dimensions.internal_mul = CVar_GetFloat("gInternalResolution", 1);
 #endif
-#ifndef __WIIU__ // TODO not implemented
+#ifndef __WIIU__
                 EnhancementSliderInt("MSAA: %d", "##IMSAA", "gMSAAValue", 1, 8, "", 1, true);
                 Tooltip("Activates multi-sample anti-aliasing when above 1x up to 8x for 8 samples for every pixel");
                 gfx_msaa_level = CVar_GetS32("gMSAAValue", 1);

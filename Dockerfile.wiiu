@@ -9,7 +9,7 @@ mkdir wut && \
 cd wut && \
 git init . && \
 git remote add origin https://github.com/devkitPro/wut.git && \
-git fetch --depth 1 origin 028899ecd3febe6cadbd3934c240d5f5e7a1d40d && \
+git fetch --depth 1 origin a8ae667989c496f832c7945fd76efa7e5f50771c && \
 git checkout FETCH_HEAD
 WORKDIR /wut
 RUN make -j$(nproc)
@@ -44,6 +44,7 @@ RUN /opt/devkitpro/portlibs/wiiu/bin/powerpc-eabi-cmake .. -DCMAKE_INSTALL_PREFI
 RUN make -j$(nproc) && make install
 WORKDIR /
 
+# build updated cmake since buster only comes with 3.18
 FROM builder as cmakebuild
 ARG cmake_ver=3.22.6
 RUN wget https://github.com/Kitware/CMake/releases/download/v$cmake_ver/cmake-$cmake_ver.tar.gz && mkdir /cmake && tar xf cmake-$cmake_ver.tar.gz -C /cmake --strip-components=1
@@ -55,6 +56,9 @@ WORKDIR /
 FROM devkitpro/devkitppc:20220531 AS final
 
 RUN apt-get update && apt-get -y install --no-install-recommends ninja-build && rm -rf /var/lib/apt/lists/*
+
+# update all packages
+RUN dkp-pacman -Syyu --noconfirm
 
 # copy in wut
 COPY --from=wutbuild /opt/devkitpro/wut /opt/devkitpro/wut

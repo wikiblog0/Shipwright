@@ -115,13 +115,6 @@ include(CMake/GlobalSettingsInclude.cmake OPTIONAL)
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
 ################################################################################
-# Workaround for current WiiU toolchain issue
-################################################################################
-if(CMAKE_SYSTEM_NAME MATCHES "CafeOS")
-    list(INSERT ${DKP_PREFIX_VAR} 0 "${DEVKITPRO}/portlibs/ppc")
-endif()
-
-################################################################################
 # Sub-projects
 ################################################################################
 add_subdirectory(libultraship/libultraship ${CMAKE_BINARY_DIR}/libultraship)

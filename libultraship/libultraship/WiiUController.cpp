@@ -71,6 +71,11 @@ namespace Ship {
             return;
         }
 
+        int16_t stickX = 0;
+        int16_t stickY = 0;
+        int16_t camX = 0;
+        int16_t camY = 0;
+
         switch (extensionType) {
             case WPAD_EXT_PRO_CONTROLLER:
                 for (uint32_t i = WPAD_PRO_BUTTON_UP; i <= WPAD_PRO_STICK_R_EMULATION_UP; i <<= 1) {
@@ -81,16 +86,16 @@ namespace Ship {
                             float axisY = i >= WPAD_PRO_STICK_R_EMULATION_LEFT ? status->pro.rightStick.y : status->pro.leftStick.y;
 
                             if (profile.Mappings[i] == BTN_STICKRIGHT || profile.Mappings[i] == BTN_STICKLEFT) {
-                                wStickX = axisX * 84;
+                                stickX = axisX * 85;
                                 continue;
                             } else if (profile.Mappings[i] == BTN_STICKDOWN || profile.Mappings[i] == BTN_STICKUP) {
-                                wStickY = axisY * 84;
+                                stickY = axisY * 85;
                                 continue;
                             } else if (profile.Mappings[i] == BTN_VSTICKRIGHT || profile.Mappings[i] == BTN_VSTICKLEFT) {
-                                wCamX = axisX * 84 * profile.Thresholds[SENSITIVITY];
+                                camX = axisX * 85;
                                 continue;
                             } else if (profile.Mappings[i] == BTN_VSTICKDOWN || profile.Mappings[i] == BTN_VSTICKUP) {
-                                wCamY = axisY * 84 * profile.Thresholds[SENSITIVITY];
+                                camY = axisY * 85;
                                 continue;
                             }
                         }
@@ -111,16 +116,16 @@ namespace Ship {
                             float axisY = i >= WPAD_CLASSIC_STICK_R_EMULATION_LEFT ? status->classic.rightStick.y : status->classic.leftStick.y;
 
                             if (profile.Mappings[i] == BTN_STICKRIGHT || profile.Mappings[i] == BTN_STICKLEFT) {
-                                wStickX = axisX * 84;
+                                stickX = axisX * 85;
                                 continue;
                             } else if (profile.Mappings[i] == BTN_STICKDOWN || profile.Mappings[i] == BTN_STICKUP) {
-                                wStickY = axisY * 84;
+                                stickY = axisY * 85;
                                 continue;
                             } else if (profile.Mappings[i] == BTN_VSTICKRIGHT || profile.Mappings[i] == BTN_VSTICKLEFT) {
-                                wCamX = axisX * 84 * profile.Thresholds[SENSITIVITY];
+                                camX = axisX * 85;
                                 continue;
                             } else if (profile.Mappings[i] == BTN_VSTICKDOWN || profile.Mappings[i] == BTN_VSTICKUP) {
-                                wCamY = axisY * 84 * profile.Thresholds[SENSITIVITY];
+                                camY = axisY * 85;
                                 continue;
                             }
                         }
@@ -142,9 +147,17 @@ namespace Ship {
                         }
                     }
                 }
-                wStickX += status->nunchuck.stick.x * 84;
-                wStickY += status->nunchuck.stick.y * 84;
+                stickX += status->nunchuck.stick.x * 85;
+                stickY += status->nunchuck.stick.y * 85;
                 break;
+        }
+
+        if (stickX || stickY) {
+            NormalizeStickAxis(stickX, stickY, profile.Thresholds[LEFT_STICK], false, profile.Thresholds[SENSITIVITY]);
+        }
+
+        if (camX || camY) {
+            NormalizeStickAxis(camX, camY, profile.Thresholds[RIGHT_STICK], true, profile.Thresholds[SENSITIVITY]);
         }
     }
 
@@ -337,6 +350,42 @@ namespace Ship {
 
     const char* WiiUController::GetControllerName() {
         return controllerName.c_str();
+    }
+
+    void WiiUController::NormalizeStickAxis(float x, float y, uint16_t threshold, bool isRightStick, float sensitivity) {
+        //create scaled circular dead-zone in range {-15 ... +15}
+        auto len = sqrt(x * x + y * y);
+        if (len < threshold) {
+            len = 0;
+        }
+        else if (len > 85.0) {
+            len = 85.0 / len;
+        }
+        else {
+            len = (len - threshold) * 85.0 / (85.0 - threshold) / len;
+        }
+        x *= len;
+        y *= len;
+
+        //bound diagonals to an octagonal range {-68 ... +68}
+        if (x != 0.0 && y != 0.0) {
+            auto slope = y / x;
+            auto edgex = copysign(85.0 / (fabs(slope) + 16.0 / 69.0), x);
+            auto edgey = copysign(std::min(fabs(edgex * slope), 85.0 / (1.0 / fabs(slope) + 16.0 / 69.0)), y);
+            edgex = edgey / slope;
+
+            auto scale = sqrt(edgex * edgex + edgey * edgey) / 85.0;
+            x *= scale;
+            y *= scale;
+        }
+
+        if (isRightStick) {
+            wCamX = x * sensitivity;
+            wCamY = y * sensitivity;
+        } else {
+            wStickX = x;
+            wStickY = y;
+        }
     }
 
     void WiiUController::CreateDefaultBinding(int32_t slot) {

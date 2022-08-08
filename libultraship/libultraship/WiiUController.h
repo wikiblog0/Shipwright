@@ -24,6 +24,7 @@ namespace Ship {
             const char* GetControllerName() override;
 
         protected:
+            void NormalizeStickAxis(float x, float y, uint16_t threshold, bool isRightStick, float sensitivity);
             void CreateDefaultBinding(int32_t slot) override;
 
         private:

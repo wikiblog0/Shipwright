@@ -55,6 +55,11 @@ namespace Ship {
             return; 
         }
 
+        int16_t stickX = 0;
+        int16_t stickY = 0;
+        int16_t camX = 0;
+        int16_t camY = 0;
+
         for (uint32_t i = VPAD_BUTTON_SYNC; i <= VPAD_STICK_L_EMULATION_LEFT; i <<= 1) {
             if (profile.Mappings.contains(i)) {
                 // check if the stick is mapped to an analog stick
@@ -63,16 +68,16 @@ namespace Ship {
                     float axisY = i >= VPAD_STICK_L_EMULATION_DOWN ? status->leftStick.y : status->rightStick.y;
 
                     if (profile.Mappings[i] == BTN_STICKRIGHT || profile.Mappings[i] == BTN_STICKLEFT) {
-                        wStickX = axisX * 84;
+                        stickX = axisX * 85;
                         continue;
                     } else if (profile.Mappings[i] == BTN_STICKDOWN || profile.Mappings[i] == BTN_STICKUP) {
-                        wStickY = axisY * 84;
+                        stickY = axisY * 85;
                         continue;
                     } else if (profile.Mappings[i] == BTN_VSTICKRIGHT || profile.Mappings[i] == BTN_VSTICKLEFT) {
-                        wCamX = axisX * 84 * profile.Thresholds[SENSITIVITY];
+                        camX = axisX * 85;
                         continue;
                     } else if (profile.Mappings[i] == BTN_VSTICKDOWN || profile.Mappings[i] == BTN_VSTICKUP) {
-                        wCamY = axisY * 84 * profile.Thresholds[SENSITIVITY];
+                        camY = axisY * 85;
                         continue;
                     }
                 }
@@ -81,6 +86,14 @@ namespace Ship {
                     dwPressedButtons[slot] |= profile.Mappings[i];
                 }
             }
+        }
+
+        if (stickX || stickY) {
+            NormalizeStickAxis(stickX, stickY, profile.Thresholds[LEFT_STICK], false, profile.Thresholds[SENSITIVITY]);
+        }
+
+        if (camX || camY) {
+            NormalizeStickAxis(camX, camY, profile.Thresholds[RIGHT_STICK], true, profile.Thresholds[SENSITIVITY]);
         }
 
         if (profile.UseGyro) {
@@ -222,6 +235,42 @@ namespace Ship {
 
     const char* WiiUGamepad::GetControllerName() {
         return Connected() ? "Wii U GamePad" : "Wii U GamePad (Disconnected)";
+    }
+
+    void WiiUGamepad::NormalizeStickAxis(float x, float y, uint16_t threshold, bool isRightStick, float sensitivity) {
+        //create scaled circular dead-zone in range {-15 ... +15}
+        auto len = sqrt(x * x + y * y);
+        if (len < threshold) {
+            len = 0;
+        }
+        else if (len > 85.0) {
+            len = 85.0 / len;
+        }
+        else {
+            len = (len - threshold) * 85.0 / (85.0 - threshold) / len;
+        }
+        x *= len;
+        y *= len;
+
+        //bound diagonals to an octagonal range {-68 ... +68}
+        if (x != 0.0 && y != 0.0) {
+            auto slope = y / x;
+            auto edgex = copysign(85.0 / (fabs(slope) + 16.0 / 69.0), x);
+            auto edgey = copysign(std::min(fabs(edgex * slope), 85.0 / (1.0 / fabs(slope) + 16.0 / 69.0)), y);
+            edgex = edgey / slope;
+
+            auto scale = sqrt(edgex * edgex + edgey * edgey) / 85.0;
+            x *= scale;
+            y *= scale;
+        }
+
+        if (isRightStick) {
+            wCamX = x * sensitivity;
+            wCamY = y * sensitivity;
+        } else {
+            wStickX = x;
+            wStickY = y;
+        }
     }
 
     void WiiUGamepad::CreateDefaultBinding(int32_t slot) {

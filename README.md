@@ -1,3 +1,5 @@
+# Wii U development has moved to the upstream repository. Check out the project [here](https://github.com/HarbourMasters/Shipwright).
+
 # Ship of Harkinian - Wii U Port
 This is a port of Ship of Harkinian to the Wii U. For more information about SoH check out the original README below.
 

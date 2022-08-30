@@ -1,115 +1,46 @@
-# Wii U development has moved to the upstream repository. Check out the project [here](https://github.com/HarbourMasters/Shipwright).
+# El desarrollo de Wii U se ha trasladado al repositorio original. Mira el proyecto [aqui](https://github.com/HarbourMasters/Shipwright).
 
 # Ship of Harkinian - Wii U Port
-This is a port of Ship of Harkinian to the Wii U. For more information about SoH check out the original README below.
+Este es un port de Ship of Harkinian para la Wii U. Para mas informacion pueden visitar el foro de gbatemp [aqui](https://gbatemp.net/threads/ship-of-harkinian-ocarina-of-time-wii-u-port.612074/) .
 
-## Quick Start
+## Inicio Rapido
 
-1) Download the latest release from the [releases page](https://github.com/GaryOderNichts/Shipwright/releases) and extract it to the root of your SD Card.
-2) Requires a supported copy of the game (See [supported games](#supported-games) below).
-3) Download the OTRGui BE version from [here](https://github.com/GaryOderNichts/Shipwright/releases/tag/otrgui).
-4) Use OTRGui to create an `oot.otr` archive file.
-5) Copy the `oot.otr` file to the `wiiu/apps/soh/` folder on your SD Card.
+1) Descargar la ultima version en la pagina de descarga [aqui](https://builds.shipofharkinian.com/job/SoH_Multibranch/job/develop-zhora/), extrae los archivos del archivo .7z y muevelos a la raiz de la tarjeta sd.
+2) Requiere una version compatible del juego (Ve [Juegos soportados](#juegos-soportados) abajo).
+3) Descarga el OTRGui de [aqui](https://downloads.shipofharkinian.com/shared/SoH-Rachael-Alfa-Win64.zip).
+4) Usa OTRGui para crear el archivo `oot.otr`.
+5) Copia el archivo `oot.otr`  en este directorio de tu tarjeta sd: `wiiu/apps/soh/`.
 
-Nightly builds can be downloaded as artifacts from the [actions tab](https://github.com/GaryOderNichts/Shipwright/actions) (requires a GitHub account).
 
-## Configuration options
 
-Check out the [GBATemp post](https://gbatemp.net/threads/ship-of-harkinian-ocarina-of-time-wii-u-port.612074/) for configuring things like controller mappings, language, and other customizations.
+## Opciones de Configuracion
 
-## Building the Wii U port
+Revisa [la publicacion de Gbatemp](https://gbatemp.net/threads/ship-of-harkinian-ocarina-of-time-wii-u-port.612074/) para configurar cosas como el mapeo de los controles, idioma y otras opciones.
 
-Refer to the [building instructions](BUILDING.md) to compile SoH.
+## Construyendo el port de Wii U
 
-# Original README: Welcome to the Ship of Harkinian!
+Dirijase al apartado de [building instructions](BUILDING.md) para compilar SoH.
 
-A PC port of OoT allowing you to enjoy the game with modern controls, widescreen, high-resolution, gyroscopy and other great features! Setup is simple, let's get started!
 
-The Ship does not include assets and as such requires a prior copy of the game to play.
-
-## Quick Start
-
-1) Download The Ship of Harkinian from [Discord](https://discord.com/invite/BtBmd55HVH).
-2) Requires a supported copy of the game (See supported games below).
-3) Use the OTRGui to generate an `oot.otr` archive file.
-4) Launch `soh.exe`
-
-### Supported Games
+### Juegos soportados
 #### Ocarina of Time Debug PAL GC (not Master Quest)
-> Currently the recommended option
+> Actualmente la mejor opcion.
 ```
 Build team: `zelda@srd022j`
 Build date: `03-02-21 00:49:18` (year-month-day)
 sha1: cee6bc3c2a634b41728f2af8da54d9bf8cc14099
 ```
 #### Ocarina of Time PAL GameCube
-> May lead to crashes and instability
+> Es inestable.
 ```
 sha1: 0227d7c0074f2d0ac935631990da8ec5914597b4
 ```
 
-Congratulations, you are now sailing with the Ship of Harkinian! Have fun!
-
-## Additional Setup Information
-
-The Ship of Harkinian uses a proprietary versioning system consisting of a sci-fi film character followed by a phonetic alphabet code word. The film character represents a major release version which increments with the addition of many new features and bug fixes. The code word represents a minor release version which increments with small updates mainly comprised of bug fixes. For example, `DECKARD ALFA`.
-
-### The Extraction Tool
-
-* Open a rom to initiate generating the `oot.otr` archive file.
-* If a second button exists then `oot.otr` already exists. To prevent overwriting the old `oot.otr` use this button to choose a new game directory. The new directory must not already contain an `oot.otr` to prevent an error.
-* When the process completes, place `oot.otr` beside `soh.exe` if it is not already.
-
-This packaging process can take up to **5 minutes**.
-
-Close the OTRGui when the `Done!` message appears.
-If you get another message, then you might have selected the wrong rom. Make sure to use a rom consistent with the above checksum.
-
-If you still cannot get the tool to work, join our [Discord Server](https://discord.com/invite/BtBmd55HVH) and ask for help in the `#support` text channel. Keep-in-mind that we do not condone piracy in any way.
-
-### Running The Ship of Harkinian
-
-Launch the game. If the window immediately closes, or if there are visual artifacts, you may have selected the wrong rom in the OTRGui tool.
-
-Default keyboard configuration:
-| N64 | A | B | Z | Start | Analog stick | C buttons | D-Pad |
-| - | - | - | - | - | - | - | - |
-| Keyboard | X | C | Z | Space | WASD | Arrow keys | TFGH |
-
-Other shortcuts:
-| Keys | Action |
-| - | - |
-| F1 | Toggle menubar |
-| F5 | Save state |
-| F6 | Change state |
-| F7 | Load state |
-| F10 | Fullscreen (OpenGL) |
-| Alt+Enter | Fullscreen (DirectX) |
-| Ctrl+R | Reset |
-
-Currently, DirectX 11 and OpenGL are supported. Change the renderer by opening the `shipofharkinian.json` configuration file in notepad and add `sdl` to the quotes in `"GfxBackend": ""` for OpenGL or leave blank for DirectX.
-
-## Take The Survey
-Want to use cartridge readers in tandem with the OTRGui?
-Take [this survey](https://retroarchopenhardware.com/survey.php) to increase chances of this becoming reality.
-
-## Discord
-
-Official Discord: https://discord.com/invite/BtBmd55HVH
-
-## Building The Ship of Harkinian
-
-Refer to the [building instructions](BUILDING.md) to compile SoH.
-
-## Troubleshooting The Exporter
-- Confirm that you have an `/assets` folder filled with XMLs in the same directory as OTRGui.exe
-- Confirm that `zapd.exe` exists in the `/assets/extractor` folder
-
-## Nightly Builds
-Nightly builds of Ship of Harkinian are available [here](https://builds.shipofharkinian.com/)
+Felicitaciones, ahora estas zarpando en la Ship of Harkinian! Diviertete!
 
 
-## The Harbour Masters Are...
+
+## Los Harbour Masters son...
 
     Kenix | Lead Developer/Public Relations - Resource Management Programmer, Audio System Programmer, and General Programmer
     Jack Walker | Lead Developer - OTR Format Programmer, Resource Load Programmer, and General Programmer
@@ -123,7 +54,7 @@ Nightly builds of Ship of Harkinian are available [here](https://builds.shipofha
     Theo3 | Developer - General Programmer
 	Random06457 | Developer - Linux Build
 
-## Special Thanks
+## Agradecimientos Especiales
 
     Decomp & ZAPD | Made this project even possible in the first place!
     MNGoldenEagle | Patiently explained audio data formats, encouragement, and founding ZSO which was the first source of the game's code and resource format documentation.
@@ -144,7 +75,7 @@ Nightly builds of Ship of Harkinian are available [here](https://builds.shipofha
 	Taylor Daley | Graphic Design
 	Can't Sleep | Graphic Design
 	
-## Video Credits
+## Video Creditos
     Kenix | Producer / Writer
 	rainbow_fash | Executive Producer
     ReveriePass | Editor

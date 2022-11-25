@@ -10,7 +10,7 @@ Este es un port de Ship of Harkinian para la Wii U. Para mas informacion pueden 
 3) Descarga el OTRGui de [aqui](https://downloads.shipofharkinian.com/shared/SoH-Rachael-Alfa-Win64.zip).
 4) Usa OTRGui para crear el archivo `oot.otr`.
 5) Copia el archivo `oot.otr`  en este directorio de tu tarjeta sd: `wiiu/apps/soh/`.
-
+6) En caso que los links anteriores esten caidos pueden descargar las versiones nightly en este enlace: https://github.com/HarbourMasters/Shipwright/actions/workflows/generate-builds.yml
 
 
 ## Opciones de Configuracion

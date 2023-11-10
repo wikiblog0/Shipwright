@@ -1,13 +1,13 @@
 # El desarrollo de Wii U se ha trasladado al repositorio original. Mira el proyecto [aqui](https://github.com/HarbourMasters/Shipwright).
 
 # Ship of Harkinian - Wii U Port
-Este es un port de Ship of Harkinian para la Wii U. Para mas informacion pueden visitar el foro de gbatemp [aqui](https://gbatemp.net/threads/ship-of-harkinian-ocarina-of-time-wii-u-port.612074/) .
+Este es un port de Ship of Harkinian para la Wii U. Para mas informacion pueden visitar el repositorio oficial de Github [aqui](https://github.com/HarbourMasters/Shipwright).
 
 ## Inicio Rapido
 
-1) Descargar la ultima version en la pagina de descarga [aqui](https://builds.shipofharkinian.com/job/SoH_Multibranch/job/develop-zhora/), extrae los archivos del archivo .7z y muevelos a la raiz de la tarjeta sd.
-2) Requiere una version compatible del juego (Ve [Juegos soportados](#juegos-soportados) abajo).
-3) Descarga el OTRGui de [aqui](https://downloads.shipofharkinian.com/shared/SoH-Rachael-Alfa-Win64.zip).
+1) Descargar la ultima version en la pagina de descarga [aqui](https://github.com/HarbourMasters/Shipwright/releases), extrae los archivos del archivo .zip, crea una carpeta y nombrala soh, mueve los archivos a esa carpeta y finalmente mueve la carpeta soh a este directorio: sd://wiiu/apps.
+2) Requiere una version compatible del juego, puedes verificar que versiones del juego son compatibles aqui: [Juegos soportados](https://ship.equipment/).
+3) Descarga el OTRGui de [aqui](https://github.com/HarbourMasters/Shipwright/releases). El OTRGui esta en la version de SOH de Windows
 4) Usa OTRGui para crear el archivo `oot.otr`.
 5) Copia el archivo `oot.otr`  en este directorio de tu tarjeta sd: `wiiu/apps/soh/`.
 6) En caso que los links anteriores esten caidos pueden descargar las versiones nightly en este enlace: https://github.com/HarbourMasters/Shipwright/actions/workflows/generate-builds.yml
@@ -19,25 +19,7 @@ Revisa [la publicacion de Gbatemp](https://gbatemp.net/threads/ship-of-harkinian
 
 ## Construyendo el port de Wii U
 
-Dirijase al apartado de [building instructions](BUILDING.md) para compilar SoH.
-
-
-### Juegos soportados
-#### Ocarina of Time Debug PAL GC (not Master Quest)
-> Actualmente la mejor opcion.
-```
-Build team: `zelda@srd022j`
-Build date: `03-02-21 00:49:18` (year-month-day)
-sha1: cee6bc3c2a634b41728f2af8da54d9bf8cc14099
-```
-#### Ocarina of Time PAL GameCube
-> Es inestable.
-```
-sha1: 0227d7c0074f2d0ac935631990da8ec5914597b4
-```
-
-Felicitaciones, ahora estas zarpando en la Ship of Harkinian! Diviertete!
-
+Dirijase al apartado de [building instructions](https://github.com/HarbourMasters/Shipwright/blob/develop/docs/BUILDING.md) para compilar SoH.
 
 
 ## Los Harbour Masters son...
